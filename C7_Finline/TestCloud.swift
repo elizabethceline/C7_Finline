@@ -12,6 +12,32 @@ import CloudKit
 import Combine
 
 // model
+struct UserProfile: Identifiable {
+    let id: String
+    let recordID: CKRecord.ID
+    var username: String
+    var points: Int
+    var wakeUpTime: Date?
+    var sleepTime: Date?
+
+    init(record: CKRecord) {
+        self.id = record.recordID.recordName
+        self.recordID = record.recordID
+        self.username = record["username"] as? String ?? ""
+        self.points = record["points"] as? Int ?? 0
+        self.wakeUpTime = record["wake_up_time"] as? Date
+        self.sleepTime = record["sleep_time"] as? Date
+    }
+
+    func toRecord(_ record: CKRecord) -> CKRecord {
+        record["username"] = username as CKRecordValue
+        record["points"] = points as CKRecordValue
+        if let wake = wakeUpTime { record["wake_up_time"] = wake as CKRecordValue } else { record["wake_up_time"] = nil }
+        if let sleep = sleepTime { record["sleep_time"] = sleep as CKRecordValue } else { record["sleep_time"] = nil }
+        return record
+    }
+}
+
 struct Goal: Identifiable {
     let id: String
     let recordID: CKRecord.ID
@@ -59,6 +85,11 @@ class CloudKitManager: ObservableObject {
     @Published var tasks: [Task] = []
     @Published var isLoading = false
     
+    @Published var points: Int = 0
+    @Published var wakeUpTime: Date = Date()
+    @Published var sleepTime: Date = Date()
+    @Published var userProfile: UserProfile?
+    
     private let database = CKContainer.default().privateCloudDatabase
     private var userId: String = ""
     
@@ -97,8 +128,13 @@ class CloudKitManager: ObservableObject {
                 
                 self.database.fetch(withRecordID: recordID) { record, _ in
                     DispatchQueue.main.async {
-                        if let record = record, let name = record["username"] as? String {
-                            self.username = name
+                        if let record = record {
+                            let profile = UserProfile(record: record)
+                            self.userProfile = profile
+                            self.username = profile.username
+                            self.points = profile.points
+                            if let wakeUp = profile.wakeUpTime { self.wakeUpTime = wakeUp }
+                            if let sleep = profile.sleepTime { self.sleepTime = sleep }
                             self.fetchGoals()
                         } else {
                             self.createEmptyUserProfile(recordID: recordID)
@@ -109,7 +145,6 @@ class CloudKitManager: ObservableObject {
         }
     }
     
-    // create new profile
     private func createEmptyUserProfile(recordID: CKRecord.ID) {
         let newRecord = CKRecord(recordType: "UserProfile", recordID: recordID)
         newRecord["username"] = "" as CKRecordValue
@@ -135,6 +170,83 @@ class CloudKitManager: ObservableObject {
                     DispatchQueue.main.async {
                         if error == nil {
                             self.username = name
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    func saveUserProfile(username: String, wakeUpTime: Date, sleepTime: Date) {
+        CKContainer.default().fetchUserRecordID { [weak self] userRecordID, error in
+            guard let self = self, let userRecordID = userRecordID else { return }
+            
+            let recordID = CKRecord.ID(recordName: "UserProfile_\(userRecordID.recordName)")
+            
+            self.database.fetch(withRecordID: recordID) { record, _ in
+                let recordToSave = record ?? CKRecord(recordType: "UserProfile", recordID: recordID)
+                var profile = self.userProfile ?? UserProfile(record: recordToSave)
+                profile.username = username
+                profile.wakeUpTime = wakeUpTime
+                profile.sleepTime = sleepTime
+                let finalRecord = profile.toRecord(recordToSave)
+                self.database.save(finalRecord) { savedRecord, error in
+                    DispatchQueue.main.async {
+                        if error == nil, let savedRecord = savedRecord {
+                            let updated = UserProfile(record: savedRecord)
+                            self.userProfile = updated
+                            self.username = updated.username
+                            if let wake = updated.wakeUpTime { self.wakeUpTime = wake }
+                            if let sleep = updated.sleepTime { self.sleepTime = sleep }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    func addPoints(amount: Int) {
+        CKContainer.default().fetchUserRecordID { [weak self] userRecordID, error in
+            guard let self = self, let userRecordID = userRecordID else { return }
+            
+            let recordID = CKRecord.ID(recordName: "UserProfile_\(userRecordID.recordName)")
+            
+            self.database.fetch(withRecordID: recordID) { record, _ in
+                guard let recordToSave = record else { return }
+                let currentPoints = recordToSave["points"] as? Int ?? 0
+                recordToSave["points"] = (currentPoints + amount) as CKRecordValue
+                
+                self.database.save(recordToSave) { _, error in
+                    DispatchQueue.main.async {
+                        if error == nil {
+                            let newPoints = currentPoints + amount
+                            self.points = newPoints
+                            if var profile = self.userProfile {
+                                profile.points = newPoints
+                                self.userProfile = profile
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    func setPoints(_ points: Int) {
+        CKContainer.default().fetchUserRecordID { [weak self] userRecordID, error in
+            guard let self = self, let userRecordID = userRecordID else { return }
+            let recordID = CKRecord.ID(recordName: "UserProfile_\(userRecordID.recordName)")
+            self.database.fetch(withRecordID: recordID) { record, _ in
+                guard let recordToSave = record else { return }
+                var profile = self.userProfile ?? UserProfile(record: recordToSave)
+                profile.points = points
+                let finalRecord = profile.toRecord(recordToSave)
+                self.database.save(finalRecord) { savedRecord, error in
+                    DispatchQueue.main.async {
+                        if error == nil, let savedRecord = savedRecord {
+                            let updated = UserProfile(record: savedRecord)
+                            self.userProfile = updated
+                            self.points = updated.points
                         }
                     }
                 }
@@ -317,9 +429,8 @@ class CloudKitManager: ObservableObject {
 struct TestCloud: View {
     @StateObject private var manager = CloudKitManager()
     @State private var showingAddGoal = false
-    @State private var showingNamePrompt = false
-    @State private var tempName = ""
-    
+    @State private var showingEditProfile = false
+
     var body: some View {
         NavigationView {
             ZStack {
@@ -327,15 +438,34 @@ struct TestCloud: View {
                     ProgressView("Loading...")
                 } else {
                     List {
-                        Section {
+                        Section("Profile") {
                             HStack {
-                                Text("Username:")
+                                Text("Username")
                                 Spacer()
                                 Text(manager.username.isEmpty ? "Not Set" : manager.username)
                                     .foregroundColor(.secondary)
-                                Button("Edit") {
-                                    tempName = manager.username
-                                    showingNamePrompt = true
+                            }
+                            HStack {
+                                Text("Points")
+                                Spacer()
+                                Text("\(manager.points)")
+                                    .foregroundColor(.secondary)
+                            }
+                            HStack {
+                                Text("Wake Up Time")
+                                Spacer()
+                                Text(manager.wakeUpTime, format: .dateTime.hour().minute())
+                                    .foregroundColor(.secondary)
+                            }
+                            HStack {
+                                Text("Sleep Time")
+                                Spacer()
+                                Text(manager.sleepTime, format: .dateTime.hour().minute())
+                                    .foregroundColor(.secondary)
+                            }
+                            HStack(spacing: 8) {
+                                Button("Edit Profile") {
+                                    showingEditProfile = true
                                 }
                                 .buttonStyle(.borderless)
                             }
@@ -369,7 +499,7 @@ struct TestCloud: View {
                     }
                 }
             }
-            .navigationTitle("Todo List")
+            .navigationTitle("Ini buat testing!")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: { showingAddGoal = true }) {
@@ -380,15 +510,8 @@ struct TestCloud: View {
             .sheet(isPresented: $showingAddGoal) {
                 AddGoalView(manager: manager)
             }
-            .alert("Enter Your Name", isPresented: $showingNamePrompt) {
-                TextField("Your name", text: $tempName)
-                Button("Save") {
-                    let cleanName = tempName.trimmingCharacters(in: .whitespacesAndNewlines)
-                    if !cleanName.isEmpty {
-                        manager.saveUsername(name: cleanName)
-                    }
-                }
-                Button("Cancel", role: .cancel) { }
+            .sheet(isPresented: $showingEditProfile) {
+                EditProfileView(manager: manager)
             }
         }
     }
@@ -858,6 +981,53 @@ struct EditTaskView: View {
                 workingTime = task.workingTime
                 focusDuration = task.focusDuration
                 isCompleted = task.isCompleted
+            }
+        }
+    }
+}
+
+struct EditProfileView: View {
+    @ObservedObject var manager: CloudKitManager
+    @Environment(\.dismiss) private var dismiss
+    @State private var username: String = ""
+    @State private var wakeUp: Date = Date()
+    @State private var sleep: Date = Date()
+    @State private var pointsText: String = ""
+
+    var body: some View {
+        NavigationView {
+            Form {
+                Section("Profile") {
+                    TextField("Username", text: $username)
+                    TextField("Points", text: $pointsText)
+                        .keyboardType(.numberPad)
+                }
+                Section("Schedule") {
+                    DatePicker("Wake Up", selection: $wakeUp, displayedComponents: [.hourAndMinute])
+                    DatePicker("Sleep", selection: $sleep, displayedComponents: [.hourAndMinute])
+                }
+            }
+            .navigationTitle("Edit Profile")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        let pts = Int(pointsText) ?? manager.points
+                        manager.saveUserProfile(username: username, wakeUpTime: wakeUp, sleepTime: sleep)
+                        manager.setPoints(pts)
+                        dismiss()
+                    }
+                    .disabled(username.isEmpty)
+                }
+            }
+            .onAppear {
+                username = manager.username
+                wakeUp = manager.wakeUpTime
+                sleep = manager.sleepTime
+                pointsText = String(manager.points)
             }
         }
     }
