@@ -44,7 +44,6 @@ struct Goal: Identifiable {
     var name: String
     var due: Date
     var description: String?
-    let userId: String
     
     init(record: CKRecord) {
         self.id = record.recordID.recordName
@@ -52,7 +51,6 @@ struct Goal: Identifiable {
         self.name = record["name"] as? String ?? ""
         self.due = record["due"] as? Date ?? Date()
         self.description = record["description"] as? String
-        self.userId = record["user_id"] as? String ?? ""
     }
 }
 
@@ -91,7 +89,6 @@ class CloudKitManager: ObservableObject {
     @Published var userProfile: UserProfile?
     
     private let database = CKContainer.default().privateCloudDatabase
-    private var userId: String = ""
     
     init() {
         getiCloudStatus()
@@ -123,7 +120,6 @@ class CloudKitManager: ObservableObject {
             guard let self = self, let userRecordID = userRecordID else { return }
             
             DispatchQueue.main.async {
-                self.userId = userRecordID.recordName
                 let recordID = CKRecord.ID(recordName: "UserProfile_\(userRecordID.recordName)")
                 
                 self.database.fetch(withRecordID: recordID) { record, _ in
@@ -210,8 +206,7 @@ class CloudKitManager: ObservableObject {
     // crud goal
     func fetchGoals() {
         isLoading = true
-        let predicate = NSPredicate(format: "user_id == %@", userId)
-        let query = CKQuery(recordType: "Goals", predicate: predicate)
+        let query = CKQuery(recordType: "Goals", predicate: NSPredicate(value: true))
         query.sortDescriptors = [NSSortDescriptor(key: "due", ascending: true)]
         
         database.fetch(withQuery: query, inZoneWith: nil) { result in
@@ -235,7 +230,6 @@ class CloudKitManager: ObservableObject {
         let record = CKRecord(recordType: "Goals", recordID: recordID)
         record["name"] = name as CKRecordValue
         record["due"] = due as CKRecordValue
-        record["user_id"] = userId as CKRecordValue
         if let desc = description, !desc.isEmpty {
             record["description"] = desc as CKRecordValue
         }
