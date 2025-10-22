@@ -11,7 +11,7 @@ import SwiftUI
 struct C7_FinlineApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            TestCloud()
         }
     }
 }
