@@ -177,7 +177,7 @@ class CloudKitManager: ObservableObject {
         }
     }
     
-    func saveUserProfile(username: String, wakeUpTime: Date, sleepTime: Date) {
+    func saveUserProfile(username: String, wakeUpTime: Date, sleepTime: Date, points: Int) {
         CKContainer.default().fetchUserRecordID { [weak self] userRecordID, error in
             guard let self = self, let userRecordID = userRecordID else { return }
             
@@ -189,6 +189,7 @@ class CloudKitManager: ObservableObject {
                 profile.username = username
                 profile.wakeUpTime = wakeUpTime
                 profile.sleepTime = sleepTime
+                profile.points = points
                 let finalRecord = profile.toRecord(recordToSave)
                 self.database.save(finalRecord) { savedRecord, error in
                     DispatchQueue.main.async {
@@ -198,54 +199,6 @@ class CloudKitManager: ObservableObject {
                             self.username = updated.username
                             if let wake = updated.wakeUpTime { self.wakeUpTime = wake }
                             if let sleep = updated.sleepTime { self.sleepTime = sleep }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    
-    func addPoints(amount: Int) {
-        CKContainer.default().fetchUserRecordID { [weak self] userRecordID, error in
-            guard let self = self, let userRecordID = userRecordID else { return }
-            
-            let recordID = CKRecord.ID(recordName: "UserProfile_\(userRecordID.recordName)")
-            
-            self.database.fetch(withRecordID: recordID) { record, _ in
-                guard let recordToSave = record else { return }
-                let currentPoints = recordToSave["points"] as? Int ?? 0
-                recordToSave["points"] = (currentPoints + amount) as CKRecordValue
-                
-                self.database.save(recordToSave) { _, error in
-                    DispatchQueue.main.async {
-                        if error == nil {
-                            let newPoints = currentPoints + amount
-                            self.points = newPoints
-                            if var profile = self.userProfile {
-                                profile.points = newPoints
-                                self.userProfile = profile
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    
-    func setPoints(_ points: Int) {
-        CKContainer.default().fetchUserRecordID { [weak self] userRecordID, error in
-            guard let self = self, let userRecordID = userRecordID else { return }
-            let recordID = CKRecord.ID(recordName: "UserProfile_\(userRecordID.recordName)")
-            self.database.fetch(withRecordID: recordID) { record, _ in
-                guard let recordToSave = record else { return }
-                var profile = self.userProfile ?? UserProfile(record: recordToSave)
-                profile.points = points
-                let finalRecord = profile.toRecord(recordToSave)
-                self.database.save(finalRecord) { savedRecord, error in
-                    DispatchQueue.main.async {
-                        if error == nil, let savedRecord = savedRecord {
-                            let updated = UserProfile(record: savedRecord)
-                            self.userProfile = updated
                             self.points = updated.points
                         }
                     }
@@ -1016,8 +969,7 @@ struct EditProfileView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         let pts = Int(pointsText) ?? manager.points
-                        manager.saveUserProfile(username: username, wakeUpTime: wakeUp, sleepTime: sleep)
-                        manager.setPoints(pts)
+                        manager.saveUserProfile(username: username, wakeUpTime: wakeUp, sleepTime: sleep, points: pts)
                         dismiss()
                     }
                     .disabled(username.isEmpty)
