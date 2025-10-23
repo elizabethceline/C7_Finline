@@ -11,29 +11,85 @@ import SwiftUI
 import CloudKit
 import Combine
 
+// Time slot enum
+enum TimeSlot: String, CaseIterable, Codable {
+    case earlyMorning = "Early morning"
+    case morning = "Morning"
+    case afternoon = "Afternoon"
+    case evening = "Evening"
+    case night = "Night"
+    
+    var hours: String {
+        switch self {
+        case .earlyMorning: return "Before 8am"
+        case .morning: return "8AM-12PM"
+        case .afternoon: return "12PM-5PM"
+        case .evening: return "5PM-9PM"
+        case .night: return "After 9PM"
+        }
+    }
+}
+
+// Day of week enum
+enum DayOfWeek: String, CaseIterable, Codable {
+    case monday = "Monday"
+    case tuesday = "Tuesday"
+    case wednesday = "Wednesday"
+    case thursday = "Thursday"
+    case friday = "Friday"
+    case saturday = "Saturday"
+    case sunday = "Sunday"
+}
+
 // model
+struct ProductiveHours: Codable {
+    var day: DayOfWeek
+    var timeSlots: [TimeSlot]
+    
+    init(day: DayOfWeek, timeSlots: [TimeSlot] = []) {
+        self.day = day
+        self.timeSlots = timeSlots
+    }
+}
+
 struct UserProfile: Identifiable {
     let id: String
     let recordID: CKRecord.ID
     var username: String
     var points: Int
-    var wakeUpTime: Date?
-    var sleepTime: Date?
+    var productiveHours: [ProductiveHours]
 
     init(record: CKRecord) {
         self.id = record.recordID.recordName
         self.recordID = record.recordID
         self.username = record["username"] as? String ?? ""
         self.points = record["points"] as? Int ?? 0
-        self.wakeUpTime = record["wake_up_time"] as? Date
-        self.sleepTime = record["sleep_time"] as? Date
+
+        if let jsonString = record["productive_hours"] as? String,
+            let jsonData = jsonString.data(using: .utf8),
+            let decoded = try? JSONDecoder().decode(
+                [ProductiveHours].self,
+                from: jsonData
+            )
+        {
+            self.productiveHours = decoded
+        } else {
+            self.productiveHours = DayOfWeek.allCases.map {
+                ProductiveHours(day: $0)
+            }
+        }
     }
 
     func toRecord(_ record: CKRecord) -> CKRecord {
         record["username"] = username as CKRecordValue
         record["points"] = points as CKRecordValue
-        if let wake = wakeUpTime { record["wake_up_time"] = wake as CKRecordValue } else { record["wake_up_time"] = nil }
-        if let sleep = sleepTime { record["sleep_time"] = sleep as CKRecordValue } else { record["sleep_time"] = nil }
+
+        if let jsonData = try? JSONEncoder().encode(productiveHours),
+            let jsonString = String(data: jsonData, encoding: .utf8)
+        {
+            record["productive_hours"] = jsonString as CKRecordValue
+        }
+
         return record
     }
 }
@@ -84,8 +140,9 @@ class CloudKitManager: ObservableObject {
     @Published var isLoading = false
     
     @Published var points: Int = 0
-    @Published var wakeUpTime: Date = Date()
-    @Published var sleepTime: Date = Date()
+    @Published var productiveHours: [ProductiveHours] = DayOfWeek.allCases.map {
+        ProductiveHours(day: $0)
+    }
     @Published var userProfile: UserProfile?
     
     private let database = CKContainer.default().privateCloudDatabase
@@ -129,8 +186,7 @@ class CloudKitManager: ObservableObject {
                             self.userProfile = profile
                             self.username = profile.username
                             self.points = profile.points
-                            if let wakeUp = profile.wakeUpTime { self.wakeUpTime = wakeUp }
-                            if let sleep = profile.sleepTime { self.sleepTime = sleep }
+                            self.productiveHours = profile.productiveHours
                             self.fetchGoals()
                         } else {
                             self.createEmptyUserProfile(recordID: recordID)
@@ -144,10 +200,19 @@ class CloudKitManager: ObservableObject {
     private func createEmptyUserProfile(recordID: CKRecord.ID) {
         let newRecord = CKRecord(recordType: "UserProfile", recordID: recordID)
         newRecord["username"] = "" as CKRecordValue
-        
+        newRecord["points"] = 0 as CKRecordValue
+
+        let emptyHours = DayOfWeek.allCases.map { ProductiveHours(day: $0) }
+        if let jsonData = try? JSONEncoder().encode(emptyHours),
+            let jsonString = String(data: jsonData, encoding: .utf8)
+        {
+            newRecord["productive_hours"] = jsonString as CKRecordValue
+        }
+
         database.save(newRecord) { _, _ in
             DispatchQueue.main.async {
                 self.username = ""
+                self.productiveHours = emptyHours
             }
         }
     }
@@ -173,7 +238,7 @@ class CloudKitManager: ObservableObject {
         }
     }
     
-    func saveUserProfile(username: String, wakeUpTime: Date, sleepTime: Date, points: Int) {
+    func saveUserProfile(username: String, productiveHours: [ProductiveHours], points: Int) {
         CKContainer.default().fetchUserRecordID { [weak self] userRecordID, error in
             guard let self = self, let userRecordID = userRecordID else { return }
             
@@ -183,8 +248,7 @@ class CloudKitManager: ObservableObject {
                 let recordToSave = record ?? CKRecord(recordType: "UserProfile", recordID: recordID)
                 var profile = self.userProfile ?? UserProfile(record: recordToSave)
                 profile.username = username
-                profile.wakeUpTime = wakeUpTime
-                profile.sleepTime = sleepTime
+                profile.productiveHours = productiveHours
                 profile.points = points
                 let finalRecord = profile.toRecord(recordToSave)
                 self.database.save(finalRecord) { savedRecord, error in
@@ -193,8 +257,7 @@ class CloudKitManager: ObservableObject {
                             let updated = UserProfile(record: savedRecord)
                             self.userProfile = updated
                             self.username = updated.username
-                            if let wake = updated.wakeUpTime { self.wakeUpTime = wake }
-                            if let sleep = updated.sleepTime { self.sleepTime = sleep }
+                            self.productiveHours = updated.productiveHours
                             self.points = updated.points
                         }
                     }
@@ -398,18 +461,19 @@ struct TestCloud: View {
                                 Text("\(manager.points)")
                                     .foregroundColor(.secondary)
                             }
-                            HStack {
-                                Text("Wake Up Time")
-                                Spacer()
-                                Text(manager.wakeUpTime, format: .dateTime.hour().minute())
-                                    .foregroundColor(.secondary)
+                            NavigationLink(
+                                destination: ProductiveHoursView(
+                                    manager: manager
+                                )
+                            ) {
+                                HStack {
+                                    Text("Productive Hours")
+                                    Spacer()
+                                    Text("View Schedule")
+                                        .foregroundColor(.secondary)
+                                }
                             }
-                            HStack {
-                                Text("Sleep Time")
-                                Spacer()
-                                Text(manager.sleepTime, format: .dateTime.hour().minute())
-                                    .foregroundColor(.secondary)
-                            }
+
                             HStack(spacing: 8) {
                                 Button("Edit Profile") {
                                     showingEditProfile = true
@@ -937,8 +1001,6 @@ struct EditProfileView: View {
     @ObservedObject var manager: CloudKitManager
     @Environment(\.dismiss) private var dismiss
     @State private var username: String = ""
-    @State private var wakeUp: Date = Date()
-    @State private var sleep: Date = Date()
     @State private var pointsText: String = ""
 
     var body: some View {
@@ -949,21 +1011,18 @@ struct EditProfileView: View {
                     TextField("Points", text: $pointsText)
                         .keyboardType(.numberPad)
                 }
-                Section("Schedule") {
-                    DatePicker("Wake Up", selection: $wakeUp, displayedComponents: [.hourAndMinute])
-                    DatePicker("Sleep", selection: $sleep, displayedComponents: [.hourAndMinute])
-                }
             }
             .navigationTitle("Edit Profile")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         let pts = Int(pointsText) ?? manager.points
-                        manager.saveUserProfile(username: username, wakeUpTime: wakeUp, sleepTime: sleep, points: pts)
+                        manager.saveUserProfile(
+                            username: username,
+                            productiveHours: manager.productiveHours,
+                            points: pts
+                        )
                         dismiss()
                     }
                     .disabled(username.isEmpty)
@@ -971,10 +1030,74 @@ struct EditProfileView: View {
             }
             .onAppear {
                 username = manager.username
-                wakeUp = manager.wakeUpTime
-                sleep = manager.sleepTime
                 pointsText = String(manager.points)
             }
+        }
+    }
+}
+
+struct ProductiveHoursView: View {
+    @ObservedObject var manager: CloudKitManager
+    @State private var productiveHours: [ProductiveHours] = []
+    @State private var hasChanges = false
+
+    var body: some View {
+        List {
+            ForEach(DayOfWeek.allCases, id: \.self) { day in
+                Section(day.rawValue) {
+                    ForEach(TimeSlot.allCases, id: \.self) { slot in
+                        Button(action: {
+                            toggleTimeSlot(day: day, slot: slot)
+                        }) {
+                            HStack {
+                                Text("\(slot.rawValue), \(slot.hours)").foregroundColor(.primary)
+                                Spacer()
+                                if isSelected(day: day, slot: slot) {
+                                    Image(systemName: "checkmark")
+                                        .foregroundColor(.blue)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        .navigationTitle("Productive Hours")
+        .toolbar {
+            if hasChanges {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Save") {
+                        manager.saveUserProfile(
+                            username: manager.username,
+                            productiveHours: productiveHours,
+                            points: manager.points
+                        )
+                        hasChanges = false
+                    }
+                }
+            }
+        }
+        .onAppear {
+            productiveHours = manager.productiveHours
+        }
+    }
+
+    private func isSelected(day: DayOfWeek, slot: TimeSlot) -> Bool {
+        guard let dayHours = productiveHours.first(where: { $0.day == day })
+        else {
+            return false
+        }
+        return dayHours.timeSlots.contains(slot)
+    }
+
+    private func toggleTimeSlot(day: DayOfWeek, slot: TimeSlot) {
+        if let index = productiveHours.firstIndex(where: { $0.day == day }) {
+            if productiveHours[index].timeSlots.contains(slot) {
+                productiveHours[index].timeSlots.removeAll { $0 == slot }
+            } else {
+                productiveHours[index].timeSlots.append(slot)
+            }
+            hasChanges = true
         }
     }
 }
