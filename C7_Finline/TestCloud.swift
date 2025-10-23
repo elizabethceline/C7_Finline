@@ -146,7 +146,7 @@ class Goal {
         due: Date,
         goalDescription: String?,
         needsSync: Bool = false
-    ) {  
+    ) {
         self.id = id
         self.name = name
         self.due = due
@@ -335,7 +335,7 @@ class CloudKitManager: ObservableObject {
             }
         }
     }
-    
+
     func fetchUserProfile() {
         guard let modelContext = modelContext, isSignedInToiCloud else {
             return
@@ -343,7 +343,7 @@ class CloudKitManager: ObservableObject {
 
         CKContainer.default().fetchUserRecordID {
             [weak self] userRecordID, error in
-            Task { @MainActor in  
+            Task { @MainActor in
                 guard let self = self, let userRecordID = userRecordID else {
                     return
                 }
@@ -365,7 +365,7 @@ class CloudKitManager: ObservableObject {
                     let record = try await self.database.record(for: recordID)
                     print("Found user profile in CloudKit.")
                     let ckProfile = UserProfile(record: record)
-                    
+
                     if let existingProfile = localProfile {
                         // update local
                         existingProfile.username = ckProfile.username
@@ -542,7 +542,7 @@ class CloudKitManager: ObservableObject {
         savePendingDeletionIDs(currentIDs, forKey: key)
         print("Added \(key) to pending deletions: \(id)")
     }
-    
+
     private func removePendingDeletionID(_ id: String, forKey key: String) {
         var currentIDs = getPendingDeletionIDs(forKey: key)
         if currentIDs.remove(id) != nil {
@@ -624,7 +624,7 @@ class CloudKitManager: ObservableObject {
             }
         }
     }
-    
+
     private func syncProfileToCloud(_ profile: UserProfile) async {
         guard networkMonitor.isConnected else { return }
         print("Attempting to sync profile for user ID: \(profile.id)")
@@ -646,7 +646,7 @@ class CloudKitManager: ObservableObject {
             let finalRecord = profile.toRecord(record)
 
             try await database.save(finalRecord)
-            
+
             await MainActor.run {
                 profile.needsSync = false
                 print("Successfully synced profile.")
@@ -662,7 +662,7 @@ class CloudKitManager: ObservableObject {
 
     private func syncGoalToCloud(_ goal: Goal) async {
         guard networkMonitor.isConnected else { return }
-        
+
         // check if this item is deleted/not
         if getPendingDeletionIDs(forKey: pendingGoalDeletionIDsKey).contains(
             goal.id
@@ -708,7 +708,7 @@ class CloudKitManager: ObservableObject {
 
     private func syncTaskToCloud(_ task: GoalTask) async {
         guard networkMonitor.isConnected else { return }
-        
+
         // check if this item is deleted/not
         if getPendingDeletionIDs(forKey: pendingTaskDeletionIDsKey).contains(
             task.id
@@ -931,9 +931,9 @@ class CloudKitManager: ObservableObject {
                     // sync cloud
                     for record in ckRecords {
                         let goalId = record["goal_id"] as? String ?? ""
-                        
+
                         let parentGoal = self.goals.first { $0.id == goalId }
-                        
+
                         if let parentGoal = parentGoal {
                             let ckTask = GoalTask(
                                 record: record,
@@ -955,7 +955,7 @@ class CloudKitManager: ObservableObject {
                                 existingTask.focusDuration =
                                     ckTask.focusDuration
                                 existingTask.isCompleted = ckTask.isCompleted
-                                existingTask.goal = parentGoal 
+                                existingTask.goal = parentGoal
                                 existingTask.needsSync = false
                                 syncedTasks.append(existingTask)
                             } else {
@@ -1378,7 +1378,7 @@ struct GoalDetailView: View {
                         .secondary
                     )
                 } else {
-                    ForEach(tasksForThisGoal) { task in 
+                    ForEach(tasksForThisGoal) { task in
                         TaskRowView(task: task, manager: manager)
                     }
                     .onDelete(perform: deleteTasks)
@@ -1756,7 +1756,7 @@ struct ProductiveHoursView: View {
                         points: manager.points
                     )
                     hasChanges = false
-                    dismiss() 
+                    dismiss()
                 }
                 .disabled(!hasChanges)
             }
@@ -1780,57 +1780,5 @@ struct ProductiveHoursView: View {
 }
 
 #Preview {
-    do {
-        let config = ModelConfiguration(isStoredInMemoryOnly: true)
-        let container = try ModelContainer(
-            for: Goal.self,
-            GoalTask.self,
-            UserProfile.self,
-            configurations: config
-        )
-
-        let context = container.mainContext
-        let user = UserProfile(
-            id: "previewUser",
-            username: "Preview User",
-            points: 100,
-            productiveHours: [
-                ProductiveHours(
-                    day: .monday,
-                    timeSlots: [.morning, .afternoon]
-                )
-            ]
-        )
-        context.insert(user)
-        let goal1 = Goal(
-            id: "goal1",
-            name: "Finish Report",
-            due: Date().addingTimeInterval(86400 * 2),
-            goalDescription: "Complete the Q3 report."
-        )
-        context.insert(goal1)
-        let task1 = GoalTask(
-            id: "task1",
-            name: "Draft intro",
-            workingTime: Date(),
-            focusDuration: 60,
-            isCompleted: false,
-            goal: goal1
-        )
-        let task2 = GoalTask(
-            id: "task2",
-            name: "Gather data",
-            workingTime: Date().addingTimeInterval(3600),
-            focusDuration: 90,
-            isCompleted: true,
-            goal: goal1
-        )
-        context.insert(task1)
-        context.insert(task2)
-
-        return TestCloud()
-            .modelContainer(container)
-    } catch {
-        return Text("Failed to create preview: \(error.localizedDescription)")
-    }
+    TestCloud()
 }
