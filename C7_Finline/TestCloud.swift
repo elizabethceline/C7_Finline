@@ -7,9 +7,9 @@
 
 // page ini cuma buat aku testing!!!
 
-import SwiftUI
 import CloudKit
 import Combine
+import SwiftUI
 
 // Time slot enum
 enum TimeSlot: String, CaseIterable, Codable {
@@ -18,7 +18,7 @@ enum TimeSlot: String, CaseIterable, Codable {
     case afternoon = "Afternoon"
     case evening = "Evening"
     case night = "Night"
-    
+
     var hours: String {
         switch self {
         case .earlyMorning: return "Before 8am"
@@ -45,7 +45,7 @@ enum DayOfWeek: String, CaseIterable, Codable {
 struct ProductiveHours: Codable {
     var day: DayOfWeek
     var timeSlots: [TimeSlot]
-    
+
     init(day: DayOfWeek, timeSlots: [TimeSlot] = []) {
         self.day = day
         self.timeSlots = timeSlots
@@ -100,7 +100,7 @@ struct Goal: Identifiable {
     var name: String
     var due: Date
     var description: String?
-    
+
     init(record: CKRecord) {
         self.id = record.recordID.recordName
         self.recordID = record.recordID
@@ -118,7 +118,7 @@ struct Task: Identifiable {
     var focusDuration: Int
     var isCompleted: Bool
     let goalId: String
-    
+
     init(record: CKRecord) {
         self.id = record.recordID.recordName
         self.recordID = record.recordID
@@ -138,20 +138,20 @@ class CloudKitManager: ObservableObject {
     @Published var goals: [Goal] = []
     @Published var tasks: [Task] = []
     @Published var isLoading = false
-    
+
     @Published var points: Int = 0
     @Published var productiveHours: [ProductiveHours] = DayOfWeek.allCases.map {
         ProductiveHours(day: $0)
     }
     @Published var userProfile: UserProfile?
-    
+
     private let database = CKContainer.default().privateCloudDatabase
-    
+
     init() {
         getiCloudStatus()
         fetchUserProfile()
     }
-    
+
     // check icloud account
     private func getiCloudStatus() {
         CKContainer.default().accountStatus { [weak self] status, _ in
@@ -171,14 +171,19 @@ class CloudKitManager: ObservableObject {
             }
         }
     }
-    
+
     private func fetchUserProfile() {
-        CKContainer.default().fetchUserRecordID { [weak self] userRecordID, error in
-            guard let self = self, let userRecordID = userRecordID else { return }
-            
+        CKContainer.default().fetchUserRecordID {
+            [weak self] userRecordID, error in
+            guard let self = self, let userRecordID = userRecordID else {
+                return
+            }
+
             DispatchQueue.main.async {
-                let recordID = CKRecord.ID(recordName: "UserProfile_\(userRecordID.recordName)")
-                
+                let recordID = CKRecord.ID(
+                    recordName: "UserProfile_\(userRecordID.recordName)"
+                )
+
                 self.database.fetch(withRecordID: recordID) { record, _ in
                     DispatchQueue.main.async {
                         if let record = record {
@@ -196,7 +201,7 @@ class CloudKitManager: ObservableObject {
             }
         }
     }
-    
+
     private func createEmptyUserProfile(recordID: CKRecord.ID) {
         let newRecord = CKRecord(recordType: "UserProfile", recordID: recordID)
         newRecord["username"] = "" as CKRecordValue
@@ -216,17 +221,24 @@ class CloudKitManager: ObservableObject {
             }
         }
     }
-    
+
     func saveUsername(name: String) {
-        CKContainer.default().fetchUserRecordID { [weak self] userRecordID, error in
-            guard let self = self, let userRecordID = userRecordID else { return }
-            
-            let recordID = CKRecord.ID(recordName: "UserProfile_\(userRecordID.recordName)")
-            
+        CKContainer.default().fetchUserRecordID {
+            [weak self] userRecordID, error in
+            guard let self = self, let userRecordID = userRecordID else {
+                return
+            }
+
+            let recordID = CKRecord.ID(
+                recordName: "UserProfile_\(userRecordID.recordName)"
+            )
+
             self.database.fetch(withRecordID: recordID) { record, _ in
-                let recordToSave = record ?? CKRecord(recordType: "UserProfile", recordID: recordID)
+                let recordToSave =
+                    record
+                    ?? CKRecord(recordType: "UserProfile", recordID: recordID)
                 recordToSave["username"] = name as CKRecordValue
-                
+
                 self.database.save(recordToSave) { _, error in
                     DispatchQueue.main.async {
                         if error == nil {
@@ -237,16 +249,28 @@ class CloudKitManager: ObservableObject {
             }
         }
     }
-    
-    func saveUserProfile(username: String, productiveHours: [ProductiveHours], points: Int) {
-        CKContainer.default().fetchUserRecordID { [weak self] userRecordID, error in
-            guard let self = self, let userRecordID = userRecordID else { return }
-            
-            let recordID = CKRecord.ID(recordName: "UserProfile_\(userRecordID.recordName)")
-            
+
+    func saveUserProfile(
+        username: String,
+        productiveHours: [ProductiveHours],
+        points: Int
+    ) {
+        CKContainer.default().fetchUserRecordID {
+            [weak self] userRecordID, error in
+            guard let self = self, let userRecordID = userRecordID else {
+                return
+            }
+
+            let recordID = CKRecord.ID(
+                recordName: "UserProfile_\(userRecordID.recordName)"
+            )
+
             self.database.fetch(withRecordID: recordID) { record, _ in
-                let recordToSave = record ?? CKRecord(recordType: "UserProfile", recordID: recordID)
-                var profile = self.userProfile ?? UserProfile(record: recordToSave)
+                let recordToSave =
+                    record
+                    ?? CKRecord(recordType: "UserProfile", recordID: recordID)
+                var profile =
+                    self.userProfile ?? UserProfile(record: recordToSave)
                 profile.username = username
                 profile.productiveHours = productiveHours
                 profile.points = points
@@ -265,13 +289,16 @@ class CloudKitManager: ObservableObject {
             }
         }
     }
-    
+
     // crud goal
     func fetchGoals() {
         isLoading = true
-        let query = CKQuery(recordType: "Goals", predicate: NSPredicate(value: true))
+        let query = CKQuery(
+            recordType: "Goals",
+            predicate: NSPredicate(value: true)
+        )
         query.sortDescriptors = [NSSortDescriptor(key: "due", ascending: true)]
-        
+
         database.fetch(withQuery: query, inZoneWith: nil) { result in
             DispatchQueue.main.async {
                 self.isLoading = false
@@ -282,12 +309,13 @@ class CloudKitManager: ObservableObject {
                     }.map { Goal(record: $0) }
                     self.fetchAllTasks()
                 case .failure(let error):
-                    self.error = "Failed to fetch goals: \(error.localizedDescription)"
+                    self.error =
+                        "Failed to fetch goals: \(error.localizedDescription)"
                 }
             }
         }
     }
-    
+
     func createGoal(name: String, due: Date, description: String?) {
         let recordID = CKRecord.ID(recordName: UUID().uuidString)
         let record = CKRecord(recordType: "Goals", recordID: recordID)
@@ -296,11 +324,12 @@ class CloudKitManager: ObservableObject {
         if let desc = description, !desc.isEmpty {
             record["description"] = desc as CKRecordValue
         }
-        
+
         database.save(record) { savedRecord, error in
             DispatchQueue.main.async {
                 if let error = error {
-                    self.error = "Failed to create goal: \(error.localizedDescription)"
+                    self.error =
+                        "Failed to create goal: \(error.localizedDescription)"
                 } else if let savedRecord = savedRecord {
                     self.goals.append(Goal(record: savedRecord))
                     self.goals.sort { $0.due < $1.due }
@@ -308,11 +337,11 @@ class CloudKitManager: ObservableObject {
             }
         }
     }
-    
+
     func updateGoal(goal: Goal, name: String, due: Date, description: String?) {
         database.fetch(withRecordID: goal.recordID) { record, _ in
             guard let record = record else { return }
-            
+
             record["name"] = name as CKRecordValue
             record["due"] = due as CKRecordValue
             if let desc = description, !desc.isEmpty {
@@ -320,13 +349,16 @@ class CloudKitManager: ObservableObject {
             } else {
                 record["description"] = nil
             }
-            
+
             self.database.save(record) { savedRecord, error in
                 DispatchQueue.main.async {
                     if let error = error {
-                        self.error = "Failed to update goal: \(error.localizedDescription)"
+                        self.error =
+                            "Failed to update goal: \(error.localizedDescription)"
                     } else if let savedRecord = savedRecord {
-                        if let index = self.goals.firstIndex(where: { $0.id == goal.id }) {
+                        if let index = self.goals.firstIndex(where: {
+                            $0.id == goal.id
+                        }) {
                             self.goals[index] = Goal(record: savedRecord)
                             self.goals.sort { $0.due < $1.due }
                         }
@@ -335,12 +367,13 @@ class CloudKitManager: ObservableObject {
             }
         }
     }
-    
+
     func deleteGoal(goal: Goal) {
         database.delete(withRecordID: goal.recordID) { _, error in
             DispatchQueue.main.async {
                 if let error = error {
-                    self.error = "Failed to delete goal: \(error.localizedDescription)"
+                    self.error =
+                        "Failed to delete goal: \(error.localizedDescription)"
                 } else {
                     self.goals.removeAll { $0.id == goal.id }
                     self.tasks.removeAll { $0.goalId == goal.id }
@@ -348,15 +381,15 @@ class CloudKitManager: ObservableObject {
             }
         }
     }
-    
+
     // crud task
     func fetchAllTasks() {
         let goalIds = goals.map { $0.id }
         guard !goalIds.isEmpty else { return }
-        
+
         let predicate = NSPredicate(format: "goal_id IN %@", goalIds)
         let query = CKQuery(recordType: "Tasks", predicate: predicate)
-        
+
         database.fetch(withQuery: query, inZoneWith: nil) { result in
             DispatchQueue.main.async {
                 switch result {
@@ -365,13 +398,19 @@ class CloudKitManager: ObservableObject {
                         try? result.get()
                     }.map { Task(record: $0) }
                 case .failure(let error):
-                    self.error = "Failed to fetch tasks: \(error.localizedDescription)"
+                    self.error =
+                        "Failed to fetch tasks: \(error.localizedDescription)"
                 }
             }
         }
     }
-    
-    func createTask(goalId: String, name: String, workingTime: Date, focusDuration: Int) {
+
+    func createTask(
+        goalId: String,
+        name: String,
+        workingTime: Date,
+        focusDuration: Int
+    ) {
         let recordID = CKRecord.ID(recordName: UUID().uuidString)
         let record = CKRecord(recordType: "Tasks", recordID: recordID)
         record["name"] = name as CKRecordValue
@@ -379,33 +418,43 @@ class CloudKitManager: ObservableObject {
         record["focus_duration"] = focusDuration as CKRecordValue
         record["is_completed"] = 0 as CKRecordValue
         record["goal_id"] = goalId as CKRecordValue
-        
+
         database.save(record) { savedRecord, error in
             DispatchQueue.main.async {
                 if let error = error {
-                    self.error = "Failed to create task: \(error.localizedDescription)"
+                    self.error =
+                        "Failed to create task: \(error.localizedDescription)"
                 } else if let savedRecord = savedRecord {
                     self.tasks.append(Task(record: savedRecord))
                 }
             }
         }
     }
-    
-    func updateTask(task: Task, name: String, workingTime: Date, focusDuration: Int, isCompleted: Bool) {
+
+    func updateTask(
+        task: Task,
+        name: String,
+        workingTime: Date,
+        focusDuration: Int,
+        isCompleted: Bool
+    ) {
         database.fetch(withRecordID: task.recordID) { record, _ in
             guard let record = record else { return }
-            
+
             record["name"] = name as CKRecordValue
             record["working_time"] = workingTime as CKRecordValue
             record["focus_duration"] = focusDuration as CKRecordValue
             record["is_completed"] = (isCompleted ? 1 : 0) as CKRecordValue
-            
+
             self.database.save(record) { savedRecord, error in
                 DispatchQueue.main.async {
                     if let error = error {
-                        self.error = "Failed to update task: \(error.localizedDescription)"
+                        self.error =
+                            "Failed to update task: \(error.localizedDescription)"
                     } else if let savedRecord = savedRecord {
-                        if let index = self.tasks.firstIndex(where: { $0.id == task.id }) {
+                        if let index = self.tasks.firstIndex(where: {
+                            $0.id == task.id
+                        }) {
                             self.tasks[index] = Task(record: savedRecord)
                         }
                     }
@@ -413,23 +462,30 @@ class CloudKitManager: ObservableObject {
             }
         }
     }
-    
+
     func toggleTaskCompletion(task: Task) {
-        updateTask(task: task, name: task.name, workingTime: task.workingTime, focusDuration: task.focusDuration, isCompleted: !task.isCompleted)
+        updateTask(
+            task: task,
+            name: task.name,
+            workingTime: task.workingTime,
+            focusDuration: task.focusDuration,
+            isCompleted: !task.isCompleted
+        )
     }
-    
+
     func deleteTask(task: Task) {
         database.delete(withRecordID: task.recordID) { _, error in
             DispatchQueue.main.async {
                 if let error = error {
-                    self.error = "Failed to delete task: \(error.localizedDescription)"
+                    self.error =
+                        "Failed to delete task: \(error.localizedDescription)"
                 } else {
                     self.tasks.removeAll { $0.id == task.id }
                 }
             }
         }
     }
-    
+
     func getTasksForGoal(_ goalId: String) -> [Task] {
         return tasks.filter { $0.goalId == goalId }
     }
@@ -452,8 +508,11 @@ struct TestCloud: View {
                             HStack {
                                 Text("Username")
                                 Spacer()
-                                Text(manager.username.isEmpty ? "Not Set" : manager.username)
-                                    .foregroundColor(.secondary)
+                                Text(
+                                    manager.username.isEmpty
+                                        ? "Not Set" : manager.username
+                                )
+                                .foregroundColor(.secondary)
                             }
                             HStack {
                                 Text("Points")
@@ -481,15 +540,25 @@ struct TestCloud: View {
                                 .buttonStyle(.borderless)
                             }
                         }
-                        
+
                         Section("Goals") {
                             if manager.goals.isEmpty {
                                 Text("No goals yet. Tap + to add one.")
                                     .foregroundColor(.secondary)
                             } else {
                                 ForEach(manager.goals) { goal in
-                                    NavigationLink(destination: GoalDetailView(manager: manager, goal: goal)) {
-                                        GoalRowView(goal: goal, taskCount: manager.getTasksForGoal(goal.id).count)
+                                    NavigationLink(
+                                        destination: GoalDetailView(
+                                            manager: manager,
+                                            goal: goal
+                                        )
+                                    ) {
+                                        GoalRowView(
+                                            goal: goal,
+                                            taskCount: manager.getTasksForGoal(
+                                                goal.id
+                                            ).count
+                                        )
                                     }
                                 }
                                 .onDelete(perform: deleteGoals)
@@ -497,7 +566,7 @@ struct TestCloud: View {
                         }
                     }
                 }
-                
+
                 if !manager.error.isEmpty {
                     VStack {
                         Spacer()
@@ -526,7 +595,7 @@ struct TestCloud: View {
             }
         }
     }
-    
+
     private func deleteGoals(at offsets: IndexSet) {
         for index in offsets {
             manager.deleteGoal(goal: manager.goals[index])
@@ -538,7 +607,7 @@ struct TestCloud: View {
 struct GoalRowView: View {
     let goal: Goal
     let taskCount: Int
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(goal.name)
@@ -550,16 +619,16 @@ struct GoalRowView: View {
                 Text(goal.due, format: .dateTime.day().month().year())
                     .font(.caption)
                     .foregroundColor(.secondary)
-                
+
                 Image(systemName: "clock")
                     .font(.caption)
                     .foregroundColor(.blue)
                 Text(goal.due, format: .dateTime.hour().minute())
                     .font(.caption)
                     .foregroundColor(.secondary)
-                
+
                 Spacer()
-                
+
                 Text("\(taskCount) tasks")
                     .font(.caption)
                     .foregroundColor(.secondary)
@@ -579,33 +648,44 @@ struct GoalRowView: View {
 struct AddGoalView: View {
     @ObservedObject var manager: CloudKitManager
     @Environment(\.dismiss) var dismiss
-    
+
     @State private var name = ""
     @State private var dueDate = Date()
     @State private var description = ""
-    
+
     var body: some View {
         NavigationView {
             Form {
                 Section("Goal Details") {
                     TextField("Goal Name", text: $name)
-                    
-                    DatePicker("Due Date", selection: $dueDate, displayedComponents: [.date, .hourAndMinute])
-                        .datePickerStyle(.compact)
-                    
-                    TextField("Description (Optional)", text: $description, axis: .vertical)
-                        .lineLimit(3...6)
+
+                    DatePicker(
+                        "Due Date",
+                        selection: $dueDate,
+                        displayedComponents: [.date, .hourAndMinute]
+                    )
+                    .datePickerStyle(.compact)
+
+                    TextField(
+                        "Description (Optional)",
+                        text: $description,
+                        axis: .vertical
+                    )
+                    .lineLimit(3...6)
                 }
-                
+
                 Section("Preview") {
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
                             Image(systemName: "calendar")
                                 .foregroundColor(.blue)
-                            Text(dueDate, format: .dateTime.day().month().year())
+                            Text(
+                                dueDate,
+                                format: .dateTime.day().month().year()
+                            )
                         }
                         .font(.caption)
-                        
+
                         HStack {
                             Image(systemName: "clock")
                                 .foregroundColor(.blue)
@@ -624,7 +704,11 @@ struct AddGoalView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         let desc = description.isEmpty ? nil : description
-                        manager.createGoal(name: name, due: dueDate, description: desc)
+                        manager.createGoal(
+                            name: name,
+                            due: dueDate,
+                            description: desc
+                        )
                         dismiss()
                     }
                     .disabled(name.isEmpty)
@@ -638,14 +722,14 @@ struct AddGoalView: View {
 struct GoalDetailView: View {
     @ObservedObject var manager: CloudKitManager
     let goal: Goal
-    
+
     @State private var showingAddTask = false
     @State private var showingEditGoal = false
-    
+
     var tasks: [Task] {
         manager.getTasksForGoal(goal.id)
     }
-    
+
     var body: some View {
         List {
             Section("Goal Info") {
@@ -653,7 +737,7 @@ struct GoalDetailView: View {
                     Text(goal.name)
                         .font(.title2)
                         .bold()
-                    
+
                     HStack(spacing: 16) {
                         VStack(alignment: .leading, spacing: 4) {
                             HStack {
@@ -663,10 +747,13 @@ struct GoalDetailView: View {
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                             }
-                            Text(goal.due, format: .dateTime.day().month().year())
-                                .font(.subheadline)
+                            Text(
+                                goal.due,
+                                format: .dateTime.day().month().year()
+                            )
+                            .font(.subheadline)
                         }
-                        
+
                         VStack(alignment: .leading, spacing: 4) {
                             HStack {
                                 Image(systemName: "clock")
@@ -679,7 +766,7 @@ struct GoalDetailView: View {
                                 .font(.subheadline)
                         }
                     }
-                    
+
                     if let desc = goal.description, !desc.isEmpty {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Description")
@@ -691,12 +778,12 @@ struct GoalDetailView: View {
                     }
                 }
                 .padding(.vertical, 4)
-                
+
                 Button("Edit Goal") {
                     showingEditGoal = true
                 }
             }
-            
+
             Section("Tasks (\(tasks.count))") {
                 if tasks.isEmpty {
                     Text("No tasks yet. Tap + to add one.")
@@ -725,7 +812,7 @@ struct GoalDetailView: View {
             EditGoalView(manager: manager, goal: goal)
         }
     }
-    
+
     private func deleteTasks(at offsets: IndexSet) {
         for index in offsets {
             manager.deleteTask(task: tasks[index])
@@ -738,20 +825,23 @@ struct TaskRowView: View {
     let task: Task
     @ObservedObject var manager: CloudKitManager
     @State private var showingEditTask = false
-    
+
     var body: some View {
         HStack {
             Button(action: { manager.toggleTaskCompletion(task: task) }) {
-                Image(systemName: task.isCompleted ? "checkmark.circle.fill" : "circle")
-                    .foregroundColor(task.isCompleted ? .green : .gray)
+                Image(
+                    systemName: task.isCompleted
+                        ? "checkmark.circle.fill" : "circle"
+                )
+                .foregroundColor(task.isCompleted ? .green : .gray)
             }
             .buttonStyle(.plain)
-            
+
             VStack(alignment: .leading, spacing: 6) {
                 Text(task.name)
                     .font(.body)
                     .strikethrough(task.isCompleted)
-                
+
                 HStack(spacing: 12) {
                     HStack(spacing: 4) {
                         Image(systemName: "timer")
@@ -760,27 +850,33 @@ struct TaskRowView: View {
                             .font(.caption)
                     }
                     .foregroundColor(.orange)
-                    
+
                     HStack(spacing: 4) {
                         Image(systemName: "calendar")
                             .font(.caption2)
-                        Text(task.workingTime, format: .dateTime.day().month().year())
-                            .font(.caption)
+                        Text(
+                            task.workingTime,
+                            format: .dateTime.day().month().year()
+                        )
+                        .font(.caption)
                     }
                     .foregroundColor(.blue)
-                    
+
                     HStack(spacing: 4) {
                         Image(systemName: "clock")
                             .font(.caption2)
-                        Text(task.workingTime, format: .dateTime.hour().minute())
-                            .font(.caption)
+                        Text(
+                            task.workingTime,
+                            format: .dateTime.hour().minute()
+                        )
+                        .font(.caption)
                     }
                     .foregroundColor(.blue)
                 }
             }
-            
+
             Spacer()
-            
+
             Button(action: { showingEditTask = true }) {
                 Image(systemName: "pencil")
                     .foregroundColor(.blue)
@@ -798,39 +894,51 @@ struct AddTaskView: View {
     @ObservedObject var manager: CloudKitManager
     let goalId: String
     @Environment(\.dismiss) var dismiss
-    
+
     @State private var name = ""
     @State private var workingTime = Date()
     @State private var focusDuration = 30
-    
+
     var body: some View {
         NavigationView {
             Form {
                 Section("Task Details") {
                     TextField("Task Name", text: $name)
-                    
-                    DatePicker("Working Date & Time", selection: $workingTime, displayedComponents: [.date, .hourAndMinute])
-                        .datePickerStyle(.compact)
-                    
-                    Stepper("Focus Duration: \(focusDuration) min", value: $focusDuration, in: 5...180, step: 5)
+
+                    DatePicker(
+                        "Working Date & Time",
+                        selection: $workingTime,
+                        displayedComponents: [.date, .hourAndMinute]
+                    )
+                    .datePickerStyle(.compact)
+
+                    Stepper(
+                        "Focus Duration: \(focusDuration) min",
+                        value: $focusDuration,
+                        in: 5...180,
+                        step: 5
+                    )
                 }
-                
+
                 Section("Preview") {
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
                             Image(systemName: "calendar")
                                 .foregroundColor(.blue)
-                            Text(workingTime, format: .dateTime.day().month().year())
+                            Text(
+                                workingTime,
+                                format: .dateTime.day().month().year()
+                            )
                         }
                         .font(.caption)
-                        
+
                         HStack {
                             Image(systemName: "clock")
                                 .foregroundColor(.blue)
                             Text(workingTime, format: .dateTime.hour().minute())
                         }
                         .font(.caption)
-                        
+
                         HStack {
                             Image(systemName: "timer")
                                 .foregroundColor(.orange)
@@ -848,7 +956,12 @@ struct AddTaskView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
-                        manager.createTask(goalId: goalId, name: name, workingTime: workingTime, focusDuration: focusDuration)
+                        manager.createTask(
+                            goalId: goalId,
+                            name: name,
+                            workingTime: workingTime,
+                            focusDuration: focusDuration
+                        )
                         dismiss()
                     }
                     .disabled(name.isEmpty)
@@ -863,33 +976,44 @@ struct EditGoalView: View {
     @ObservedObject var manager: CloudKitManager
     let goal: Goal
     @Environment(\.dismiss) var dismiss
-    
+
     @State private var name = ""
     @State private var dueDate = Date()
     @State private var description = ""
-    
+
     var body: some View {
         NavigationView {
             Form {
                 Section("Goal Details") {
                     TextField("Goal Name", text: $name)
-                    
-                    DatePicker("Due Date & Time", selection: $dueDate, displayedComponents: [.date, .hourAndMinute])
-                        .datePickerStyle(.compact)
-                    
-                    TextField("Description (Optional)", text: $description, axis: .vertical)
-                        .lineLimit(3...6)
+
+                    DatePicker(
+                        "Due Date & Time",
+                        selection: $dueDate,
+                        displayedComponents: [.date, .hourAndMinute]
+                    )
+                    .datePickerStyle(.compact)
+
+                    TextField(
+                        "Description (Optional)",
+                        text: $description,
+                        axis: .vertical
+                    )
+                    .lineLimit(3...6)
                 }
-                
+
                 Section("Preview") {
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
                             Image(systemName: "calendar")
                                 .foregroundColor(.blue)
-                            Text(dueDate, format: .dateTime.day().month().year())
+                            Text(
+                                dueDate,
+                                format: .dateTime.day().month().year()
+                            )
                         }
                         .font(.caption)
-                        
+
                         HStack {
                             Image(systemName: "clock")
                                 .foregroundColor(.blue)
@@ -908,7 +1032,12 @@ struct EditGoalView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         let desc = description.isEmpty ? nil : description
-                        manager.updateGoal(goal: goal, name: name, due: dueDate, description: desc)
+                        manager.updateGoal(
+                            goal: goal,
+                            name: name,
+                            due: dueDate,
+                            description: desc
+                        )
                         dismiss()
                     }
                     .disabled(name.isEmpty)
@@ -928,42 +1057,54 @@ struct EditTaskView: View {
     @ObservedObject var manager: CloudKitManager
     let task: Task
     @Environment(\.dismiss) var dismiss
-    
+
     @State private var name = ""
     @State private var workingTime = Date()
     @State private var focusDuration = 30
     @State private var isCompleted = false
-    
+
     var body: some View {
         NavigationView {
             Form {
                 Section("Task Details") {
                     TextField("Task Name", text: $name)
-                    
-                    DatePicker("Working Date & Time", selection: $workingTime, displayedComponents: [.date, .hourAndMinute])
-                        .datePickerStyle(.compact)
-                    
-                    Stepper("Focus Duration: \(focusDuration) min", value: $focusDuration, in: 5...180, step: 5)
-                    
+
+                    DatePicker(
+                        "Working Date & Time",
+                        selection: $workingTime,
+                        displayedComponents: [.date, .hourAndMinute]
+                    )
+                    .datePickerStyle(.compact)
+
+                    Stepper(
+                        "Focus Duration: \(focusDuration) min",
+                        value: $focusDuration,
+                        in: 5...180,
+                        step: 5
+                    )
+
                     Toggle("Completed", isOn: $isCompleted)
                 }
-                
+
                 Section("Preview") {
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
                             Image(systemName: "calendar")
                                 .foregroundColor(.blue)
-                            Text(workingTime, format: .dateTime.day().month().year())
+                            Text(
+                                workingTime,
+                                format: .dateTime.day().month().year()
+                            )
                         }
                         .font(.caption)
-                        
+
                         HStack {
                             Image(systemName: "clock")
                                 .foregroundColor(.blue)
                             Text(workingTime, format: .dateTime.hour().minute())
                         }
                         .font(.caption)
-                        
+
                         HStack {
                             Image(systemName: "timer")
                                 .foregroundColor(.orange)
@@ -981,7 +1122,13 @@ struct EditTaskView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
-                        manager.updateTask(task: task, name: name, workingTime: workingTime, focusDuration: focusDuration, isCompleted: isCompleted)
+                        manager.updateTask(
+                            task: task,
+                            name: name,
+                            workingTime: workingTime,
+                            focusDuration: focusDuration,
+                            isCompleted: isCompleted
+                        )
                         dismiss()
                     }
                     .disabled(name.isEmpty)
@@ -1050,7 +1197,8 @@ struct ProductiveHoursView: View {
                             toggleTimeSlot(day: day, slot: slot)
                         }) {
                             HStack {
-                                Text("\(slot.rawValue), \(slot.hours)").foregroundColor(.primary)
+                                Text("\(slot.rawValue), \(slot.hours)")
+                                    .foregroundColor(.primary)
                                 Spacer()
                                 if isSelected(day: day, slot: slot) {
                                     Image(systemName: "checkmark")
