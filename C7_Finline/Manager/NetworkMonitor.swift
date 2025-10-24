@@ -5,12 +5,11 @@
 //  Created by Elizabeth Celine Liong on 23/10/25.
 //
 
+import Combine
 import Foundation
 import Network
-import Combine
 import SwiftUI
 
-@MainActor
 class NetworkMonitor: ObservableObject {
     private let monitor = NWPathMonitor()
     private let queue = DispatchQueue(label: "NetworkMonitor")
@@ -18,15 +17,13 @@ class NetworkMonitor: ObservableObject {
 
     init() {
         monitor.pathUpdateHandler = { [weak self] path in
-            let weakSelf = self
+            guard let self = self else { return }
 
-            Task { @MainActor in
-                guard let strongSelf = weakSelf else { return }
+            let connected = (path.status == .satisfied)
 
-                let connected = (path.status == .satisfied)
-
-                if strongSelf.isConnected != connected {
-                    strongSelf.isConnected = connected
+            DispatchQueue.main.async {
+                if self.isConnected != connected {
+                    self.isConnected = connected
                     print(
                         "Network Status Changed: \(connected ? "Connected" : "Disconnected")"
                     )
@@ -36,7 +33,7 @@ class NetworkMonitor: ObservableObject {
         monitor.start(queue: queue)
     }
 
-    func stop() {
+    deinit {
         monitor.cancel()
     }
 }

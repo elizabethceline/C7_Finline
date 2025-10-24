@@ -7,14 +7,11 @@
 
 // page ini cuma buat aku testing!!!
 
-import CloudKit
-import Combine
-import Network
-import SwiftData
 import SwiftUI
+import SwiftData
 
 struct TestCloud: View {
-    @StateObject private var manager = CloudKitManager()
+    @StateObject private var viewModel = TestCloudViewModel()
     @Environment(\.modelContext) private var modelContext
     @State private var showingAddGoal = false
     @State private var showingEditProfile = false
@@ -22,7 +19,7 @@ struct TestCloud: View {
     var body: some View {
         NavigationView {
             ZStack {
-                if manager.isLoading && manager.goals.isEmpty {
+                if viewModel.isLoading && viewModel.goals.isEmpty {
                     ProgressView("Loading...")
                 } else {
                     List {
@@ -32,20 +29,20 @@ struct TestCloud: View {
                                 Text("Username")
                                 Spacer()
                                 Text(
-                                    manager.username.isEmpty
-                                        ? "Not Set" : manager.username
+                                    viewModel.username.isEmpty
+                                        ? "Not Set" : viewModel.username
                                 )
                                 .foregroundColor(.secondary)
                             }
                             HStack {
                                 Text("Points")
                                 Spacer()
-                                Text("\(manager.points)")
+                                Text("\(viewModel.points)")
                                     .foregroundColor(.secondary)
                             }
                             NavigationLink(
                                 destination: ProductiveHoursView(
-                                    manager: manager
+                                    viewModel: viewModel
                                 )
                             ) {
                                 HStack {
@@ -63,20 +60,20 @@ struct TestCloud: View {
 
                         // Goals Section
                         Section("Goals") {
-                            if manager.goals.isEmpty {
+                            if viewModel.goals.isEmpty {
                                 Text("No goals yet. Tap + to add one.")
                                     .foregroundColor(.secondary)
                             } else {
-                                ForEach(manager.goals) { goal in
+                                ForEach(viewModel.goals) { goal in
                                     NavigationLink(
                                         destination: GoalDetailView(
-                                            manager: manager,
+                                            viewModel: viewModel,
                                             goal: goal
                                         )
                                     ) {
                                         GoalRowView(
                                             goal: goal,
-                                            taskCount: manager.getTasksForGoal(
+                                            taskCount: viewModel.getTasksForGoal(
                                                 goal.id
                                             ).count
                                         )
@@ -87,19 +84,18 @@ struct TestCloud: View {
                         }
                     }
                     .refreshable {
-                        print("Pull to refresh triggered.")
-                        manager.fetchUserProfile()
+                        viewModel.fetchUserProfile()
                     }
                 }
 
                 // Error View
-                if !manager.error.isEmpty {
+                if !viewModel.error.isEmpty {
                     VStack {
                         Spacer()
-                        Text(manager.error)
+                        Text(viewModel.error)
                             .foregroundColor(.white).padding()
                             .background(Color.red).cornerRadius(8).padding()
-                            .onTapGesture { manager.error = "" }
+                            .onTapGesture { viewModel.error = "" }
                     }
                 }
             }
@@ -112,24 +108,24 @@ struct TestCloud: View {
                         Image(systemName: "plus")
                     }
                 }
-                if manager.isLoading {
+                if viewModel.isLoading {
                     ToolbarItem(placement: .navigationBarLeading) {
                         ProgressView()
                     }
                 }
             }
             .sheet(isPresented: $showingAddGoal) {
-                AddGoalView(manager: manager)
+                AddGoalView(viewModel: viewModel)
             }
             .sheet(isPresented: $showingEditProfile) {
-                EditProfileView(manager: manager)
+                EditProfileView(viewModel: viewModel)
             }
-            .onAppear { manager.setModelContext(modelContext) }
+            .onAppear { viewModel.setModelContext(modelContext) }
         }
     }
 
     private func deleteGoals(at offsets: IndexSet) {
-        offsets.map { manager.goals[$0] }.forEach(manager.deleteGoal)
+        offsets.map { viewModel.goals[$0] }.forEach(viewModel.deleteGoal)
     }
 }
 
@@ -174,7 +170,7 @@ struct GoalRowView: View {
 
 // add goal
 struct AddGoalView: View {
-    @ObservedObject var manager: CloudKitManager
+    @ObservedObject var viewModel: TestCloudViewModel
     @Environment(\.dismiss) var dismiss
 
     @State private var name = ""
@@ -231,8 +227,7 @@ struct AddGoalView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
-                        _ = description.isEmpty ? nil : description
-                        manager.createGoal(
+                        viewModel.createGoal(
                             name: name,
                             due: dueDate,
                             description: description.isEmpty ? nil : description
@@ -248,13 +243,13 @@ struct AddGoalView: View {
 
 // goal detail
 struct GoalDetailView: View {
-    @ObservedObject var manager: CloudKitManager
+    @ObservedObject var viewModel: TestCloudViewModel
     let goal: Goal
     @State private var showingAddTask = false
     @State private var showingEditGoal = false
 
     var tasksForThisGoal: [GoalTask] {
-        manager.tasks.filter { $0.goal?.id == goal.id }
+        viewModel.tasks.filter { $0.goal?.id == goal.id }
             .sorted { $0.workingTime < $1.workingTime }
     }
 
@@ -320,7 +315,7 @@ struct GoalDetailView: View {
                     )
                 } else {
                     ForEach(tasksForThisGoal) { task in
-                        TaskRowView(task: task, manager: manager)
+                        TaskRowView(task: task, viewModel: viewModel)
                     }
                     .onDelete(perform: deleteTasks)
                 }
@@ -337,26 +332,94 @@ struct GoalDetailView: View {
             }
         }
         .sheet(isPresented: $showingAddTask) {
-            AddTaskView(manager: manager, goalId: goal.id)
+            AddTaskView(viewModel: viewModel, goalId: goal.id)
         }
         .sheet(isPresented: $showingEditGoal) {
-            EditGoalView(manager: manager, goal: goal)
+            EditGoalView(viewModel: viewModel, goal: goal)
         }
     }
 
     private func deleteTasks(at offsets: IndexSet) {
-        offsets.map { tasksForThisGoal[$0] }.forEach(manager.deleteTask)
+        offsets.map { tasksForThisGoal[$0] }.forEach(viewModel.deleteTask)
+    }
+}
+
+struct EditGoalView: View {
+    @ObservedObject var viewModel: TestCloudViewModel
+    let goal: Goal
+    @Environment(\.dismiss) var dismiss
+    @State private var name: String = ""
+    @State private var dueDate: Date = Date()
+    @State private var description: String = ""
+    
+    var body: some View {
+        NavigationView {
+            Form {
+                Section("Goal Details") {
+                    TextField("Goal Name", text: $name)
+                    DatePicker(
+                        "Due Date & Time",
+                        selection: $dueDate,
+                        displayedComponents: [.date, .hourAndMinute]
+                    )
+                    .datePickerStyle(.compact)
+                    TextField(
+                        "Description (Optional)",
+                        text: $description,
+                        axis: .vertical
+                    )
+                    .lineLimit(3...6)
+                }
+                Section("Preview") {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Image(systemName: "calendar").foregroundColor(.blue)
+                            Text(
+                                dueDate,
+                                format: .dateTime.day().month().year()
+                            )
+                        }
+                        HStack {
+                            Image(systemName: "clock").foregroundColor(.blue)
+                            Text(dueDate, format: .dateTime.hour().minute())
+                        }
+                    }.font(.caption)
+                }
+            }
+            .navigationTitle("Edit Goal").navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        viewModel.updateGoal(
+                            goal: goal,
+                            name: name,
+                            due: dueDate,
+                            description: description.isEmpty ? nil : description
+                        )
+                        dismiss()
+                    }.disabled(name.isEmpty)
+                }
+            }
+            .onAppear {
+                name = goal.name
+                dueDate = goal.due
+                description = goal.goalDescription ?? ""
+            }
+        }
     }
 }
 
 struct TaskRowView: View {
     let task: GoalTask
-    @ObservedObject var manager: CloudKitManager
+    @ObservedObject var viewModel: TestCloudViewModel
     @State private var showingEditTask = false
     var body: some View {
         HStack {
             Button {
-                manager.toggleTaskCompletion(task: task)
+                viewModel.toggleTaskCompletion(task: task)
             } label: {
                 Image(
                     systemName: task.isCompleted
@@ -405,13 +468,13 @@ struct TaskRowView: View {
             .buttonStyle(.plain)
         }
         .sheet(isPresented: $showingEditTask) {
-            EditTaskView(manager: manager, task: task)
+            EditTaskView(viewModel: viewModel, task: task)
         }
     }
 }
 
 struct AddTaskView: View {
-    @ObservedObject var manager: CloudKitManager
+    @ObservedObject var viewModel: TestCloudViewModel
     let goalId: String
     @Environment(\.dismiss) var dismiss
     @State private var name = ""
@@ -462,7 +525,7 @@ struct AddTaskView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
-                        manager.createTask(
+                        viewModel.createTask(
                             goalId: goalId,
                             name: name,
                             workingTime: workingTime,
@@ -476,81 +539,15 @@ struct AddTaskView: View {
     }
 }
 
-struct EditGoalView: View {
-    @ObservedObject var manager: CloudKitManager
-    let goal: Goal
-    @Environment(\.dismiss) var dismiss
-    @State private var name: String = ""
-    @State private var dueDate: Date = Date()
-    @State private var description: String = ""
-    var body: some View {
-        NavigationView {
-            Form {
-                Section("Goal Details") {
-                    TextField("Goal Name", text: $name)
-                    DatePicker(
-                        "Due Date & Time",
-                        selection: $dueDate,
-                        displayedComponents: [.date, .hourAndMinute]
-                    )
-                    .datePickerStyle(.compact)
-                    TextField(
-                        "Description (Optional)",
-                        text: $description,
-                        axis: .vertical
-                    )
-                    .lineLimit(3...6)
-                }
-                Section("Preview") {
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Image(systemName: "calendar").foregroundColor(.blue)
-                            Text(
-                                dueDate,
-                                format: .dateTime.day().month().year()
-                            )
-                        }
-                        HStack {
-                            Image(systemName: "clock").foregroundColor(.blue)
-                            Text(dueDate, format: .dateTime.hour().minute())
-                        }
-                    }.font(.caption)
-                }
-            }
-            .navigationTitle("Edit Goal").navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
-                        manager.updateGoal(
-                            goal: goal,
-                            name: name,
-                            due: dueDate,
-                            description: description.isEmpty ? nil : description
-                        )
-                        dismiss()
-                    }.disabled(name.isEmpty)
-                }
-            }
-            .onAppear {
-                name = goal.name
-                dueDate = goal.due
-                description = goal.goalDescription ?? ""
-            }
-        }
-    }
-}
-
 struct EditTaskView: View {
-    @ObservedObject var manager: CloudKitManager
+    @ObservedObject var viewModel: TestCloudViewModel
     let task: GoalTask
     @Environment(\.dismiss) var dismiss
     @State private var name: String = ""
     @State private var workingTime: Date = Date()
     @State private var focusDuration: Int = 30
     @State private var isCompleted: Bool = false
+    
     var body: some View {
         NavigationView {
             Form {
@@ -597,7 +594,7 @@ struct EditTaskView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
-                        manager.updateTask(
+                        viewModel.updateTask(
                             task: task,
                             name: name,
                             workingTime: workingTime,
@@ -619,10 +616,11 @@ struct EditTaskView: View {
 }
 
 struct EditProfileView: View {
-    @ObservedObject var manager: CloudKitManager
+    @ObservedObject var viewModel: TestCloudViewModel
     @Environment(\.dismiss) private var dismiss
     @State private var username: String = ""
     @State private var pointsText: String = ""
+    
     var body: some View {
         NavigationView {
             Form {
@@ -641,10 +639,10 @@ struct EditProfileView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
-                        let pts = Int(pointsText) ?? manager.points
-                        manager.saveUserProfile(
+                        let pts = Int(pointsText) ?? viewModel.points
+                        viewModel.saveUserProfile(
                             username: username,
-                            productiveHours: manager.productiveHours,
+                            productiveHours: viewModel.productiveHours,
                             points: pts
                         )
                         dismiss()
@@ -652,15 +650,15 @@ struct EditProfileView: View {
                 }
             }
             .onAppear {
-                username = manager.username
-                pointsText = String(manager.points)
+                username = viewModel.username
+                pointsText = String(viewModel.points)
             }
         }
     }
 }
 
 struct ProductiveHoursView: View {
-    @ObservedObject var manager: CloudKitManager
+    @ObservedObject var viewModel: TestCloudViewModel
     @State private var productiveHoursState: [ProductiveHours] = []
     @State private var hasChanges = false
     @Environment(\.dismiss) private var dismiss
@@ -691,10 +689,10 @@ struct ProductiveHoursView: View {
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 Button("Save") {
-                    manager.saveUserProfile(
-                        username: manager.username,
+                    viewModel.saveUserProfile(
+                        username: viewModel.username,
                         productiveHours: productiveHoursState,
-                        points: manager.points
+                        points: viewModel.points
                     )
                     hasChanges = false
                     dismiss()
@@ -703,7 +701,7 @@ struct ProductiveHoursView: View {
             }
         }
         .onAppear {
-            productiveHoursState = manager.productiveHours
+            productiveHoursState = viewModel.productiveHours
         }
     }
 
