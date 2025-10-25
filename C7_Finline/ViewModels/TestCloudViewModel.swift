@@ -159,49 +159,21 @@ class TestCloudViewModel: ObservableObject {
         productiveHours: [ProductiveHours],
         points: Int
     ) {
-        guard let modelContext = modelContext else { return }
+        guard let userProfile = self.userProfile else { return }
 
-        // Update or create profile
-        if let existingProfile = userProfile {
-            existingProfile.username = username
-            existingProfile.productiveHours = productiveHours
-            existingProfile.points = points
-            existingProfile.needsSync = true
-            updatePublishedProfile(existingProfile)
-        } else {
-            // Create new profile if it doesn't exist
-            let userID = UUID().uuidString
-            let newProfile = UserProfile(
-                id: userID,
-                username: username,
-                points: points,
-                productiveHours: productiveHours,
-                needsSync: true
-            )
-            modelContext.insert(newProfile)
-            self.userProfile = newProfile
-            updatePublishedProfile(newProfile)
-        }
+        userProfile.username = username
+        userProfile.productiveHours = productiveHours
+        userProfile.points = points
+        userProfile.needsSync = true
 
-        // save locally
-        do {
-            try modelContext.save()
-        } catch {
-            self.error =
-                "Failed to save profile locally: \(error.localizedDescription)"
-        }
+        updatePublishedProfile(userProfile)
 
-        // Sync to CloudKit if connected
-        if networkMonitor.isConnected, isSignedInToiCloud {
-            Task {
-                do {
-                    if let profile = userProfile {
-                        try await userProfileManager.saveProfile(profile)
-                    }
-                } catch {
-                    self.error =
-                        "Failed to sync profile to iCloud: \(error.localizedDescription)"
-                }
+        Task {
+            do {
+                try await userProfileManager.saveProfile(userProfile)
+            } catch {
+                self.error =
+                    "Failed to save profile: \(error.localizedDescription)"
             }
         }
     }
