@@ -36,9 +36,6 @@ struct C7_FinlineApp: App {
     var body: some Scene {
         WindowGroup {
             RootView()
-                .modelContainer(for: [
-                    UserProfile.self, Goal.self, GoalTask.self,
-                ])
         }
         .modelContainer(sharedModelContainer)
     }
