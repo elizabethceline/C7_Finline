@@ -46,11 +46,14 @@ struct OnboardingView: View {
                 ))
                 
             case .characterIntro:
-                CharacterIntroView(onComplete: {
-                    withAnimation {
-                        currentStep = .setProductiveHours
-                    }
-                })
+                CharacterIntroView(
+                    onComplete: {
+                        withAnimation {
+                            currentStep = .setProductiveHours
+                        }
+                    },
+                    username: $viewModel.username
+                )
                 .transition(.asymmetric(
                     insertion: .move(edge: .trailing),
                     removal: .move(edge: .leading)
