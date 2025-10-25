@@ -5,6 +5,7 @@
 //  Created by Elizabeth Celine Liong on 25/10/25.
 //
 
+import SwiftData
 import SwiftUI
 
 struct OnboardingView: View {
@@ -12,14 +13,14 @@ struct OnboardingView: View {
     @Binding var hasCompletedOnboarding: Bool
     @State private var currentStep: OnboardingStep = .splash
     @State private var showSplash = true
-    
+
     enum OnboardingStep {
         case splash
         case carousel
         case characterIntro
         case setProductiveHours
     }
-    
+
     var body: some View {
         ZStack {
             switch currentStep {
@@ -33,18 +34,20 @@ struct OnboardingView: View {
                             }
                         }
                     }
-                
+
             case .carousel:
                 CarouselView(onComplete: {
                     withAnimation {
                         currentStep = .characterIntro
                     }
                 })
-                .transition(.asymmetric(
-                    insertion: .move(edge: .trailing),
-                    removal: .move(edge: .leading)
-                ))
-                
+                .transition(
+                    .asymmetric(
+                        insertion: .move(edge: .trailing),
+                        removal: .move(edge: .leading)
+                    )
+                )
+
             case .characterIntro:
                 CharacterIntroView(
                     onComplete: {
@@ -54,11 +57,13 @@ struct OnboardingView: View {
                     },
                     username: $viewModel.username
                 )
-                .transition(.asymmetric(
-                    insertion: .move(edge: .trailing),
-                    removal: .move(edge: .leading)
-                ))
-                
+                .transition(
+                    .asymmetric(
+                        insertion: .move(edge: .trailing),
+                        removal: .move(edge: .leading)
+                    )
+                )
+
             case .setProductiveHours:
                 SetProductiveHoursView(
                     productiveHours: $viewModel.productiveHours,
@@ -68,18 +73,23 @@ struct OnboardingView: View {
                             productiveHours: viewModel.productiveHours,
                             points: 0
                         )
-                        
-                        UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
-                        
+
+                        UserDefaults.standard.set(
+                            true,
+                            forKey: "hasCompletedOnboarding"
+                        )
+
                         withAnimation {
                             hasCompletedOnboarding = true
                         }
                     }
                 )
-                .transition(.asymmetric(
-                    insertion: .move(edge: .trailing),
-                    removal: .move(edge: .leading)
-                ))
+                .transition(
+                    .asymmetric(
+                        insertion: .move(edge: .trailing),
+                        removal: .move(edge: .leading)
+                    )
+                )
             }
         }
     }

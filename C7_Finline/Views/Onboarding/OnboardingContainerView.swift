@@ -11,19 +11,29 @@ struct OnboardingContainerView: View {
     @StateObject private var viewModel: OnboardingViewModel
     @Environment(\.modelContext) private var modelContext
     @Binding var hasCompletedOnboarding: Bool
-    
-    init(hasCompletedOnboarding: Binding<Bool>, networkMonitor: NetworkMonitor = NetworkMonitor()) {
+
+    init(
+        hasCompletedOnboarding: Binding<Bool>,
+        networkMonitor: NetworkMonitor = NetworkMonitor()
+    ) {
         self._hasCompletedOnboarding = hasCompletedOnboarding
-        self._viewModel = StateObject(wrappedValue: OnboardingViewModel(networkMonitor: networkMonitor))
-    }
-    
-    var body: some View {
-        OnboardingView(
-            viewModel: viewModel,
-            hasCompletedOnboarding: $hasCompletedOnboarding
+        self._viewModel = StateObject(
+            wrappedValue: OnboardingViewModel(networkMonitor: networkMonitor)
         )
-        .onAppear {
-            viewModel.setModelContext(modelContext)
+    }
+
+    var body: some View {
+        if viewModel.isLoading {
+            ProgressView("Loading your profile from iCloud...")
+        } else {
+            OnboardingView(
+                viewModel: viewModel,
+                hasCompletedOnboarding: $hasCompletedOnboarding
+            )
+
+            .onAppear {
+                viewModel.setModelContext(modelContext)
+            }
         }
     }
 }

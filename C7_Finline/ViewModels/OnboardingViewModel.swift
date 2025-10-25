@@ -45,15 +45,34 @@ class OnboardingViewModel: ObservableObject {
         loadDataFromSwiftData()
 
         if networkMonitor.isConnected {
-            Task {
-                await syncPendingItems()
-            }
+            Task { await syncPendingItems() }
         }
 
-        fetchUserProfile()
+        Task {
+            await checkiCloud()
+        }
     }
 
-    // check if online
+    @MainActor
+    private func checkiCloud() async {
+        isLoading = true
+        defer { isLoading = false }
+
+        var retries = 0
+        while !isSignedInToiCloud && retries < 10 {
+            print("Waiting for iCloud sign-in (\(retries + 1))...")
+            try? await Task.sleep(nanoseconds: 500_000_000)
+            retries += 1
+        }
+
+        if isSignedInToiCloud {
+            print("iCloud signed in, fetching profile…")
+            await fetchUserProfile()
+        } else {
+            print("Still not signed in to iCloud after waiting.")
+        }
+    }
+
     private func observeNetworkStatus() {
         networkMonitor.$isConnected
             .receive(on: DispatchQueue.main)
@@ -90,37 +109,43 @@ class OnboardingViewModel: ObservableObject {
     @MainActor
     private func updatePublishedProfile(_ profile: UserProfile?) {
         self.userProfile = profile
-        self.username = profile?.username ?? ""
-        self.points = profile?.points ?? 0
-        self.productiveHours =
+        username = profile?.username ?? ""
+        points = profile?.points ?? 0
+        productiveHours =
             profile?.productiveHours
             ?? DayOfWeek.allCases.map {
                 ProductiveHours(day: $0)
             }
+
+        print("Updated published profile: \(String(describing: profile))")
     }
-    
+
     // fetch + create/update user profile
     @MainActor
-    func fetchUserProfile() {
-        guard let modelContext = modelContext, isSignedInToiCloud else {
+    func fetchUserProfile() async {
+        guard let modelContext, isSignedInToiCloud else {
             return
         }
 
-        Task {
-            do {
-                let userRecordID = try await CloudKitManager.shared
-                    .fetchUserRecordID()
-                let profile = try await userProfileManager.fetchProfile(
-                    userRecordID: userRecordID,
-                    modelContext: modelContext
-                )
+        isLoading = true
+        defer { isLoading = false }
 
-                updatePublishedProfile(profile)
+        do {
+            let userRecordID = try await CloudKitManager.shared
+                .fetchUserRecordID()
+            print("recordID: \(userRecordID)")
 
-            } catch {
-                self.error =
-                    "Failed to fetch user profile: \(error.localizedDescription)"
-            }
+            let profile = try await userProfileManager.fetchProfile(
+                userRecordID: userRecordID,
+                modelContext: modelContext
+            )
+
+            print("userProfile from iCloud: \(profile)")
+            updatePublishedProfile(profile)
+        } catch {
+            self.error =
+                "Failed to fetch user profile: \(error.localizedDescription)"
+            print("fetchUserProfile error: \(error)")
         }
     }
 
@@ -132,59 +157,38 @@ class OnboardingViewModel: ObservableObject {
     ) {
         guard let modelContext = modelContext else { return }
 
-        // Update or create profile
-        if let existingProfile = userProfile {
-            existingProfile.username = username
-            existingProfile.productiveHours = productiveHours
-            existingProfile.points = points
-            existingProfile.needsSync = true
-            updatePublishedProfile(existingProfile)
-        } else {
-            // Create new profile if it doesn't exist
-            let userID = UUID().uuidString
-            let newProfile = UserProfile(
-                id: userID,
-                username: username,
-                points: points,
-                productiveHours: productiveHours,
-                needsSync: true
-            )
-            modelContext.insert(newProfile)
-            self.userProfile = newProfile
-            updatePublishedProfile(newProfile)
-        }
-
-        // save locally
         do {
-            try modelContext.save()
-        } catch {
-            self.error =
-                "Failed to save profile locally: \(error.localizedDescription)"
-        }
+            let descriptor = FetchDescriptor<UserProfile>()
+            let currentProfile =
+                try modelContext.fetch(descriptor).first ?? self.userProfile
 
-        // Sync to CloudKit if connected
-        if networkMonitor.isConnected, isSignedInToiCloud {
+            guard let userProfile = currentProfile else { return }
+
+            userProfile.username = username
+            userProfile.productiveHours = productiveHours
+            userProfile.points = points
+            userProfile.needsSync = true
+
+            updatePublishedProfile(userProfile)
+
             Task {
                 do {
-                    if let profile = userProfile {
-                        try await userProfileManager.saveProfile(profile)
-                    }
+                    try await userProfileManager.saveProfile(userProfile)
                 } catch {
                     self.error =
-                        "Failed to sync profile to iCloud: \(error.localizedDescription)"
+                        "Failed to save profile: \(error.localizedDescription)"
                 }
             }
+        } catch {
+            self.error =
+                "Failed to fetch latest profile: \(error.localizedDescription)"
         }
     }
-    
+
     // sync
     @MainActor
     func syncPendingItems() async {
-        guard let modelContext = modelContext, networkMonitor.isConnected else {
-            return
-        }
-
-        // Sync profile
+        guard let modelContext, networkMonitor.isConnected else { return }
         await userProfileManager.syncPendingProfiles(modelContext: modelContext)
     }
 }

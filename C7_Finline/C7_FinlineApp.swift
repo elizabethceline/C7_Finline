@@ -37,9 +37,6 @@ struct C7_FinlineApp: App {
         WindowGroup {
             AIGeneratorView()
             RootView()
-                .modelContainer(for: [
-                    UserProfile.self, Goal.self, GoalTask.self,
-                ])
         }
         .modelContainer(sharedModelContainer)
     }
