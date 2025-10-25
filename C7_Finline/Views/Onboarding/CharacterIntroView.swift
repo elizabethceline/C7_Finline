@@ -11,7 +11,7 @@ struct CharacterIntroView: View {
     let onComplete: () -> Void
     @State private var currentMessageIndex = 0
     @State private var showNameInput = false
-    @State private var username = ""
+    @Binding var username: String
     @FocusState private var isTextFieldFocused: Bool
 
     let messages = [
@@ -43,19 +43,17 @@ struct CharacterIntroView: View {
                                 .font(.body)
                                 .multilineTextAlignment(.center)
 
-                            VStack(spacing: 8) {
-                                TextField("Enter your name", text: $username)
-                                    .multilineTextAlignment(.center)
-                                    .focused($isTextFieldFocused)
-                                    .padding(.vertical, 6)
-                                    .overlay(
-                                        Rectangle()
-                                            .frame(height: 1)
-                                            .foregroundColor(.gray)
-                                            .padding(.horizontal, 16),
-                                        alignment: .bottom
-                                    )
-                            }
+                            TextField("Enter your name", text: $username)
+                                .multilineTextAlignment(.center)
+                                .focused($isTextFieldFocused)
+                                .padding(.vertical, 6)
+                                .overlay(
+                                    Rectangle()
+                                        .frame(height: 1)
+                                        .foregroundColor(.gray)
+                                        .padding(.horizontal, 16),
+                                    alignment: .bottom
+                                )
                         }
                         .padding(.horizontal, 28)
                         .padding(.vertical, 20)
@@ -149,5 +147,5 @@ struct CharacterIntroView: View {
 }
 
 #Preview {
-    CharacterIntroView(onComplete: {})
+    CharacterIntroView(onComplete: {}, username: .constant("Budi") )
 }
