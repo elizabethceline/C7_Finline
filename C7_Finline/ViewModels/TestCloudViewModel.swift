@@ -159,22 +159,30 @@ class TestCloudViewModel: ObservableObject {
         productiveHours: [ProductiveHours],
         points: Int
     ) {
-        guard let userProfile = self.userProfile else { return }
+        guard let modelContext = modelContext else { return }
 
-        userProfile.username = username
-        userProfile.productiveHours = productiveHours
-        userProfile.points = points
-        userProfile.needsSync = true
+        do {
+            let descriptor = FetchDescriptor<UserProfile>()
+            let currentProfile = try modelContext.fetch(descriptor).first ?? self.userProfile
 
-        updatePublishedProfile(userProfile)
+            guard let userProfile = currentProfile else { return }
+            
+            userProfile.username = username
+            userProfile.productiveHours = productiveHours
+            userProfile.points = points
+            userProfile.needsSync = true
 
-        Task {
-            do {
-                try await userProfileManager.saveProfile(userProfile)
-            } catch {
-                self.error =
-                    "Failed to save profile: \(error.localizedDescription)"
+            updatePublishedProfile(userProfile)
+
+            Task {
+                do {
+                    try await userProfileManager.saveProfile(userProfile)
+                } catch {
+                    self.error = "Failed to save profile: \(error.localizedDescription)"
+                }
             }
+        } catch {
+            self.error = "Failed to fetch latest profile: \(error.localizedDescription)"
         }
     }
 
