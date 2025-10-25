@@ -26,10 +26,9 @@ struct OnboardingView: View {
             switch currentStep {
             case .splash:
                 SplashScreenView()
-                    .transition(.opacity)
                     .onAppear {
                         DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
-                            withAnimation(.easeInOut(duration: 0.5)) {
+                            withAnimation(.easeInOut(duration: 0.6)) {
                                 currentStep = .carousel
                             }
                         }
@@ -37,31 +36,19 @@ struct OnboardingView: View {
 
             case .carousel:
                 CarouselView(onComplete: {
-                    withAnimation {
+                    withAnimation(.easeInOut(duration: 0.6)) {
                         currentStep = .characterIntro
                     }
                 })
-                .transition(
-                    .asymmetric(
-                        insertion: .move(edge: .trailing),
-                        removal: .move(edge: .leading)
-                    )
-                )
 
             case .characterIntro:
                 CharacterIntroView(
                     onComplete: {
-                        withAnimation {
+                        withAnimation(.easeInOut(duration: 0.6)) {
                             currentStep = .setProductiveHours
                         }
                     },
                     username: $viewModel.username
-                )
-                .transition(
-                    .asymmetric(
-                        insertion: .move(edge: .trailing),
-                        removal: .move(edge: .leading)
-                    )
                 )
 
             case .setProductiveHours:
@@ -79,19 +66,14 @@ struct OnboardingView: View {
                             forKey: "hasCompletedOnboarding"
                         )
 
-                        withAnimation {
+                        withAnimation(.easeInOut(duration: 0.6)) {
                             hasCompletedOnboarding = true
                         }
                     }
                 )
-                .transition(
-                    .asymmetric(
-                        insertion: .move(edge: .trailing),
-                        removal: .move(edge: .leading)
-                    )
-                )
             }
         }
+        .animation(.easeInOut(duration: 0.6), value: currentStep)
     }
 }
 
