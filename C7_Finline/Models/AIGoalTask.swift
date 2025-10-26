@@ -15,10 +15,14 @@ struct AIGoalTask: Identifiable, Codable {
     @Guide(description: "A short descriptive name for the task milestone.")
     var name: String
 
-    @Guide(description: "The scheduled working time (Date) within user's productive hours and before goal deadline.")
+    @Guide(description: """
+        The scheduled working time (Date) within the user's productive hours and before the goal deadline.
+        Each generated task should start at least 15 minutes after the previous task's end time 
+        (previous workingTime + focusDuration). Ensure no overlapping between tasks.
+        """)
     var workingTime: String
 
-    @Guide(description: "Focus duration in minutes (45–120).")
+    @Guide(description: "Determine a reasonable focus duration in minutes that matches the task's difficulty — simpler tasks should take less time, while more complex ones should take longer. Maximun is 120 minute")
     var focusDuration: Int
 
     @Guide(description: "Whether the task is completed or not. Defaults to false when generated.")

@@ -9,21 +9,11 @@ import SwiftUI
 
 struct AIGeneratorView: View {
     @StateObject private var vm = AITaskGeneratorViewModel()
-    private let user = UserProfile(
-        id: "user-1",
-        username: "Elizabeth",
-        points: 200,
-        productiveHours: [
-            ProductiveHours(day: .monday, timeSlots: [.morning, .afternoon]),
-            ProductiveHours(day: .tuesday, timeSlots: [.morning, .evening]),
-            ProductiveHours(day: .wednesday, timeSlots: [.afternoon]),
-            ProductiveHours(day: .friday, timeSlots: [.morning])
-        ]
-    )
 
     @State private var title: String = ""
     @State private var desc: String = ""
-    @State private var due: Date = Calendar.current.date(byAdding: .day, value: 7, to: Date())!
+    @State private var due: Date = Date()
+    @State private var showCreateGoalModal = false
 
     var body: some View {
         NavigationView {
@@ -32,7 +22,7 @@ struct AIGeneratorView: View {
                     Section(header: Text("Your Goal")) {
                         TextField("Title", text: $title)
                         TextField("Description", text: $desc)
-                        DatePicker("Deadline", selection: $due, displayedComponents: .date)
+                        DatePicker("Deadline", selection: $due, displayedComponents: [.date, .hourAndMinute])
                     }
 
                     Section {
@@ -64,9 +54,7 @@ struct AIGeneratorView: View {
                             ForEach(vm.generatedTasks) { t in
                                 VStack(alignment: .leading, spacing: 6) {
                                     Text(t.name).bold()
-                                    Text("When: \(t.workingTime)")
-                                    Text("Focus: \(t.focusDuration) minutes")
-                                        .foregroundColor(.secondary)
+                                    Text("Focus: \(t.focusDuration) minutes").foregroundColor(.secondary)
                                 }
                                 .padding()
                                 .background(Color(.systemGray6))
@@ -78,6 +66,23 @@ struct AIGeneratorView: View {
                 }
 
                 Spacer()
+
+                Button {
+                    showCreateGoalModal.toggle()
+                } label: {
+                    Image(systemName: "plus")
+                        .font(.system(size: 24, weight: .bold))
+                        .frame(width: 56, height: 56)
+                        .foregroundColor(.white)
+                        .background(Color.accentColor)
+                        .clipShape(Circle())
+                        .shadow(radius: 4)
+                }
+                .padding(.bottom, 20)
+                .sheet(isPresented: $showCreateGoalModal) {
+                    CreateGoalView()
+                        .presentationDetents([.large])
+                }
             }
             .navigationTitle("AI Task Generator")
         }
