@@ -20,22 +20,24 @@ struct MainView: View {
     }
 
     var body: some View {
-        GeometryReader { geo in
-            let headerHeight = geo.size.height * 0.5
+        NavigationStack {
+            GeometryReader { geo in
+                let headerHeight = geo.size.height * 0.5
 
-            ZStack(alignment: .top) {
-                HeaderImageView(height: headerHeight, width: geo.size.width)
+                ZStack(alignment: .top) {
+                    HeaderImageView(height: headerHeight, width: geo.size.width)
 
-                VStack(spacing: 0) {
-                    Spacer(minLength: headerHeight / 1.5)
+                    VStack(spacing: 0) {
+                        Spacer(minLength: headerHeight / 1.8)
 
-                    ContentCardView(
-                        selectedDate: $selectedDate,
-                        filteredTasks: filteredTasks,
-                        goals: viewModel.goals
-                    )
-                    .refreshable {
-                        viewModel.fetchUserProfile()
+                        ContentCardView(
+                            selectedDate: $selectedDate,
+                            filteredTasks: filteredTasks,
+                            goals: viewModel.goals
+                        )
+                        .refreshable {
+                            viewModel.fetchUserProfile()
+                        }
                     }
                 }
 
@@ -44,26 +46,58 @@ struct MainView: View {
                     Spacer()
                     HStack {
                         Spacer()
-                        Button(action: {
-                            // add task action
-                        }) {
-                            Image(systemName: "plus")
-                                .font(.title)
-                                .foregroundColor(.white)
-                                .padding()
-                                .background(
-                                    Circle().fill(Color.blue.opacity(0.4))
-                                )
-                                .shadow(radius: 2)
+                        HStack {
+                            Spacer()
+                            Button(action: {
+                                // Add task action
+                            }) {
+                                Image(systemName: "plus")
+                                    .font(.title)
+                                    .foregroundColor(.white)
+                                    .padding()
+                                    .background(
+                                        Circle().fill(Color.blue.opacity(0.4))
+                                    )
+                                    .shadow(radius: 2)
+                            }
+                            .padding(.trailing, 28)
+                            .padding(.bottom, 16)
                         }
-                        .padding(.trailing, 28)
+                    }
+                }
+                .onAppear {
+                    viewModel.setModelContext(modelContext)
+                    selectedDate = Calendar.current.startOfDay(for: Date())
+                }
+            }
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        Button {
+                            // to profile
+                        } label: {
+                            Label(
+                                "Profile",
+                                systemImage: "person"
+                            )
+                        }
+
+                        Button {
+                            // to shop
+                        } label: {
+                            Label(
+                                "Shop",
+                                systemImage: "cart"
+                            )
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis")
+                            .imageScale(.large)
+                            .foregroundColor(.primary)
                     }
                 }
             }
-            .onAppear {
-                viewModel.setModelContext(modelContext)
-                selectedDate = Calendar.current.startOfDay(for: Date())
-            }
+            .navigationBarTitleDisplayMode(.inline)
         }
     }
 }
