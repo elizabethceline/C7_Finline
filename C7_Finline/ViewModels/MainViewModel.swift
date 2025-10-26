@@ -163,10 +163,11 @@ class MainViewModel: ObservableObject {
 
         do {
             let descriptor = FetchDescriptor<UserProfile>()
-            let currentProfile = try modelContext.fetch(descriptor).first ?? self.userProfile
+            let currentProfile =
+                try modelContext.fetch(descriptor).first ?? self.userProfile
 
             guard let userProfile = currentProfile else { return }
-            
+
             userProfile.username = username
             userProfile.productiveHours = productiveHours
             userProfile.points = points
@@ -178,11 +179,13 @@ class MainViewModel: ObservableObject {
                 do {
                     try await userProfileManager.saveProfile(userProfile)
                 } catch {
-                    self.error = "Failed to save profile: \(error.localizedDescription)"
+                    self.error =
+                        "Failed to save profile: \(error.localizedDescription)"
                 }
             }
         } catch {
-            self.error = "Failed to fetch latest profile: \(error.localizedDescription)"
+            self.error =
+                "Failed to fetch latest profile: \(error.localizedDescription)"
         }
     }
 
@@ -243,6 +246,7 @@ class MainViewModel: ObservableObject {
         guard let modelContext = modelContext else { return }
 
         self.goals.removeAll { $0.id == goal.id }
+        modelContext.delete(goal)
         goalManager.deleteGoal(goal: goal, modelContext: modelContext)
     }
 
