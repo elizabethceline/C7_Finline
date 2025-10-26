@@ -32,6 +32,7 @@ class TaskManager {
             // No goals = delete all non-pending tasks
             let predicate = #Predicate<GoalTask> { !$0.needsSync }
             try? modelContext.delete(model: GoalTask.self, where: predicate)
+            try? modelContext.save()
             return []
         }
 
@@ -44,11 +45,7 @@ class TaskManager {
         // Sync from cloud
         for record in ckRecords {
             let goalId = record["goal_id"] as? String ?? ""
-
-            guard let parentGoal = goals.first(where: { $0.id == goalId })
-            else {
-                continue
-            }
+            guard let parentGoal = goals.first(where: { $0.id == goalId }) else { continue }
 
             let ckTask = GoalTask(record: record, goal: parentGoal)
             let taskID = ckTask.id
@@ -71,14 +68,20 @@ class TaskManager {
         }
 
         // Delete local tasks not in cloud
+        let goalIdSet = Set(goalIds)
         let allLocalTasks = try modelContext.fetch(FetchDescriptor<GoalTask>())
-        let tasksToDelete = allLocalTasks.filter {
-            !cloudRecordIDs.contains($0.id) && !$0.needsSync
+        let tasksToDelete = allLocalTasks.filter { task in
+            guard let taskGoalId = task.goal?.id, goalIdSet.contains(taskGoalId) else {
+                return false
+            }
+            return !cloudRecordIDs.contains(task.id) && !task.needsSync
         }
 
         for task in tasksToDelete {
             modelContext.delete(task)
         }
+        
+        try? modelContext.save()
 
         return try modelContext.fetch(FetchDescriptor<GoalTask>())
     }

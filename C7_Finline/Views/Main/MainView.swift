@@ -34,6 +34,9 @@ struct MainView: View {
                         filteredTasks: filteredTasks,
                         goals: viewModel.goals
                     )
+                    .refreshable {
+                        viewModel.fetchUserProfile()
+                    }
                 }
 
                 // add task button
