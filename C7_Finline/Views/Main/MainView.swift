@@ -12,6 +12,7 @@ struct MainView: View {
     @StateObject private var viewModel = MainViewModel()
     @Environment(\.modelContext) private var modelContext
     @State private var selectedDate: Date = Date()
+    @State private var navigateToProfile: Bool = false
 
     private var filteredTasks: [GoalTask] {
         viewModel.tasks.filter { task in
@@ -74,7 +75,7 @@ struct MainView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
                         Button {
-                            // to profile
+                            navigateToProfile = true
                         } label: {
                             Label(
                                 "Profile",
@@ -98,6 +99,9 @@ struct MainView: View {
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
+            .navigationDestination(isPresented: $navigateToProfile) {
+                ProfileView(viewModel: ProfileViewModel())
+            }
         }
     }
 }
