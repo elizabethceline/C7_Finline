@@ -51,6 +51,7 @@ final class FocusSessionViewModel: ObservableObject {
 
     func startSession() {
         guard !isFocusing else { return }
+        shouldReturnToStart = false
         isFocusing = true
         remainingTime = sessionDuration
         lastTickDate = Date()
@@ -74,22 +75,25 @@ final class FocusSessionViewModel: ObservableObject {
     func endSession() async {
         guard isFocusing else { return }
         isFocusing = false
+
         timer?.invalidate()
         timer = nil
 
-        if deepFocusEnabled {
-            clearShield()
-        }
+        fishingVM.stopFishing()  // ✅ stop fishing regardless of how the session ends
+
+        if deepFocusEnabled { clearShield() }
 
         if let last = lastTickDate {
             let delta = Date().timeIntervalSince(last)
             totalFocusedSeconds += min(sessionDuration, delta)
         }
 
-        fishingVM.stopFishing()
-
-        shouldReturnToStart = true
+        await MainActor.run {
+            shouldReturnToStart = true
+        }
     }
+
+
 
     private func startTimer() {
         timer?.invalidate()
@@ -101,7 +105,7 @@ final class FocusSessionViewModel: ObservableObject {
                 self.lastTickDate = Date()
             } else {
                 self.remainingTime = 0
-                Task{
+                Task { @MainActor in
                     await self.endSession()
                 }
             }
@@ -109,6 +113,38 @@ final class FocusSessionViewModel: ObservableObject {
         RunLoop.current.add(timer!, forMode: .common)
     }
 
+    func giveUp() async{
+        guard isFocusing else { return }
+        
+        print("🛑 Session given up!")
+        // Stop timer immediately
+        timer?.invalidate()
+        timer = nil
+        
+        // Stop fishing immediately
+        fishingVM.stopFishing()
+        
+        // Mark session as ended
+        isFocusing = false
+        shouldReturnToStart = true
+    }
+    
+    func resetSession() {
+            // Stop any lingering timer
+            timer?.invalidate()
+            timer = nil
+
+            // Reset all session-specific properties
+            isFocusing = false
+            shouldReturnToStart = false // <-- The most important part!
+            remainingTime = 0
+            taskTitle = ""
+            
+            // You might want to reset totalFocusedSeconds here too,
+            // if it's per-session, but it looks like it's a total counter.
+        }
+
+    
     private func applyShield() {
         #if os(iOS)
         if selection.applicationTokens.isEmpty && selection.webDomainTokens.isEmpty {

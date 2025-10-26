@@ -14,14 +14,25 @@ class FishResultViewModel: ObservableObject {
     var totalPoints: Int{
         fishCaught.reduce(0) { $0 + $1.points }
     }
-    private var context: ModelContext
+    private var context: ModelContext?
     
-    init(context: ModelContext) {
+    init(context: ModelContext? = nil) {
         self.context = context
-        loadHistory()
+        
+        if context != nil {
+            loadHistory()
+        } else {
+            history = [] // skip loading in preview mode
+        }
     }
     
     func recordResult(from session: FocusSessionViewModel) {
+        // ✅ Safely unwrap context
+        guard let context else {
+            print("⚠️ Skipping save — no SwiftData context (likely running in preview).")
+            return
+        }
+
         let result = FishingResult(caughtFish: session.fishingVM.caughtFish)
         context.insert(result)
         try? context.save()
@@ -30,6 +41,12 @@ class FishResultViewModel: ObservableObject {
     }
     
     func loadHistory() {
+        // ✅ Safely unwrap context
+        guard let context else {
+            history = []
+            return
+        }
+
         let descriptor = FetchDescriptor<FishingResult>(
             sortBy: [SortDescriptor(\.date, order: .reverse)]
         )

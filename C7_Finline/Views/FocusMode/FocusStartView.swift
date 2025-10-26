@@ -1,5 +1,4 @@
 //ini sementara sambil nunggu TaskDetailView
-
 import SwiftUI
 import FamilyControls
 
@@ -7,7 +6,7 @@ struct FocusStartView: View {
     @EnvironmentObject var viewModel: FocusSessionViewModel
     @State private var duration: Double = 5 // minutes
     @State private var deepFocusEnabled: Bool = true
-    @State private var navigateToFocus = false
+    @State private var showFocusView = false
 
     var body: some View {
         NavigationStack {
@@ -42,7 +41,7 @@ struct FocusStartView: View {
                     viewModel.sessionDuration = duration * 60
                     viewModel.deepFocusEnabled = deepFocusEnabled
                     viewModel.startSession()
-                    navigateToFocus = true // trigger navigation
+                    showFocusView = true
                 } label: {
                     Text("Start Focus")
                         .frame(maxWidth: .infinity)
@@ -51,25 +50,28 @@ struct FocusStartView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .cornerRadius(12)
-                
-                // Hidden NavigationLink
-                NavigationLink(
-                    destination: FocusView()
-                        .environmentObject(viewModel),
-                    isActive: $navigateToFocus
-                ) {
-                    EmptyView()
-                }
             }
             .padding()
             .onAppear {
+                #if DEBUG
+                // Disable live authorization requests in preview
+                #else
                 viewModel.configureAuthorizationIfNeeded()
+                #endif
+            }
+            .fullScreenCover(isPresented: $showFocusView) {
+                FocusModeView()
+                    .environmentObject(viewModel)
             }
         }
     }
 }
 
 #Preview {
-    FocusStartView()
-        .environmentObject(FocusSessionViewModel())
+    let mockViewModel = FocusSessionViewModel()
+    mockViewModel.authorizationError = nil
+    mockViewModel.taskTitle = "Preview Focus Task"
+
+    return FocusStartView()
+        .environmentObject(mockViewModel)
 }
