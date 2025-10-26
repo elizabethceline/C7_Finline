@@ -16,6 +16,16 @@ final class AITaskGeneratorViewModel: ObservableObject {
     @Published var errorMessage: String?
 
     private let model = SystemLanguageModel.default
+    
+    func generate(for goalName: String, description: String, deadline: Date) async {
+            let goal = Goal(
+                id: UUID().uuidString,
+                name: goalName,
+                due: deadline,
+                goalDescription: description
+            )
+            await generateTasks(for: goal)
+        }
 
     func generateTasks(for goal: Goal) async {
         isLoading = true

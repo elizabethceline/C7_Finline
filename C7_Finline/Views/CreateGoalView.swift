@@ -45,7 +45,7 @@ struct CreateGoalView: View {
                             Image(systemName: "chevron.right")
                                 .foregroundStyle(.secondary)
                         }
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(.black)
                     }
 
                     Button {
@@ -62,13 +62,15 @@ struct CreateGoalView: View {
                             Image(systemName: "chevron.right")
                                 .foregroundStyle(.secondary)
                         }
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(.black)
                     }
                 } header: {
                     Text("Deadline")
                         .font(.headline)
                         .foregroundStyle(.secondary)
                 }
+                
+                
 
             }
             .scrollContentBackground(.hidden)
@@ -83,14 +85,12 @@ struct CreateGoalView: View {
                         Image(systemName: "xmark")
                     }
                 }
-
                 ToolbarItem(placement: .confirmationAction) {
-                    Button {
-                        dismiss()
-                    } label: {
+                    NavigationLink(destination: CreateTaskView(goalName: goalName, deadlineDate: deadlineDate)) {
                         Image(systemName: "checkmark")
                             .fontWeight(.semibold)
                     }
+                    .disabled(goalName.isEmpty)
                 }
             }
             .sheet(isPresented: $isShowingDatePicker) {
