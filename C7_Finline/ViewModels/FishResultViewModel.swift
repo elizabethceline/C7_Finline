@@ -22,14 +22,13 @@ class FishResultViewModel: ObservableObject {
         if context != nil {
             loadHistory()
         } else {
-            history = [] // skip loading in preview mode
+            history = []
         }
     }
     
     func recordResult(from session: FocusSessionViewModel) {
-        // ✅ Safely unwrap context
         guard let context else {
-            print("⚠️ Skipping save — no SwiftData context (likely running in preview).")
+            print("Skipping save — no SwiftData context (likely running in preview).")
             return
         }
 
@@ -41,7 +40,6 @@ class FishResultViewModel: ObservableObject {
     }
     
     func loadHistory() {
-        // ✅ Safely unwrap context
         guard let context else {
             history = []
             return
@@ -51,6 +49,21 @@ class FishResultViewModel: ObservableObject {
             sortBy: [SortDescriptor(\.date, order: .reverse)]
         )
         history = (try? context.fetch(descriptor)) ?? []
+    }
+    
+        
+    func recordCombinedResult(fish: [Fish]) {
+        guard let context else {
+            print("Skipping save — no SwiftData context (likely running in preview).")
+            self.currentResult = FishingResult(caughtFish: fish)
+            return
+        }
+        
+        let result = FishingResult(caughtFish: fish)
+        context.insert(result)
+        try? context.save()
+        currentResult = result
+        history.append(result)
     }
 }
 

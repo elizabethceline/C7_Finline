@@ -24,7 +24,6 @@ final class FishingViewModel: ObservableObject {
         caughtFish.removeAll()
         elapsedTime = 0
 
-        // ✅ Store the task so it can be cancelled
         fishingTask = Task { [weak self] in
             await self?.runFishingLoop(for: duration, deepFocusEnabled: deepFocusEnabled)
             await MainActor.run {
@@ -37,7 +36,7 @@ final class FishingViewModel: ObservableObject {
     
     func stopFishing() {
         guard isFishing else { return }
-        print("🛑 Fishing stopped!")
+        print("Fishing stopped!")
         fishingTask?.cancel()
         fishingTask = nil
         isFishing = false
@@ -71,7 +70,7 @@ final class FishingViewModel: ObservableObject {
                 elapsedTime = elapsed
 
                 if Task.isCancelled {
-                    print("🛑 Fishing loop cancelled before catch")
+                    print("Fishing loop cancelled before catch")
                     break
                 }
 
@@ -122,4 +121,5 @@ final class FishingViewModel: ObservableObject {
         }
         return .common
     }
+    
 }

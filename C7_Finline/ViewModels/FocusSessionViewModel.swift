@@ -79,7 +79,7 @@ final class FocusSessionViewModel: ObservableObject {
         timer?.invalidate()
         timer = nil
 
-        fishingVM.stopFishing()  // ✅ stop fishing regardless of how the session ends
+        fishingVM.stopFishing()
 
         if deepFocusEnabled { clearShield() }
 
@@ -112,36 +112,69 @@ final class FocusSessionViewModel: ObservableObject {
         }
         RunLoop.current.add(timer!, forMode: .common)
     }
+    
+    func addMoreTime(minutes: Int) async {
+        let extraTime = TimeInterval(minutes * 60)
 
+        self.remainingTime = extraTime
+        self.sessionDuration = extraTime
+        self.shouldReturnToStart = false
+        self.isFocusing = true
+        
+        if deepFocusEnabled {
+            applyShield()
+        }
+        
+        Task {
+            await fishingVM.startFishing(for: extraTime, deepFocusEnabled: deepFocusEnabled)
+        }
+
+        self.startTimer()
+    }
+    
+    func stopSessionForEarlyFinish() async {
+        guard isFocusing else { return }
+        isFocusing = false
+
+        timer?.invalidate()
+        timer = nil
+
+        fishingVM.stopFishing()
+
+        if deepFocusEnabled { clearShield() }
+        
+        if let last = lastTickDate {
+            let delta = Date().timeIntervalSince(last)
+            totalFocusedSeconds += min(sessionDuration, delta)
+        }
+    }
+    
     func giveUp() async{
         guard isFocusing else { return }
         
-        print("🛑 Session given up!")
+        print("Session given up!")
         // Stop timer immediately
         timer?.invalidate()
         timer = nil
         
-        // Stop fishing immediately
         fishingVM.stopFishing()
+        if deepFocusEnabled { clearShield() }
         
-        // Mark session as ended
         isFocusing = false
         shouldReturnToStart = true
     }
     
     func resetSession() {
-            // Stop any lingering timer
             timer?.invalidate()
             timer = nil
 
-            // Reset all session-specific properties
+
             isFocusing = false
-            shouldReturnToStart = false // <-- The most important part!
+            shouldReturnToStart = false
             remainingTime = 0
             taskTitle = ""
             
-            // You might want to reset totalFocusedSeconds here too,
-            // if it's per-session, but it looks like it's a total counter.
+           
         }
 
     
@@ -166,7 +199,6 @@ final class FocusSessionViewModel: ObservableObject {
         #endif
     }
 
-    // MARK: - Persistence
     private func saveSelection() {
         do {
             let data = try JSONEncoder().encode(selection)
@@ -189,7 +221,6 @@ final class FocusSessionViewModel: ObservableObject {
         #endif
     }
 
-    // MARK: - Authorization
     func configureAuthorizationIfNeeded() {
         #if os(iOS)
         Task { @MainActor in
@@ -227,7 +258,6 @@ final class FocusSessionViewModel: ObservableObject {
         #endif
     }
 
-    // MARK: - Settings Navigation
     func openSettings() {
         #if os(iOS)
         if let url = URL(string: UIApplication.openSettingsURLString) {

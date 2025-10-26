@@ -54,7 +54,7 @@ struct FocusStartView: View {
             .padding()
             .onAppear {
                 #if DEBUG
-                // Disable live authorization requests in preview
+
                 #else
                 viewModel.configureAuthorizationIfNeeded()
                 #endif

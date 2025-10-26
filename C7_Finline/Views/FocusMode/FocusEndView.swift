@@ -97,7 +97,7 @@ struct FocusEndView: View {
 
 final class MockFishResultViewModel: FishResultViewModel {
     init() {
-        // ✅ Pass nil since we don't need SwiftData in previews
+
         super.init(context: nil)
         self.currentResult = FishingResult(caughtFish: fishCaught)
     }
