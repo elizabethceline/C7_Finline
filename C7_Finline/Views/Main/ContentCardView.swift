@@ -11,27 +11,32 @@ struct ContentCardView: View {
     @Binding var selectedDate: Date
     let filteredTasks: [GoalTask]
     let goals: [Goal]
-    
+
     private var goalsForSelectedDate: [Goal] {
         goals.filter { goal in
             goal.tasks.contains { task in
-                Calendar.current.isDate(task.workingTime, inSameDayAs: selectedDate)
+                Calendar.current.isDate(
+                    task.workingTime,
+                    inSameDayAs: selectedDate
+                )
             }
         }
     }
-    
+
     var body: some View {
         ZStack(alignment: .top) {
             RoundedRectangle(cornerRadius: 20)
                 .fill(Color(uiColor: .systemGray6))
                 .ignoresSafeArea(edges: .bottom)
 
-            VStack(spacing: 0) {
+            VStack(spacing: 16) {
+                Text(selectedDate.formatted(.dateTime.month(.wide).year()))
+                    .font(.title)
+                    .fontWeight(.bold)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 DateSelectorView(selectedDate: $selectedDate)
-                    .padding(.top, 32)
 
                 Divider()
-                    .padding()
 
                 if filteredTasks.isEmpty {
                     EmptyStateView()
@@ -42,10 +47,9 @@ struct ContentCardView: View {
                         goals: goalsForSelectedDate,
                         selectedDate: selectedDate
                     )
-                    .padding(.horizontal)
                     .padding(.top, 12)
                 }
-            }
+            }.padding()
         }
     }
 }
