@@ -11,8 +11,8 @@ struct GenerateTaskWithAIView: View {
     @Environment(\.dismiss) private var dismiss
     let goalName: String
     let deadlineDate: Date
-    
     @State private var goalDescription: String = ""
+    var onGenerate: ((String) -> Void)? 
     
     var body: some View {
         NavigationStack {
@@ -68,6 +68,7 @@ struct GenerateTaskWithAIView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button {
+                        onGenerate?(goalDescription) 
                         dismiss()
                     } label: {
                         Image(systemName: "sparkles")

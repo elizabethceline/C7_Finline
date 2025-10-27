@@ -9,7 +9,7 @@ import Foundation
 import FoundationModels
 
 @Generable
-struct AIGoalTask: Identifiable, Codable {
+struct AIGoalTask: Identifiable, Codable, Equatable {
     var id: String = UUID().uuidString
 
     @Guide(description: "A short descriptive name for the task milestone.")
