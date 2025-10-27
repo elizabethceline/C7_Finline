@@ -12,6 +12,7 @@ struct MainView: View {
     @StateObject private var viewModel = MainViewModel()
     @Environment(\.modelContext) private var modelContext
     @State private var selectedDate: Date = Date()
+    @State private var navigateToProfile: Bool = false
 
     private var filteredTasks: [GoalTask] {
         viewModel.tasks.filter { task in
@@ -28,7 +29,7 @@ struct MainView: View {
                     HeaderImageView(height: headerHeight, width: geo.size.width)
 
                     VStack(spacing: 0) {
-                        Spacer(minLength: headerHeight / 1.8)
+                        Spacer(minLength: headerHeight / 2)
 
                         ContentCardView(
                             selectedDate: $selectedDate,
@@ -53,13 +54,11 @@ struct MainView: View {
                             }) {
                                 Image(systemName: "plus")
                                     .font(.title)
-                                    .foregroundColor(.white)
+                                    .foregroundColor(.black)
                                     .padding()
-                                    .background(
-                                        Circle().fill(Color.blue.opacity(0.4))
-                                    )
-                                    .shadow(radius: 2)
                             }
+                            .background(Circle().fill(Color.blue.opacity(0.6)))
+                            .buttonStyle(.glass)
                             .padding(.trailing, 28)
                             .padding(.bottom, 16)
                         }
@@ -74,7 +73,7 @@ struct MainView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
                         Button {
-                            // to profile
+                            navigateToProfile = true
                         } label: {
                             Label(
                                 "Profile",
@@ -98,6 +97,9 @@ struct MainView: View {
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
+            .navigationDestination(isPresented: $navigateToProfile) {
+                // ProfileView(viewModel: ProfileViewModel())
+            }
         }
     }
 }
