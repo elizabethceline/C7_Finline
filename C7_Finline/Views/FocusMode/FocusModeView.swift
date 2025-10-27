@@ -11,7 +11,6 @@ struct FocusModeView: View {
     @State private var isShowingGiveUpAlert = false
     @State private var isShowingEarlyFinishAlert = false
     
-    // NEW: State for the "Time's Up" alert
     @State private var isShowingTimesUpAlert = false
     @State private var isShowingAddTimeModal = false
     @State private var extraTimeInMinutes: Int = 5
@@ -108,6 +107,17 @@ struct FocusModeView: View {
                 isShowingTimesUpAlert = true
             }
         }
+        .task(id: viewModel.isShowingNudgeAlert) {
+            if viewModel.isShowingNudgeAlert {
+                do {
+                    try await Task.sleep(nanoseconds: 15_000_000_000)
+                    viewModel.isShowingNudgeAlert = false
+                } catch {
+                    
+                    print("Nudge timer cancelled (likely due to user action).")
+                }
+            }
+        }
         .onAppear {
             isGivingUp = false
             resultVM = nil
@@ -160,6 +170,14 @@ struct FocusModeView: View {
             Text("Did you finish your task?")
         }
         
+        .alert("Just checking, are you still working?", isPresented: $viewModel.isShowingNudgeAlert) {
+             Button("Yes I'm still working") {
+                 viewModel.userConfirmedNudge()
+             }
+         } message: {
+             Text("Answering this will get 20 points")
+         }
+        
         .sheet(isPresented: $isShowingAddTimeModal, onDismiss: {
             if extraTimeInMinutes > 0 {
                 Task {
@@ -174,15 +192,17 @@ struct FocusModeView: View {
     
     
     private func saveResult() {
-            guard resultVM == nil else { return }
-            
-            print("Saving combined result — showing FocusEndView now")
-            let newResultVM = FishResultViewModel(context: modelContext)
-            
-            newResultVM.recordCombinedResult(fish: accumulatedFish)
-            
-            self.resultVM = newResultVM
-        }
+        guard resultVM == nil else { return }
+        
+        print("Saving combined result — showing FocusEndView now")
+        let newResultVM = FishResultViewModel(context: modelContext)
+        
+        let bonus = viewModel.bonusPointsFromNudge
+        
+        newResultVM.recordCombinedResult(fish: accumulatedFish, bonusPoints: bonus)
+        
+        self.resultVM = newResultVM
+    }
     
     private func formatTime(_ seconds: TimeInterval) -> String {
         let minutes = Int(seconds) / 60

@@ -6,6 +6,7 @@ struct FocusStartView: View {
     @EnvironmentObject var viewModel: FocusSessionViewModel
     @State private var duration: Double = 5 // minutes
     @State private var deepFocusEnabled: Bool = true
+    @State private var nudgeMeEnabled: Bool = true
     @State private var showFocusView = false
 
     var body: some View {
@@ -28,6 +29,14 @@ struct FocusStartView: View {
                 }
                 .toggleStyle(SwitchToggleStyle(tint: .blue))
                 .padding(.horizontal)
+                
+                Toggle(isOn: $nudgeMeEnabled) {
+                    Text("Nudge Me?")
+                        .font(.title3)
+                        .bold()
+                }
+                .toggleStyle(SwitchToggleStyle(tint: .blue))
+                .padding(.horizontal)
 
                 if let error = viewModel.authorizationError {
                     Text(error)
@@ -40,6 +49,7 @@ struct FocusStartView: View {
                 Button {
                     viewModel.sessionDuration = duration * 60
                     viewModel.deepFocusEnabled = deepFocusEnabled
+                    viewModel.nudgeMeEnabled = nudgeMeEnabled
                     viewModel.startSession()
                     showFocusView = true
                 } label: {

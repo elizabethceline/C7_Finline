@@ -52,18 +52,37 @@ class FishResultViewModel: ObservableObject {
     }
     
         
-    func recordCombinedResult(fish: [Fish]) {
-        guard let context else {
-            print("Skipping save — no SwiftData context (likely running in preview).")
-            self.currentResult = FishingResult(caughtFish: fish)
-            return
+//    func recordCombinedResult(fish: [Fish]) {
+//        guard let context else {
+//            print("Skipping save — no SwiftData context (likely running in preview).")
+//            self.currentResult = FishingResult(caughtFish: fish)
+//            return
+//        }
+//        
+//        let result = FishingResult(caughtFish: fish)
+//        context.insert(result)
+//        try? context.save()
+//        currentResult = result
+//        history.append(result)
+//    }
+    
+    func recordCombinedResult(fish: [Fish], bonusPoints: Int) {
+            let result = FishingResult(caughtFish: fish)
+            self.currentResult = result
+            let fishPoints = self.totalPoints
+            
+//            userProfile?.addPoints(fishPoints + bonusPoints)
+            print("Added \(fishPoints) (fish) + \(bonusPoints) (bonus) points to UserProfile.")
+
+            // Save to SwiftData
+            guard let context else {
+                print("Skipping save — no SwiftData context (likely running in preview).")
+                return
+            }
+            
+            context.insert(result)
+            try? context.save()
+            history.append(result)
         }
-        
-        let result = FishingResult(caughtFish: fish)
-        context.insert(result)
-        try? context.save()
-        currentResult = result
-        history.append(result)
-    }
 }
 

@@ -58,11 +58,10 @@ final class FishingViewModel: ObservableObject {
 
                 print("Waiting \(wait)s before next catch attempt... (elapsed: \(elapsed)s / \(duration)s)")
 
-                // Proper cancellation handling
                 do {
                     try await Task.sleep(nanoseconds: UInt64(wait * 1_000_000_000))
                 } catch {
-                    print("🛑 Fishing loop cancelled during sleep")
+                    print("Fishing loop cancelled during sleep")
                     break
                 }
 

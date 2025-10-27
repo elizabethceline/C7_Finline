@@ -10,7 +10,7 @@ struct FocusEndView: View {
 //                .opacity(0.3)
             
             VStack(spacing: 20) {
-                Text("🎯 Session Complete!")
+                Text("Session Complete!")
                     .font(.largeTitle.bold())
                     .foregroundColor(.white)
                     .shadow(radius: 6)

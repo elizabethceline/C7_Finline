@@ -21,6 +21,10 @@ final class FocusSessionViewModel: ObservableObject {
     @Published var authorizationError: String?
     @Published var shouldReturnToStart = false
     @Published var taskTitle: String = ""
+    @Published var nudgeMeEnabled: Bool = false
+    @Published var isShowingNudgeAlert: Bool = false
+    private var hasNudgeBeenTriggered: Bool = false
+    var bonusPointsFromNudge: Int = 0
 
 
     #if os(iOS)
@@ -52,6 +56,8 @@ final class FocusSessionViewModel: ObservableObject {
     func startSession() {
         guard !isFocusing else { return }
         shouldReturnToStart = false
+        hasNudgeBeenTriggered = false
+        bonusPointsFromNudge = 0
         isFocusing = true
         remainingTime = sessionDuration
         lastTickDate = Date()
@@ -70,6 +76,7 @@ final class FocusSessionViewModel: ObservableObject {
         }
 
         startTimer()
+        print("nudge me: \(nudgeMeEnabled))")
     }
 
     func endSession() async {
@@ -99,10 +106,18 @@ final class FocusSessionViewModel: ObservableObject {
         timer?.invalidate()
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             guard let self = self else { return }
-
+            
             if self.remainingTime > 1 {
                 self.remainingTime -= 1
                 self.lastTickDate = Date()
+                let halfwayPoint = self.sessionDuration / 2
+                if self.nudgeMeEnabled &&
+                    !self.hasNudgeBeenTriggered &&
+                    self.remainingTime <= halfwayPoint {
+                    
+                    self.isShowingNudgeAlert = true
+                    self.hasNudgeBeenTriggered = true
+                }
             } else {
                 self.remainingTime = 0
                 Task { @MainActor in
@@ -120,6 +135,7 @@ final class FocusSessionViewModel: ObservableObject {
         self.sessionDuration = extraTime
         self.shouldReturnToStart = false
         self.isFocusing = true
+        self.hasNudgeBeenTriggered = true
         
         if deepFocusEnabled {
             applyShield()
@@ -165,18 +181,25 @@ final class FocusSessionViewModel: ObservableObject {
     }
     
     func resetSession() {
-            timer?.invalidate()
-            timer = nil
+        timer?.invalidate()
+        timer = nil
+        
+        
+        isFocusing = false
+        shouldReturnToStart = false
+        remainingTime = 0
+        taskTitle = ""
+        
+        isShowingNudgeAlert = false
+        hasNudgeBeenTriggered = false
+        bonusPointsFromNudge = 0
+    }
 
-
-            isFocusing = false
-            shouldReturnToStart = false
-            remainingTime = 0
-            taskTitle = ""
-            
-           
-        }
-
+    func userConfirmedNudge() {
+        isShowingNudgeAlert = false
+        self.bonusPointsFromNudge = 20
+        print("User confirmed nudge, 20 points awarded.")
+    }
     
     private func applyShield() {
         #if os(iOS)
