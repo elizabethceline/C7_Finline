@@ -23,18 +23,22 @@ struct OnboardingContainerView: View {
     }
 
     var body: some View {
-        if viewModel.isLoading {
-            ProgressView("Loading your profile from iCloud...")
-        } else {
-            OnboardingView(
-                viewModel: viewModel,
-                hasCompletedOnboarding: $hasCompletedOnboarding
-            )
-
-            .onAppear {
-                viewModel.setModelContext(modelContext)
+        ZStack {
+            if viewModel.isLoading {
+                SplashScreenView()
+                    .transition(.opacity)
+            } else {
+                OnboardingView(
+                    viewModel: viewModel,
+                    hasCompletedOnboarding: $hasCompletedOnboarding
+                )
+                .transition(.opacity)
             }
         }
+        .onAppear {
+            viewModel.setModelContext(modelContext)
+        }
+        .animation(.easeInOut(duration: 0.6), value: viewModel.isLoading)
     }
 }
 
