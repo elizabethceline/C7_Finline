@@ -5,16 +5,15 @@
 //  Created by Elizabeth Celine Liong on 26/10/25.
 //
 
-import SwiftUI
-import SwiftData
 import Charts
+import SwiftData
+import SwiftUI
 
 struct ProfileView: View {
     @ObservedObject var viewModel: ProfileViewModel
     @Environment(\.dismiss) var dismiss
 
     @Environment(\.modelContext) private var modelContext
-    @State private var selectedMonth = Date()
 
     var body: some View {
         NavigationStack {
@@ -28,12 +27,15 @@ struct ProfileView: View {
                             .overlay(
                                 Image(systemName: "person.fill")
                                     .foregroundColor(.gray)
-                                    .font(.system(size: 28))
+                                    .font(.title)
                             )
-                        
+
                         VStack(alignment: .leading, spacing: 4) {
-                            Text(viewModel.username.isEmpty ? "Your Name" : viewModel.username)
-                                .font(.headline)
+                            Text(
+                                viewModel.username.isEmpty
+                                    ? "Your Name" : viewModel.username
+                            )
+                            .font(.headline)
                             Text("@username")
                                 .font(.subheadline)
                                 .foregroundColor(.gray)
@@ -46,29 +48,11 @@ struct ProfileView: View {
                             .fill(Color(uiColor: .systemGray6))
                     )
                     .padding(.horizontal)
-                    
-                    // monthly report
-                    HStack {
-                        Text("Monthly report")
-                            .font(.title3)
-                            .fontWeight(.semibold)
-                        
-                        Spacer()
-                        
-                        HStack(spacing: 4) {
-                            Text(selectedMonth, format: .dateTime.month())
-                                .font(.subheadline)
-                            Image(systemName: "chevron.down")
-                                .font(.system(size: 12))
-                        }
-                        .foregroundColor(.gray)
-                    }
-                    .padding(.horizontal)
-                    
+
                     HStack(spacing: 16) {
                         StatCard(
                             title: "Task Complete",
-                            value: "\(viewModel.completedTasksThisMonth)"
+                            value: "\(viewModel.completedTasks)"
                         )
                         StatCard(
                             title: "Points Earn",
@@ -76,70 +60,46 @@ struct ProfileView: View {
                         )
                     }
                     .padding(.horizontal)
-                    
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Task Done")
-                            .font(.headline)
-                        
-                        Chart {
-                            ForEach(generateWeeklyData(), id: \.week) { item in
-                                BarMark(
-                                    x: .value("Week", item.week),
-                                    y: .value("Tasks", item.count)
-                                )
-                                .foregroundStyle(Color.blue)
-                            }
-                        }
-                        .frame(height: 180)
-                    }
-                    .padding()
-                    .background(
-                        RoundedRectangle(cornerRadius: 16)
-                            .fill(Color(uiColor: .systemGray6))
-                    )
-                    .padding(.horizontal)
-                    
+
                     HStack {
                         Text("Best Focus Time")
-                            .font(.headline)
+                            .font(.body)
                         Spacer()
                         Text("12:09:10")
                             .font(.title3)
                             .fontWeight(.semibold)
                     }
-                    .padding()
+                    .padding(.vertical, 24)
+                    .padding(.horizontal)
                     .background(
                         RoundedRectangle(cornerRadius: 16)
                             .fill(Color(uiColor: .systemGray6))
                     )
                     .padding(.horizontal)
-                    
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Average Focus Time")
-                            .font(.headline)
-                        
-                        Chart {
-                            ForEach(focusData) { item in
-                                SectorMark(
-                                    angle: .value("Hours", item.value),
-                                    innerRadius: .ratio(0.5)
-                                )
-                                .foregroundStyle(item.color)
-                                .annotation(position: .overlay) {
-                                    Text(item.label)
-                                        .font(.caption2)
-                                        .foregroundColor(.white)
-                                }
+
+                    HStack {
+                        Text("Edit your activity time")
+                            .font(.body)
+                        Spacer()
+                        NavigationLink(
+                            destination: EditProductiveHoursView(
+                                viewModel: viewModel
+                            )
+                        ) {
+                            HStack {
+                                Image(systemName: "chevron.right")
+                                    .foregroundColor(.gray)
+                                    .font(.body)
                             }
                         }
-                        .frame(height: 180)
-                    }
-                    .padding()
-                    .background(
-                        RoundedRectangle(cornerRadius: 16)
-                            .fill(Color(uiColor: .systemGray6))
-                    )
-                    .padding(.horizontal)
+                    }.padding(.vertical, 24)
+                        .padding(.horizontal)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(Color(uiColor: .systemGray6))
+                        )
+                        .padding(.horizontal)
+
                 }
                 .onAppear {
                     viewModel.setModelContext(modelContext)
@@ -149,23 +109,6 @@ struct ProfileView: View {
             .navigationTitle("Profile")
             .navigationBarTitleDisplayMode(.inline)
         }
-    }
-
-    private func generateWeeklyData() -> [(week: String, count: Int)] {
-        return [
-            ("W1", 28),
-            ("W2", 12),
-            ("W3", 3),
-            ("W4", 31),
-            ("W5", 6)
-        ]
-    }
-
-    private var focusData: [FocusSegment] {
-        [
-            .init(label: "Morning", value: 25, color: .blue.opacity(0.8)),
-            .init(label: "Night", value: 75, color: .blue)
-        ]
     }
 }
 
@@ -189,13 +132,6 @@ struct StatCard: View {
                 .fill(Color(uiColor: .systemGray6))
         )
     }
-}
-
-struct FocusSegment: Identifiable {
-    let id = UUID()
-    let label: String
-    let value: Double
-    let color: Color
 }
 
 #Preview {

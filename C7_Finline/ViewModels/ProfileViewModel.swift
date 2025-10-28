@@ -260,33 +260,9 @@ class ProfileViewModel: ObservableObject {
         await taskManager.syncPendingTasks(modelContext: modelContext)
     }
     
-    var completedTasksThisMonth: Int {
-        let calendar = Calendar.current
-        let now = Date()
-        let startOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: now))!
-        let endOfMonth = calendar.date(byAdding: DateComponents(month: 1, day: -1), to: startOfMonth)!
-
+    var completedTasks: Int {
         return tasks.filter { task in
-            task.isCompleted &&
-            task.workingTime >= startOfMonth &&
-            task.workingTime <= endOfMonth
+            task.isCompleted
         }.count
-    }
-
-    var totalTasksThisMonth: Int {
-        let calendar = Calendar.current
-        let now = Date()
-        let startOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: now))!
-        let endOfMonth = calendar.date(byAdding: DateComponents(month: 1, day: -1), to: startOfMonth)!
-
-        return tasks.filter { task in
-            task.workingTime >= startOfMonth &&
-            task.workingTime <= endOfMonth
-        }.count
-    }
-
-    var completionPercentageThisMonth: Double {
-        guard totalTasksThisMonth > 0 else { return 0 }
-        return (Double(completedTasksThisMonth) / Double(totalTasksThisMonth)) * 100
     }
 }
