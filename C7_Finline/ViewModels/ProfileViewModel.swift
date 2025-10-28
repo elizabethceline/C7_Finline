@@ -19,7 +19,7 @@ class ProfileViewModel: ObservableObject {
     @Published var tasks: [GoalTask] = []
     @Published var isLoading = false
     @Published var error: String = ""
-    
+
     @Published var isEditingName = false
     @Published var tempUsername = ""
 
@@ -262,7 +262,7 @@ class ProfileViewModel: ObservableObject {
         // Sync tasks
         await taskManager.syncPendingTasks(modelContext: modelContext)
     }
-    
+
     var completedTasks: Int {
         return tasks.filter { task in
             task.isCompleted
@@ -275,7 +275,11 @@ class ProfileViewModel: ObservableObject {
     }
 
     func saveUsername() {
-        guard !tempUsername.trimmingCharacters(in: .whitespaces).isEmpty else { return }
+        guard !tempUsername.trimmingCharacters(in: .whitespaces).isEmpty else {
+            tempUsername = username
+            isEditingName = false
+            return
+        }
         username = tempUsername
         saveUserProfile(
             username: username,
