@@ -30,17 +30,23 @@ struct ProfileView: View {
 
                         VStack(alignment: .leading) {
                             if viewModel.isEditingName {
-                                TextField("Your name", text: $viewModel.tempUsername)
-                                    .textInputAutocapitalization(.words)
-                                    .disableAutocorrection(true)
-                                    .font(.headline)
-                                    .focused($isNameFieldFocused)
-                                    .onSubmit {
-                                        viewModel.saveUsername()
-                                    }
+                                TextField(
+                                    "Your name",
+                                    text: $viewModel.tempUsername
+                                )
+                                .textInputAutocapitalization(.words)
+                                .disableAutocorrection(true)
+                                .font(.headline)
+                                .focused($isNameFieldFocused)
+                                .onSubmit {
+                                    viewModel.saveUsername()
+                                }
                             } else {
-                                Text(viewModel.username.isEmpty ? "Your Name" : viewModel.username)
-                                    .font(.headline)
+                                Text(
+                                    viewModel.username.isEmpty
+                                        ? "Your Name" : viewModel.username
+                                )
+                                .font(.headline)
                             }
                         }
                         .padding(.leading, 8)
@@ -54,7 +60,9 @@ struct ProfileView: View {
                                     isNameFieldFocused = false
                                 } else {
                                     viewModel.startEditingUsername()
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                    DispatchQueue.main.asyncAfter(
+                                        deadline: .now() + 0.1
+                                    ) {
                                         isNameFieldFocused = true
                                     }
                                 }
@@ -103,28 +111,29 @@ struct ProfileView: View {
                     .padding(.horizontal)
 
                     // Edit productive hours
-                    HStack {
-                        Text("Edit your activity time")
-                            .font(.body)
-                        Spacer()
-                        NavigationLink(
-                            destination: EditProductiveHoursView(
-                                viewModel: viewModel
-                            )
-                        ) {
-                            HStack {
-                                Image(systemName: "chevron.right")
-                                    .foregroundColor(.gray)
-                                    .font(.body)
-                            }
+                    NavigationLink(
+                        destination: EditProductiveHoursView(
+                            viewModel: viewModel
+                        )
+                    ) {
+                        HStack {
+                            Text("Edit your activity time")
+                                .font(.body)
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .foregroundColor(.gray)
+                                .font(.body)
                         }
-                    }.padding(.vertical, 24)
+                        .padding(.vertical, 24)
                         .padding(.horizontal)
                         .background(
                             RoundedRectangle(cornerRadius: 16)
                                 .fill(Color(uiColor: .systemGray6))
                         )
                         .padding(.horizontal)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
 
                 }
                 .onAppear {
