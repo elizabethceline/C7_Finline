@@ -25,8 +25,34 @@ final class TaskViewModel: ObservableObject {
     
     private let model = SystemLanguageModel.default
     
+    func createTaskManually(name: String, workingTime: Date, focusDuration: Int) {
+        let dateFormatter = ISO8601DateFormatter()
+        let formattedTime = dateFormatter.string(from: workingTime)
+        
+        let newTask = AIGoalTask(
+            name: name,
+            workingTime: formattedTime,
+            focusDuration: focusDuration,
+            isCompleted: false
+        )
+        
+        tasks.append(newTask)
+        sortTasksByDate()
+    }
     
-    func createAllTasks(for goal: Goal, modelContext: ModelContext) async {
+    private func sortTasksByDate() {
+        let dateFormatter = ISO8601DateFormatter()
+        tasks.sort { t1, t2 in
+            guard let d1 = dateFormatter.date(from: t1.workingTime),
+                  let d2 = dateFormatter.date(from: t2.workingTime) else {
+                return false
+            }
+            return d1 < d2
+        }
+    }
+    
+    
+    func saveAllTasks(for goal: Goal, modelContext: ModelContext) async {
         guard !tasks.isEmpty else {
             print("⚠️ No generated tasks to save.")
             return
@@ -58,7 +84,7 @@ final class TaskViewModel: ObservableObject {
         }
     }
     
-    func generate(for goalName: String, goalDescription: String, goalDeadline: Date) async {
+    func generateTaskWithAI(for goalName: String, goalDescription: String, goalDeadline: Date) async {
         await MainActor.run {
             self.tasks.removeAll()
         }
@@ -69,10 +95,10 @@ final class TaskViewModel: ObservableObject {
             due: goalDeadline,
             goalDescription: goalDescription
         )
-        await generateTasks(for: goal)
+        await prompt(for: goal)
     }
     
-    func generateTasks(for goal: Goal) async {
+    func prompt(for goal: Goal) async {
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
