@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct AIGeneratorView: View {
-    @StateObject private var vm = AITaskGeneratorViewModel()
+    @StateObject private var vm = TaskViewModel(networkMonitor: NetworkMonitor())
 
     @State private var title: String = ""
     @State private var desc: String = ""
@@ -45,13 +45,13 @@ struct AIGeneratorView: View {
                     Text("Error: \(err)").foregroundColor(.red)
                 }
 
-                if vm.generatedTasks.isEmpty {
+                if vm.tasks.isEmpty {
                     Text("No tasks generated yet").foregroundColor(.secondary)
                 } else {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 12) {
                             Text("AI Generated Tasks").font(.headline)
-                            ForEach(vm.generatedTasks) { t in
+                            ForEach(vm.tasks) { t in
                                 VStack(alignment: .leading, spacing: 6) {
                                     Text(t.name).bold()
                                     Text("Focus: \(t.focusDuration) minutes").foregroundColor(.secondary)

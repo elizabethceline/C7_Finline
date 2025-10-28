@@ -10,7 +10,7 @@ import SwiftUI
 struct GenerateTaskWithAIView: View {
     @Environment(\.dismiss) private var dismiss
     let goalName: String
-    let deadlineDate: Date
+    let goalDeadline: Date
     @State private var goalDescription: String = ""
     var onGenerate: ((String) -> Void)? 
     
@@ -34,7 +34,7 @@ struct GenerateTaskWithAIView: View {
                         Text("Deadline")
                             .foregroundStyle(.secondary)
                         Spacer()
-                        Text("\(deadlineDate.formatted(date: .long, time: .omitted)) | \(deadlineDate.formatted(date: .omitted, time: .shortened))")
+                        Text("\(goalDeadline.formatted(date: .long, time: .omitted)) | \(goalDeadline.formatted(date: .omitted, time: .shortened))")
                             .multilineTextAlignment(.trailing)
                     }
                     
@@ -82,7 +82,7 @@ struct GenerateTaskWithAIView: View {
 #Preview {
     GenerateTaskWithAIView(
         goalName: "Merancang Skripsi",
-        deadlineDate: Date()
+        goalDeadline: Date()
     )
 }
 

@@ -6,12 +6,15 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct CreateTaskView: View {
     let goalName: String
-    let deadlineDate: Date
+    let goalDeadline: Date
     @State private var isShowingModalCreateWithAI: Bool = false
-    @StateObject private var aiViewModel = AITaskGeneratorViewModel()
+    @StateObject private var taskVM = TaskViewModel()
+    @StateObject private var goalVM = GoalViewModel()
+    @Environment(\.modelContext) private var modelContext
     
     var body: some View {
         VStack(spacing: 0) {
@@ -28,12 +31,12 @@ struct CreateTaskView: View {
                         Text("Deadline")
                             .foregroundStyle(.secondary)
                         Spacer()
-                        Text("\(deadlineDate.formatted(date: .long, time: .omitted)) | \(deadlineDate.formatted(date: .omitted, time: .shortened))")
+                        Text("\(goalDeadline.formatted(date: .long, time: .omitted)) | \(goalDeadline.formatted(date: .omitted, time: .shortened))")
                             .multilineTextAlignment(.trailing)
                     }
                 }
                 
-                if aiViewModel.isLoading {
+                if taskVM.isLoading {
                     Section {
                         ProgressView("Generating AI tasks...")
                             .padding(.vertical)
@@ -42,7 +45,7 @@ struct CreateTaskView: View {
                     }
                 }
                 
-                if let error = aiViewModel.errorMessage {
+                if let error = taskVM.errorMessage {
                     Section {
                         Text("Error: \(error)")
                             .foregroundColor(.red)
@@ -50,25 +53,15 @@ struct CreateTaskView: View {
                     }
                 }
                 
-                if !aiViewModel.generatedTasks.isEmpty {
+                if !taskVM.tasks.isEmpty {
                     Section(header: Text("Generated Tasks")) {
                         VStack(spacing: 12) {
-                            ForEach(aiViewModel.generatedTasks) { task in
-                                VStack(alignment: .leading, spacing: 6) {
-                                    Text(task.name)
-                                        .font(.headline)
-                                    Text("Start: \(task.workingTime), Duration: \(task.focusDuration) mins")
-                                        .font(.subheadline)
-                                        .foregroundColor(.secondary)
-                                }
-                                .padding()
-                                .background(Color.white)
-                                .cornerRadius(12)
-                                .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-                                .transition(.move(edge: .bottom).combined(with: .opacity))
-                                .animation(.spring(response: 0.5, dampingFraction: 0.7), value: aiViewModel.generatedTasks)
-                                .frame(maxWidth: .infinity, alignment: .center)
+                            ForEach(taskVM.tasks) { task in
+                                TaskCardView(task: task)
+                                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                                    .animation(.spring(response: 0.5, dampingFraction: 0.7), value: taskVM.tasks)
                             }
+
                         }
                         .listRowBackground(Color.clear)
                     }
@@ -105,18 +98,31 @@ struct CreateTaskView: View {
             .padding()
         }
         .navigationTitle("Create Task")
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    Task {
+                        let goal = await goalVM.createGoal(name: goalName, deadline: goalDeadline, description: "", modelContext: modelContext)
+                        await taskVM.createAllTasks(for: goal, modelContext: modelContext)
+                    }
+                } label: {
+                    Image(systemName: "checkmark")
+                }
+                .disabled(taskVM.tasks.isEmpty)
+            }
+        }
         .background(Color.gray.opacity(0.2).ignoresSafeArea())
         .sheet(isPresented: $isShowingModalCreateWithAI) {
             NavigationStack {
                 GenerateTaskWithAIView(
                     goalName: goalName,
-                    deadlineDate: deadlineDate
+                    goalDeadline: goalDeadline
                 ) { description in
                     Task {
-                        await aiViewModel.generate(
+                        await taskVM.generate(
                             for: goalName,
-                            description: description,
-                            deadline: deadlineDate
+                            goalDescription: description,
+                            goalDeadline: goalDeadline
                         )
                     }
                 }
@@ -124,6 +130,26 @@ struct CreateTaskView: View {
             }
         }
     }
+    
+    struct TaskCardView: View {
+        let task: AIGoalTask 
+
+        var body: some View {
+            VStack(alignment: .leading, spacing: 6) {
+                Text(task.name)
+                    .font(.headline)
+                Text("Start: \(task.workingTime), Duration: \(task.focusDuration) mins")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
+            .padding()
+            .background(Color.white)
+            .cornerRadius(12)
+            .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+            .frame(maxWidth: .infinity, alignment: .center)
+        }
+    }
+
 }
 
 
@@ -131,7 +157,7 @@ struct CreateTaskView: View {
     NavigationStack {
         CreateTaskView(
             goalName: "Finish SwiftUI Project",
-            deadlineDate: Calendar.current.date(byAdding: .day, value: 3, to: Date()) ?? Date()
+            goalDeadline: Calendar.current.date(byAdding: .day, value: 3, to: Date()) ?? Date()
         )
     }
     .preferredColorScheme(.light)

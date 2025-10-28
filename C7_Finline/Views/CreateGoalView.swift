@@ -11,7 +11,7 @@ struct CreateGoalView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var goalName: String = ""
-    @State private var deadlineDate: Date = Date()
+    @State private var goalDeadline: Date = Date()
     @State private var isShowingDatePicker: Bool = false
     @State private var isShowingTimePicker: Bool = false
     
@@ -36,7 +36,7 @@ struct CreateGoalView: View {
                     } label: {
                         HStack {
                             Label {
-                                Text(deadlineDate.formatted(date: .long, time: .omitted))
+                                Text(goalDeadline.formatted(date: .long, time: .omitted))
                                     .font(.body)
                             } icon: {
                                 Image(systemName: "calendar")
@@ -53,7 +53,7 @@ struct CreateGoalView: View {
                     } label: {
                         HStack {
                             Label {
-                                Text(deadlineDate.formatted(date: .omitted, time: .shortened))
+                                Text(goalDeadline.formatted(date: .omitted, time: .shortened))
                                     .font(.body)
                             } icon: {
                                 Image(systemName: "clock")
@@ -86,7 +86,7 @@ struct CreateGoalView: View {
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    NavigationLink(destination: CreateTaskView(goalName: goalName, deadlineDate: deadlineDate)) {
+                    NavigationLink(destination: CreateTaskView(goalName: goalName, goalDeadline: goalDeadline)) {
                         Image(systemName: "checkmark")
                             .fontWeight(.semibold)
                     }
@@ -96,14 +96,14 @@ struct CreateGoalView: View {
             .sheet(isPresented: $isShowingDatePicker) {
                 DateTimePickerView(
                     title: "Select Date",
-                    selection: $deadlineDate,
+                    selection: $goalDeadline,
                     displayedComponents: [.date]
                 )
             }
             .sheet(isPresented: $isShowingTimePicker) {
                 DateTimePickerView(
                     title: "Select Time",
-                    selection: $deadlineDate,
+                    selection: $goalDeadline,
                     displayedComponents: [.hourAndMinute]
                 )
             }
