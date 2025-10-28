@@ -26,15 +26,15 @@ struct AIGeneratorView: View {
                     }
 
                     Section {
-                        if vm.isLoading {
-                            HStack { Spacer(); ProgressView("Generating..."); Spacer() }
-                        } else {
-                            Button(action: generate) {
-                                Text("Generate Tasks with AI")
-                                    .frame(maxWidth: .infinity)
-                            }
-                            .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty)
-                        }
+//                        if vm.isLoading {
+//                            HStack { Spacer(); ProgressView("Generating..."); Spacer() }
+//                        } else {
+//                            Button(action: generate) {
+//                                Text("Generate Tasks with AI")
+//                                    .frame(maxWidth: .infinity)
+//                            }
+//                            .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty)
+//                        }
                     }
                 }
                 .frame(maxHeight: 360)
@@ -88,8 +88,8 @@ struct AIGeneratorView: View {
         }
     }
 
-    private func generate() {
-        let goal = Goal(id: UUID().uuidString, name: title, due: due, goalDescription: desc)
-        Task { await vm.generateTasks(for: goal) }
-    }
+//    private func generate() {
+//        let goal = Goal(id: UUID().uuidString, name: title, due: due, goalDescription: desc)
+//        Task { await vm.generateTaskWithAI(for: goal) }
+//    }
 }
