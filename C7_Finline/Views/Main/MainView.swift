@@ -32,9 +32,9 @@ struct MainView: View {
                         Spacer(minLength: headerHeight / 2)
 
                         ContentCardView(
+                            viewModel: viewModel,
                             selectedDate: $selectedDate,
-                            filteredTasks: filteredTasks,
-                            goals: viewModel.goals
+                            filteredTasks: filteredTasks
                         )
                         .refreshable {
                             viewModel.fetchUserProfile()
@@ -53,7 +53,7 @@ struct MainView: View {
                                 // Add task action
                             }) {
                                 Image(systemName: "plus")
-                                    .font(.title)
+                                    .font(.title2)
                                     .foregroundColor(.black)
                                     .padding(.all, 8)
                             }

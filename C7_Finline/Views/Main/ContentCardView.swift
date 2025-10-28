@@ -8,12 +8,12 @@
 import SwiftUI
 
 struct ContentCardView: View {
+    @ObservedObject var viewModel: MainViewModel
     @Binding var selectedDate: Date
     let filteredTasks: [GoalTask]
-    let goals: [Goal]
 
     private var goalsForSelectedDate: [Goal] {
-        goals.filter { goal in
+        viewModel.goals.filter { goal in
             goal.tasks.contains { task in
                 Calendar.current.isDate(
                     task.workingTime,
@@ -43,21 +43,23 @@ struct ContentCardView: View {
                         .padding(.top, 24)
                 } else {
                     TaskListView(
+                        viewModel: viewModel,
                         tasks: filteredTasks,
                         goals: goalsForSelectedDate,
                         selectedDate: selectedDate
                     )
-                    .padding(.top, 12)
                 }
-            }.padding()
+            }
+            .padding()
         }
+        .ignoresSafeArea(edges: .bottom)
     }
 }
 
 #Preview {
     ContentCardView(
+        viewModel: MainViewModel(),
         selectedDate: .constant(Date()),
-        filteredTasks: [],
-        goals: []
+        filteredTasks: []
     )
 }
