@@ -1,4 +1,5 @@
 import Foundation
+import SwiftData
 import SwiftUI
 import Combine
 
@@ -10,7 +11,7 @@ import UIKit
 import AppKit
 #endif
 
-@MainActor
+//@MainActor
 final class FocusSessionViewModel: ObservableObject {
     @Published var isFocusing = false
     @Published var remainingTime: TimeInterval = 0
@@ -25,7 +26,7 @@ final class FocusSessionViewModel: ObservableObject {
     @Published var isShowingNudgeAlert: Bool = false
     private var hasNudgeBeenTriggered: Bool = false
     var bonusPointsFromNudge: Int = 0
-
+    @Published var accumulatedFish: [Fish] = []
 
     #if os(iOS)
     @Published var selection = FamilyActivitySelection()
@@ -35,6 +36,9 @@ final class FocusSessionViewModel: ObservableObject {
     #endif
 
     let fishingVM = FishingViewModel()
+    let userProfileManager: UserProfileManager
+    private let networkMonitor: NetworkMonitor
+//    let fishResultVM: FishResultViewModel
 //    private let userProfileManager: UserProfileManager?
 
     private var timer: Timer?
@@ -49,7 +53,14 @@ final class FocusSessionViewModel: ObservableObject {
     }
     #endif
 
-    init() {
+//    init() {
+//        loadSelection()
+//        updateAuthorizationStatus()
+//    }
+//    
+    init(networkMonitor: NetworkMonitor = NetworkMonitor()) {
+        self.networkMonitor = networkMonitor
+        self.userProfileManager = UserProfileManager(networkMonitor: networkMonitor)
         loadSelection()
         updateAuthorizationStatus()
     }
@@ -62,6 +73,7 @@ final class FocusSessionViewModel: ObservableObject {
 
     func startSession() {
         guard !isFocusing else { return }
+        accumulatedFish.removeAll()
         shouldReturnToStart = false
         hasNudgeBeenTriggered = false
         bonusPointsFromNudge = 0
@@ -83,7 +95,7 @@ final class FocusSessionViewModel: ObservableObject {
         }
 
         startTimer()
-        print("nudge me: \(nudgeMeEnabled))")
+        print("nudge me: (\(nudgeMeEnabled))")
     }
 
     func endSession() async {
@@ -93,6 +105,7 @@ final class FocusSessionViewModel: ObservableObject {
         timer?.invalidate()
         timer = nil
 
+        bankCaughtFish()
         fishingVM.stopFishing()
 
         if deepFocusEnabled { clearShield() }
@@ -135,9 +148,15 @@ final class FocusSessionViewModel: ObservableObject {
         RunLoop.current.add(timer!, forMode: .common)
     }
     
+    private func bankCaughtFish(){
+        self.accumulatedFish.append(contentsOf: fishingVM.caughtFish)
+    }
+    
     func addMoreTime(minutes: Int) async {
         let extraTime = TimeInterval(minutes * 60)
 
+        bankCaughtFish()
+        
         self.remainingTime = extraTime
         self.sessionDuration = extraTime
         self.shouldReturnToStart = false
@@ -162,6 +181,7 @@ final class FocusSessionViewModel: ObservableObject {
         timer?.invalidate()
         timer = nil
 
+        bankCaughtFish()
         fishingVM.stopFishing()
 
         if deepFocusEnabled { clearShield() }
@@ -200,6 +220,7 @@ final class FocusSessionViewModel: ObservableObject {
         isShowingNudgeAlert = false
         hasNudgeBeenTriggered = false
         bonusPointsFromNudge = 0
+        accumulatedFish.removeAll()
     }
 
     func userConfirmedNudge() {

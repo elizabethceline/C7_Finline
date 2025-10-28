@@ -14,8 +14,8 @@ struct FocusModeView: View {
     @State private var isShowingTimesUpAlert = false
     @State private var isShowingAddTimeModal = false
     @State private var extraTimeInMinutes: Int = 5
-    @State private var accumulatedFish: [Fish] = []
-    
+    //@State private var accumulatedFish: [Fish] = []
+    //@StateObject private var resultVM = FishResultViewModel()
     private var isEarlyFinishAllowed: Bool {
         guard viewModel.sessionDuration > 0 else {
             return false
@@ -105,6 +105,9 @@ struct FocusModeView: View {
             if newValue && !isGivingUp && resultVM == nil {
                 isShowingTimesUpAlert = true
             }
+            if newValue && isGivingUp{
+                dismiss()
+            }
         }
         .task(id: viewModel.isShowingNudgeAlert) {
             if viewModel.isShowingNudgeAlert {
@@ -121,11 +124,11 @@ struct FocusModeView: View {
             isGivingUp = false
             resultVM = nil
             
-            if viewModel.shouldReturnToStart && !isGivingUp {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                    saveResult()
-                }
-            }
+//            if viewModel.shouldReturnToStart && !isGivingUp {
+//                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+//                    saveResult()
+//                }
+//            }
         }
         .alert("Are you sure?", isPresented: $isShowingGiveUpAlert) {
             Button("Yes", role: .destructive) {
@@ -146,7 +149,7 @@ struct FocusModeView: View {
                    
                     await viewModel.stopSessionForEarlyFinish()
                     
-                    accumulatedFish.append(contentsOf: viewModel.fishingVM.caughtFish)
+                    //accumulatedFish.append(contentsOf: viewModel.fishingVM.caughtFish)
                     saveResult()
                 }
             }
@@ -157,11 +160,11 @@ struct FocusModeView: View {
         
         .alert("Time's Up!", isPresented: $isShowingTimesUpAlert) {
             Button("Yes, I finished") {
-                accumulatedFish.append(contentsOf: viewModel.fishingVM.caughtFish)
+                //accumulatedFish.append(contentsOf: viewModel.fishingVM.caughtFish)
                 saveResult()
             }
             Button("I need more time") {
-                accumulatedFish.append(contentsOf: viewModel.fishingVM.caughtFish)
+                //accumulatedFish.append(contentsOf: viewModel.fishingVM.caughtFish)
                 extraTimeInMinutes = 5
                 isShowingAddTimeModal = true
             }
@@ -194,11 +197,11 @@ struct FocusModeView: View {
         guard resultVM == nil else { return }
         
         print("Saving combined result — showing FocusEndView now")
-        let newResultVM = FishResultViewModel(context: modelContext)
+        let newResultVM = FishResultViewModel(context: modelContext, profileManager: viewModel.userProfileManager)
         
         let bonus = viewModel.bonusPointsFromNudge
         
-        newResultVM.recordCombinedResult(fish: accumulatedFish, bonusPoints: bonus)
+        newResultVM.recordCombinedResult(fish: viewModel.accumulatedFish, bonusPoints: bonus)
         
         self.resultVM = newResultVM
     }

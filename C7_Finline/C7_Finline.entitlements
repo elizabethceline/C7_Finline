@@ -10,7 +10,7 @@
 	<true/>
 	<key>com.apple.developer.icloud-container-identifiers</key>
 	<array>
-		<string>iCloud.com.ping.C7-Finline</string>
+		<string>iCloud.c7.finline</string>
 	</array>
 	<key>com.apple.developer.icloud-extended-share-access</key>
 	<array/>
