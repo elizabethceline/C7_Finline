@@ -19,6 +19,9 @@ class ProfileViewModel: ObservableObject {
     @Published var tasks: [GoalTask] = []
     @Published var isLoading = false
     @Published var error: String = ""
+    
+    @Published var isEditingName = false
+    @Published var tempUsername = ""
 
     private var userProfile: UserProfile?
     private var modelContext: ModelContext?
@@ -265,4 +268,21 @@ class ProfileViewModel: ObservableObject {
             task.isCompleted
         }.count
     }
+
+    func startEditingUsername() {
+        tempUsername = username
+        isEditingName = true
+    }
+
+    func saveUsername() {
+        guard !tempUsername.trimmingCharacters(in: .whitespaces).isEmpty else { return }
+        username = tempUsername
+        saveUserProfile(
+            username: username,
+            productiveHours: productiveHours,
+            points: points
+        )
+        isEditingName = false
+    }
+
 }

@@ -5,21 +5,19 @@
 //  Created by Elizabeth Celine Liong on 26/10/25.
 //
 
-import Charts
 import SwiftData
 import SwiftUI
 
 struct ProfileView: View {
     @ObservedObject var viewModel: ProfileViewModel
     @Environment(\.dismiss) var dismiss
-
     @Environment(\.modelContext) private var modelContext
+    @FocusState private var isNameFieldFocused: Bool
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
-                    // profile
                     HStack {
                         Circle()
                             .fill(Color.gray.opacity(0.3))
@@ -30,17 +28,43 @@ struct ProfileView: View {
                                     .font(.title)
                             )
 
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(
-                                viewModel.username.isEmpty
-                                    ? "Your Name" : viewModel.username
-                            )
-                            .font(.headline)
-                            Text("@username")
-                                .font(.subheadline)
-                                .foregroundColor(.gray)
+                        VStack(alignment: .leading) {
+                            if viewModel.isEditingName {
+                                TextField("Your name", text: $viewModel.tempUsername)
+                                    .textInputAutocapitalization(.words)
+                                    .disableAutocorrection(true)
+                                    .font(.headline)
+                                    .focused($isNameFieldFocused)
+                                    .onSubmit {
+                                        viewModel.saveUsername()
+                                    }
+                            } else {
+                                Text(viewModel.username.isEmpty ? "Your Name" : viewModel.username)
+                                    .font(.headline)
+                            }
                         }
+                        .padding(.leading, 8)
+
                         Spacer()
+
+                        Button {
+                            withAnimation {
+                                if viewModel.isEditingName {
+                                    viewModel.saveUsername()
+                                    isNameFieldFocused = false
+                                } else {
+                                    viewModel.startEditingUsername()
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                        isNameFieldFocused = true
+                                    }
+                                }
+                            }
+                        } label: {
+                            Image(systemName: "pencil")
+                                .foregroundColor(.black)
+                                .font(.title2)
+                                .padding(8)
+                        }
                     }
                     .padding()
                     .background(
@@ -61,6 +85,7 @@ struct ProfileView: View {
                     }
                     .padding(.horizontal)
 
+                    // Best Focus Time
                     HStack {
                         Text("Best Focus Time")
                             .font(.body)
@@ -77,6 +102,7 @@ struct ProfileView: View {
                     )
                     .padding(.horizontal)
 
+                    // Edit productive hours
                     HStack {
                         Text("Edit your activity time")
                             .font(.body)
