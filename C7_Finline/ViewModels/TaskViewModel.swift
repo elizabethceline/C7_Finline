@@ -51,6 +51,15 @@ final class TaskViewModel: ObservableObject {
         }
     }
     
+    func deleteTask(_ task: AIGoalTask) {
+        if let index = tasks.firstIndex(where: { $0.id == task.id }) {
+            tasks.remove(at: index)
+            print("Task deleted: \(task.name)")
+        } else {
+            print("Task not found for deletion")
+        }
+    }
+    
     private func sortTasksByDate() {
         let dateFormatter = ISO8601DateFormatter()
         tasks.sort { t1, t2 in
