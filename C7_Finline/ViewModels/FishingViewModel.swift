@@ -10,6 +10,11 @@ final class FishingViewModel: ObservableObject {
     @Published var totalDuration: TimeInterval = 0
     
     private var fishingTask: Task<Void, Never>?
+    private let userProfileManager: UserProfileManager?
+    
+    init(userProfileManager: UserProfileManager? = nil) {
+        self.userProfileManager = userProfileManager
+    }
 
     func startFishing(for duration: TimeInterval, deepFocusEnabled: Bool) async {
         guard !isFishing else {

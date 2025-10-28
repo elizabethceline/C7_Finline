@@ -13,6 +13,10 @@ struct MainView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var selectedDate: Date = Date()
     @State private var navigateToProfile: Bool = false
+    
+    //NITIP FOCUS MODE START//
+    @State private var navigateToFocus: Bool = false
+    //NITIP DOCUS MODE END//
 
     private var filteredTasks: [GoalTask] {
         viewModel.tasks.filter { task in
@@ -89,6 +93,18 @@ struct MainView: View {
                                 systemImage: "cart"
                             )
                         }
+                        
+                        //NITIP FOCUS MODE START
+                        Button {
+                            navigateToFocus = true
+                        } label: {
+                            Label(
+                                "Focus Mode",
+                                systemImage: "lock.desktopcomputer"
+                            )
+                        }
+                        //NITIP FOCUS MODE END//
+                        
                     } label: {
                         Image(systemName: "ellipsis")
                             .imageScale(.large)
@@ -100,6 +116,12 @@ struct MainView: View {
             .navigationDestination(isPresented: $navigateToProfile) {
                 ProfileView(viewModel: ProfileViewModel())
             }
+            
+            //NITIP FOCUS MODE START
+            .navigationDestination(isPresented: $navigateToFocus) {
+                    TestCloud()
+                }
+            //NITIP FOCUS MODE END
         }
     }
 }

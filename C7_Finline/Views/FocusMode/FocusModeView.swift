@@ -101,9 +101,8 @@ struct FocusModeView: View {
         //                }
         //            }
         //        }
-        .onChange(of: viewModel.shouldReturnToStart) { shouldReturn in
-            
-            if shouldReturn && !isGivingUp && resultVM == nil {
+        .onChange(of: viewModel.shouldReturnToStart) { oldValue, newValue in
+            if newValue && !isGivingUp && resultVM == nil {
                 isShowingTimesUpAlert = true
             }
         }

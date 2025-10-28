@@ -3,11 +3,11 @@ import SwiftUI
 struct FocusEndView: View {
     @ObservedObject var viewModel: FishResultViewModel
     @Environment(\.dismiss) private var dismiss
-
+    
     var body: some View {
         ZStack {
-//            Color.black.ignoresSafeArea()
-//                .opacity(0.3)
+            //            Color.black.ignoresSafeArea()
+            //                .opacity(0.3)
             
             VStack(spacing: 20) {
                 Text("Session Complete!")
@@ -15,7 +15,7 @@ struct FocusEndView: View {
                     .foregroundColor(.white)
                     .shadow(radius: 6)
                     .padding(.top)
-
+                
                 if viewModel.fishCaught.isEmpty {
                     Text("No fish caught this time!")
                         .foregroundColor(.white.opacity(0.7))
@@ -37,9 +37,8 @@ struct FocusEndView: View {
                         
                         return index1 < index2
                     }
-
-
-                    // Stack instead of List
+                    
+                    
                     VStack(spacing: 12) {
                         ForEach(sortedNames, id: \.self) { name in
                             if let fishes = groupedFish[name],
@@ -52,31 +51,50 @@ struct FocusEndView: View {
                                 )
                             }
                         }
+                        if viewModel.bonusPoints > 0 {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Bonus Points")
+                                        .font(.headline)
+                                    Text("Nudge Confirmed")
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                }
+                                Spacer()
+                                Text("+\(viewModel.bonusPoints)")
+                                    .font(.headline.bold())
+                                    .foregroundColor(.yellow) // Match points style
+                            }
+                            .padding()
+                            .background(Color.white.opacity(0.15))
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                            .shadow(color: .black.opacity(0.1), radius: 3, x: 0, y: 2)
+                        }
                     }
                     .padding(.horizontal)
                 }
-
+                
                 // Total summary
-                Text("Total: \(viewModel.totalPoints) points")
+                Text("Total: \(viewModel.grandTotal) points")
                     .font(.title2.bold())
                     .foregroundColor(.white)
                     .padding(.top)
                 Spacer()
                 // Done button
-//                Button() {
-//                    dismiss()
-//                }label: {
-//                    Text("Done")
-//                        .font(.headline)
-//                        .frame(maxWidth: .infinity)
-//                        .padding()
-//                        .background(Color.white.opacity(0.2))
-//                        .foregroundColor(.white)
-//                        .clipShape(RoundedRectangle(cornerRadius: 16))
-//                }
-//                .padding()
-//                //.padding(.horizontal, 80)
-//                .padding(.bottom, 50)
+                //                Button() {
+                //                    dismiss()
+                //                }label: {
+                //                    Text("Done")
+                //                        .font(.headline)
+                //                        .frame(maxWidth: .infinity)
+                //                        .padding()
+                //                        .background(Color.white.opacity(0.2))
+                //                        .foregroundColor(.white)
+                //                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                //                }
+                //                .padding()
+                //                //.padding(.horizontal, 80)
+                //                .padding(.bottom, 50)
             }
             .padding(.horizontal)
             .padding()
@@ -97,11 +115,12 @@ struct FocusEndView: View {
 
 final class MockFishResultViewModel: FishResultViewModel {
     init() {
-
+        
         super.init(context: nil)
         self.currentResult = FishingResult(caughtFish: fishCaught)
+        self.bonusPoints = 20
     }
-
+    
     override var fishCaught: [Fish] {
         [
             Fish.sample(of: .common),
@@ -113,9 +132,12 @@ final class MockFishResultViewModel: FishResultViewModel {
             Fish.sample(of: .legendary)
         ]
     }
-
+    
     override var totalPoints: Int {
         fishCaught.reduce(0) { $0 + $1.points }
     }
+    override var grandTotal: Int {
+           totalPoints + bonusPoints
+       }
 }
 

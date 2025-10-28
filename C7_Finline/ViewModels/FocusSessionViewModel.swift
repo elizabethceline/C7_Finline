@@ -35,6 +35,7 @@ final class FocusSessionViewModel: ObservableObject {
     #endif
 
     let fishingVM = FishingViewModel()
+//    private let userProfileManager: UserProfileManager?
 
     private var timer: Timer?
     private var lastTickDate: Date?
@@ -52,6 +53,12 @@ final class FocusSessionViewModel: ObservableObject {
         loadSelection()
         updateAuthorizationStatus()
     }
+//    init(userProfileManager: UserProfileManager? = nil) {
+//           self.userProfileManager = userProfileManager
+//           self.fishingVM = FishingViewModel(userProfileManager: userProfileManager)
+//           loadSelection()
+//           updateAuthorizationStatus()
+//       }
 
     func startSession() {
         guard !isFocusing else { return }
@@ -105,22 +112,22 @@ final class FocusSessionViewModel: ObservableObject {
     private func startTimer() {
         timer?.invalidate()
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
-            guard let self = self else { return }
-            
-            if self.remainingTime > 1 {
-                self.remainingTime -= 1
-                self.lastTickDate = Date()
-                let halfwayPoint = self.sessionDuration / 2
-                if self.nudgeMeEnabled &&
-                    !self.hasNudgeBeenTriggered &&
-                    self.remainingTime <= halfwayPoint {
-                    
-                    self.isShowingNudgeAlert = true
-                    self.hasNudgeBeenTriggered = true
-                }
-            } else {
-                self.remainingTime = 0
-                Task { @MainActor in
+            Task { @MainActor in
+                guard let self = self else { return }
+
+                if self.remainingTime > 1 {
+                    self.remainingTime -= 1
+                    self.lastTickDate = Date()
+                    let halfwayPoint = self.sessionDuration / 2
+                    if self.nudgeMeEnabled &&
+                        !self.hasNudgeBeenTriggered &&
+                        self.remainingTime <= halfwayPoint {
+
+                        self.isShowingNudgeAlert = true
+                        self.hasNudgeBeenTriggered = true
+                    }
+                } else {
+                    self.remainingTime = 0
                     await self.endSession()
                 }
             }
@@ -297,3 +304,4 @@ final class FocusSessionViewModel: ObservableObject {
         #endif
     }
 }
+

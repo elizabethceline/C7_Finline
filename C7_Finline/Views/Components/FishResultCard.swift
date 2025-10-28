@@ -24,7 +24,7 @@ struct FishResultCard: View {
                     .font(.headline)
                 Text("+\(totalPoints)")
                     .font(.subheadline.bold())
-                    .foregroundColor(.blue)
+                    .foregroundColor(.yellow)
             }
         }
         .padding()
