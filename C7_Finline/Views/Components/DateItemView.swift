@@ -20,7 +20,7 @@ struct DateItemView: View {
 
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 6) {
+            VStack(spacing: 4) {
                 Text(shortWeekday(from: date))
                     .font(.caption)
                     .foregroundColor(.black.opacity(0.6))
@@ -30,7 +30,7 @@ struct DateItemView: View {
                     .fontWeight(.semibold)
                     .foregroundColor(.black)
             }
-            .frame(width: 60, height: 70)
+            .frame(width: 60, height: 55)
             .background(
                 RoundedRectangle(cornerRadius: 14)
                     .fill(Color.white)
@@ -38,7 +38,7 @@ struct DateItemView: View {
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
                     .stroke(
-                        isSelected ? Color.black : Color.clear,
+                        isSelected ? Color.blue.opacity(0.3) : Color.clear,
                         lineWidth: 2
                     )
             )

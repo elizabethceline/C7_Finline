@@ -332,7 +332,7 @@ struct GoalDetailView: View {
             }
         }
         .sheet(isPresented: $showingAddTask) {
-            AddTaskView(viewModel: viewModel, goalId: goal.id)
+            AddTaskView(viewModel: viewModel, goal: goal)
         }
         .sheet(isPresented: $showingEditGoal) {
             EditGoalView(viewModel: viewModel, goal: goal)
@@ -475,7 +475,7 @@ struct TaskRowView: View {
 
 struct AddTaskView: View {
     @ObservedObject var viewModel: TestCloudViewModel
-    let goalId: String
+    let goal: Goal
     @Environment(\.dismiss) var dismiss
     @State private var name = ""
     @State private var workingTime = Date()
@@ -526,7 +526,7 @@ struct AddTaskView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         viewModel.createTask(
-                            goalId: goalId,
+                            goal: goal,
                             name: name,
                             workingTime: workingTime,
                             focusDuration: focusDuration

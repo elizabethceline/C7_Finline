@@ -12,6 +12,8 @@ struct OnboardingContainerView: View {
     @Environment(\.modelContext) private var modelContext
     @Binding var hasCompletedOnboarding: Bool
 
+    @State private var showSplash = true
+
     init(
         hasCompletedOnboarding: Binding<Bool>,
         networkMonitor: NetworkMonitor = NetworkMonitor()
@@ -23,16 +25,39 @@ struct OnboardingContainerView: View {
     }
 
     var body: some View {
-        if viewModel.isLoading {
-            ProgressView("Loading your profile from iCloud...")
-        } else {
-            OnboardingView(
-                viewModel: viewModel,
-                hasCompletedOnboarding: $hasCompletedOnboarding
-            )
+        ZStack {
+            if showSplash {
+                SplashScreenView()
+                    .transition(.opacity)
+            } else {
+                OnboardingView(
+                    viewModel: viewModel,
+                    hasCompletedOnboarding: $hasCompletedOnboarding
+                )
+                .transition(.opacity)
+            }
+        }
+        .onAppear {
+            viewModel.setModelContext(modelContext)
+            startSplashSequence()
+        }
+        .animation(.easeInOut(duration: 0.6), value: showSplash)
+    }
 
-            .onAppear {
-                viewModel.setModelContext(modelContext)
+    private func startSplashSequence() {
+        Task {
+            // wait 2 sec
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
+
+            // cek loading
+            while viewModel.isLoading {
+                try? await Task.sleep(nanoseconds: 200_000_000)
+            }
+            
+            await MainActor.run {
+                withAnimation {
+                    showSplash = false
+                }
             }
         }
     }

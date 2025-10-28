@@ -13,7 +13,7 @@ struct SetProductiveHoursView: View {
     @State private var selectedDay: DayOfWeek = .monday
 
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 16) {
             // Header
             VStack(alignment: .leading, spacing: 8) {
                 Text("Find Your Best Time to Work")
@@ -21,80 +21,23 @@ struct SetProductiveHoursView: View {
                     .fontWeight(.medium)
                     .multilineTextAlignment(.leading)
 
-                Text(
-                    "Our AI analyzes your activity and shows you the time when you are most focused."
-                )
-                .font(.body)
-                .foregroundColor(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-            }
-            .padding()
-
-            HStack {
-                ForEach(DayOfWeek.allCases, id: \.self) { day in
-                    Button {
-                        selectedDay = day
-                    } label: {
-                        Text(day.shortLabel)
-                            .font(.subheadline)
-                            .fontWeight(.medium)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 10)
-                            .background(
-                                selectedDay == day ? Color.blue : Color.white
-                            )
-                            .foregroundColor(
-                                selectedDay == day ? .white : .primary
-                            )
-                            .clipShape(RoundedRectangle(cornerRadius: 10))
-                    }
-                }
+                Text("Our AI analyzes your activity and shows you the time when you are most focused.")
+                    .font(.body)
+                    .foregroundColor(.secondary)
             }
             .padding(.horizontal)
 
-            // Time slot
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: 12) {
-                    ForEach(TimeSlot.allCases, id: \.self) { slot in
-                        let selected =
-                            productiveHours.first(where: {
-                                $0.day == selectedDay
-                            })?
-                            .timeSlots.contains(slot) ?? false
+            // Day selector
+            DaySelectorView(selectedDay: $selectedDay)
 
-                        Button {
-                            toggleTimeSlot(day: selectedDay, slot: slot)
-                        } label: {
-                            HStack {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(slot.rawValue.capitalized)
-                                        .font(.headline)
-                                    Text(slot.hours)
-                                        .font(.caption)
-                                }
-                                Spacer()
-                                Image(
-                                    systemName: selected
-                                        ? "checkmark.circle.fill" : "circle"
-                                )
-                                .foregroundColor(
-                                    .blue.opacity(selected ? 1 : 0.6)
-                                )
-                                .font(.title2)
-                            }
-                            .padding()
-                            .frame(maxWidth: .infinity)
-                            .background(Color.blue.opacity(0.05))
-                            .cornerRadius(20)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-                .padding(.horizontal)
-                .padding(.vertical, 8)
-            }
+            // Time slots
+            TimeSlotListView(
+                productiveHours: $productiveHours,
+                selectedDay: selectedDay,
+                onChange: {}
+            )
 
-            // Start button
+            // Buttons
             VStack(spacing: 16) {
                 Button {
                     onComplete()
@@ -119,16 +62,6 @@ struct SetProductiveHoursView: View {
             .padding()
         }
         .background(Color(.systemBackground))
-    }
-
-    private func toggleTimeSlot(day: DayOfWeek, slot: TimeSlot) {
-        if let index = productiveHours.firstIndex(where: { $0.day == day }) {
-            if productiveHours[index].timeSlots.contains(slot) {
-                productiveHours[index].timeSlots.removeAll { $0 == slot }
-            } else {
-                productiveHours[index].timeSlots.append(slot)
-            }
-        }
     }
 }
 

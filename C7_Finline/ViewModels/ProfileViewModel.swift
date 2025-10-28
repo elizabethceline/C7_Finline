@@ -1,15 +1,15 @@
 //
-//  AppViewModel.swift
+//  ProfileViewModel.swift
 //  C7_Finline
 //
-//  Created by Elizabeth Celine Liong on 24/10/25.
+//  Created by Elizabeth Celine Liong on 26/10/25.
 //
 
 import Combine
 import Foundation
 import SwiftData
 
-class TestCloudViewModel: ObservableObject {
+class ProfileViewModel: ObservableObject {
     @Published var username: String = ""
     @Published var points: Int = 0
     @Published var productiveHours: [ProductiveHours] = DayOfWeek.allCases.map {
@@ -19,6 +19,9 @@ class TestCloudViewModel: ObservableObject {
     @Published var tasks: [GoalTask] = []
     @Published var isLoading = false
     @Published var error: String = ""
+    
+    @Published var isEditingName = false
+    @Published var tempUsername = ""
 
     private var userProfile: UserProfile?
     private var modelContext: ModelContext?
@@ -214,42 +217,6 @@ class TestCloudViewModel: ObservableObject {
         isLoading = false
     }
 
-    @MainActor
-    func createGoal(name: String, due: Date, description: String?) {
-        guard let modelContext = modelContext else { return }
-
-        let newGoal = goalManager.createGoal(
-            name: name,
-            due: due,
-            description: description,
-            modelContext: modelContext
-        )
-
-        self.goals.append(newGoal)
-        self.goals.sort { $0.due < $1.due }
-    }
-
-    @MainActor
-    func updateGoal(goal: Goal, name: String, due: Date, description: String?) {
-        goalManager.updateGoal(
-            goal: goal,
-            name: name,
-            due: due,
-            description: description
-        )
-
-        self.goals.sort { $0.due < $1.due }
-    }
-
-    @MainActor
-    func deleteGoal(goal: Goal) {
-        guard let modelContext = modelContext else { return }
-
-        self.goals.removeAll { $0.id == goal.id }
-        modelContext.delete(goal)
-        goalManager.deleteGoal(goal: goal, modelContext: modelContext)
-    }
-
     // crud tasks
     @MainActor
     func fetchAllTasks() async {
@@ -269,56 +236,6 @@ class TestCloudViewModel: ObservableObject {
         } catch {
             self.error = "Failed to fetch tasks: \(error.localizedDescription)"
         }
-    }
-
-    @MainActor
-    func createTask(
-        goal: Goal,
-        name: String,
-        workingTime: Date,
-        focusDuration: Int
-    ) {
-        guard let modelContext = modelContext else { return }
-
-        let newTask = taskManager.createTask(
-            goal: goal,
-            name: name,
-            workingTime: workingTime,
-            focusDuration: focusDuration,
-            modelContext: modelContext
-        )
-
-        self.tasks.append(newTask)
-    }
-
-    @MainActor
-    func updateTask(
-        task: GoalTask,
-        name: String,
-        workingTime: Date,
-        focusDuration: Int,
-        isCompleted: Bool
-    ) {
-        taskManager.updateTask(
-            task: task,
-            name: name,
-            workingTime: workingTime,
-            focusDuration: focusDuration,
-            isCompleted: isCompleted
-        )
-    }
-
-    @MainActor
-    func deleteTask(task: GoalTask) {
-        guard let modelContext = modelContext else { return }
-
-        self.tasks.removeAll { $0.id == task.id }
-        taskManager.deleteTask(task: task, modelContext: modelContext)
-    }
-
-    @MainActor
-    func toggleTaskCompletion(task: GoalTask) {
-        taskManager.toggleTaskCompletion(task: task)
     }
 
     func getTasksForGoal(_ goalId: String) -> [GoalTask] {
@@ -345,4 +262,27 @@ class TestCloudViewModel: ObservableObject {
         // Sync tasks
         await taskManager.syncPendingTasks(modelContext: modelContext)
     }
+    
+    var completedTasks: Int {
+        return tasks.filter { task in
+            task.isCompleted
+        }.count
+    }
+
+    func startEditingUsername() {
+        tempUsername = username
+        isEditingName = true
+    }
+
+    func saveUsername() {
+        guard !tempUsername.trimmingCharacters(in: .whitespaces).isEmpty else { return }
+        username = tempUsername
+        saveUserProfile(
+            username: username,
+            productiveHours: productiveHours,
+            points: points
+        )
+        isEditingName = false
+    }
+
 }

@@ -8,63 +8,119 @@
 import SwiftUI
 
 struct TaskListView: View {
+    @ObservedObject var viewModel: MainViewModel
     let tasks: [GoalTask]
     let goals: [Goal]
     let selectedDate: Date
 
     var body: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 20) {
-                ForEach(goals) { goal in
-                    let goalTasks = tasks.filter { task in
-                        goal.tasks.contains(where: { $0.id == task.id })
-                    }.sorted { $0.workingTime < $1.workingTime }
+        List {
+            ForEach(goals) { goal in
+                let goalTasks = tasks.filter { task in
+                    goal.tasks.contains(where: { $0.id == task.id })
+                }.sorted { $0.workingTime < $1.workingTime }
 
-                    if !goalTasks.isEmpty {
-                        VStack(alignment: .leading, spacing: 12) {
-                            GoalHeaderView(goalName: goal.name)
+                if !goalTasks.isEmpty {
+                    Section {
+                        GoalHeaderView(goalName: goal.name)
+                            .listRowInsets(
+                                EdgeInsets(
+                                    top: 8,
+                                    leading: 0,
+                                    bottom: 8,
+                                    trailing: 0
+                                )
+                            )
+                            .listRowSeparator(.hidden)
+                            .listRowBackground(Color.clear)
 
-                            ForEach(goalTasks) { task in
-                                TaskCardView(task: task)
-                            }
+                        ForEach(goalTasks) { task in
+                            TaskCardView(task: task)
+                                .listRowInsets(
+                                    EdgeInsets(
+                                        top: 8,
+                                        leading: 0,
+                                        bottom: 8,
+                                        trailing: 0
+                                    )
+                                )
+                                .listRowSeparator(.hidden)
+                                .listRowBackground(Color.clear)
+                                .swipeActions(
+                                    edge: .trailing,
+                                    allowsFullSwipe: false
+                                ) {
+                                    Button {
+                                        viewModel.toggleTaskCompletion(
+                                            task: task
+                                        )
+                                    } label: {
+                                        Image(
+                                            systemName: task.isCompleted
+                                                ? "xmark" : "checkmark"
+                                        )
+                                    }
+                                    .tint(task.isCompleted ? .gray : .green)
+
+                                    Button(role: .destructive) {
+                                        viewModel.deleteTask(task: task)
+                                    } label: {
+                                        Image(systemName: "trash")
+                                    }
+                                    .tint(.red)
+                                }
+
                         }
                     }
+                    .listSectionSeparator(.hidden)
                 }
             }
-            .padding(.bottom, 48)
         }
+        .animation(.default, value: viewModel.tasks)
+        .listStyle(.plain)
+        .scrollIndicators(.hidden)
+        .ignoresSafeArea(edges: .bottom)
     }
 }
 
 #Preview {
-    TaskListView(
+    let goal = Goal(
+        id: "goal_001",
+        name: "Learn Algebra",
+        due: Date().addingTimeInterval(7 * 24 * 60 * 60),
+        goalDescription:
+            "Understand the basics of algebraic expressions and equations."
+    )
+
+    let task1 = GoalTask(
+        id: "task_001",
+        name: "Study Math",
+        workingTime: Date(),
+        focusDuration: 25,
+        isCompleted: false,
+        goal: goal
+    )
+
+    let task2 = GoalTask(
+        id: "task_002",
+        name: "Practice Exercises",
+        workingTime: Date().addingTimeInterval(2 * 60 * 60),
+        focusDuration: 30,
+        isCompleted: true,
+        goal: goal
+    )
+
+    goal.tasks = [task1, task2]
+
+    return TaskListView(
+        viewModel: MainViewModel(),
         tasks: [
-            GoalTask(
-                id: "task_001",
-                name: "Study Math",
-                workingTime: Date(),
-                focusDuration: 25,
-                isCompleted: false,
-                goal: Goal(
-                    id: "goal_001",
-                    name: "Learn Algebra",
-                    due: Date().addingTimeInterval(7 * 24 * 60 * 60),
-                    goalDescription:
-                        "Understand the basics of algebraic expressions and equations."
-                )
-            )
+            task1, task2, task1, task2, task2, task1, task2, task1, task2,
+            task1, task2, task2, task1, task2,
         ],
-        goals: [
-            Goal(
-                id: "goal_001",
-                name: "Learn Algebra",
-                due: Date().addingTimeInterval(7 * 24 * 60 * 60),
-                goalDescription:
-                    "Understand the basics of algebraic expressions and equations."
-            )
-        ],
+        goals: [goal],
         selectedDate: Date()
     )
     .padding()
-    .background(Color.gray.opacity(0.2))
+    .background(Color.gray.opacity(0.1))
 }
