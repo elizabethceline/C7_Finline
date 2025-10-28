@@ -17,12 +17,12 @@ final class TaskViewModel: ObservableObject {
     @Published var errorMessage: String?
     private let taskManager: TaskManager
     private let networkMonitor: NetworkMonitor
-
+    
     init(networkMonitor: NetworkMonitor = NetworkMonitor()) {
         self.networkMonitor = networkMonitor
         self.taskManager = TaskManager(networkMonitor: networkMonitor)
     }
-
+    
     private let model = SystemLanguageModel.default
     
     func createTaskManually(name: String, workingTime: Date, focusDuration: Int) {
@@ -40,6 +40,17 @@ final class TaskViewModel: ObservableObject {
         sortTasksByDate()
     }
     
+    func updateTask(_ task: AIGoalTask, name: String, workingTime: String, focusDuration: Int) {
+        if let index = tasks.firstIndex(where: { $0.id == task.id }) {
+            tasks[index].name = name
+            tasks[index].workingTime = workingTime
+            tasks[index].focusDuration = focusDuration
+            print("Task updated: \(name)")
+        } else {
+            print("Task not found for update")
+        }
+    }
+    
     private func sortTasksByDate() {
         let dateFormatter = ISO8601DateFormatter()
         tasks.sort { t1, t2 in
@@ -54,19 +65,19 @@ final class TaskViewModel: ObservableObject {
     
     func saveAllTasks(for goal: Goal, modelContext: ModelContext) async {
         guard !tasks.isEmpty else {
-            print("⚠️ No generated tasks to save.")
+            print("No generated tasks to save.")
             return
         }
-
+        
         let dateFormatter = ISO8601DateFormatter()
-
+        
         for task in tasks {
             guard let workingDate = dateFormatter.date(from: task.workingTime)
             else {
-                print("⚠️ Invalid workingTime: \(task.workingTime)")
+                print("Invalid workingTime: \(task.workingTime)")
                 continue
             }
-
+            
             _ = taskManager.createTask(
                 goal: goal,
                 name: task.name,
@@ -75,12 +86,12 @@ final class TaskViewModel: ObservableObject {
                 modelContext: modelContext
             )
         }
-
+        
         do {
             try modelContext.save()
-            print("✅ Saved \(tasks.count) AI tasks for goal \(goal.name)")
+            print("Saved \(tasks.count) AI tasks for goal \(goal.name)")
         } catch {
-            print("❌ Failed to save AI tasks: \(error.localizedDescription)")
+            print("Failed to save AI tasks: \(error.localizedDescription)")
         }
     }
     
@@ -88,7 +99,7 @@ final class TaskViewModel: ObservableObject {
         await MainActor.run {
             self.tasks.removeAll()
         }
-
+        
         let goal = Goal(
             id: UUID().uuidString,
             name: goalName,
@@ -102,7 +113,7 @@ final class TaskViewModel: ObservableObject {
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
-
+        
         //dummy
         let user = UserProfile(
             id: "user-1",
@@ -129,23 +140,23 @@ final class TaskViewModel: ObservableObject {
                 ),
                 ProductiveHours(day: .sunday, timeSlots: [.evening]),
             ]
-
+            
         )
-
+        
         guard model.isAvailable else {
             errorMessage = "On-device model not available."
             return
         }
-
+        
         let session = LanguageModelSession(
             model: model,
             instructions:
                 "You are an AI productivity assistant. Return only structured JSON matching AIGoalTask or an array of them."
         )
-
+        
         let dateFormatter = ISO8601DateFormatter()
         let todayString = dateFormatter.string(from: Date())
-
+        
         let productiveDaysDescription = user.productiveHours.map { ph in
             let day = ph.day.rawValue.capitalized
             let slots = ph.timeSlots.map { slot -> [String: String] in
@@ -161,27 +172,27 @@ final class TaskViewModel: ObservableObject {
                 .joined(separator: ", ")
             return "- \(day): \(slotsJSON)"
         }.joined(separator: "\n")
-
+        
         print("=== Productive Hours Description ===")
         print(productiveDaysDescription)
         print("===================================")
-
+        
         print(goal.due)
         print(todayString)
         let prompt = """
             You are an AI productivity assistant that creates actionable milestone tasks for a user's goal.
-
+            
             ## USER PROFILE
             - Name: \(user.username)
             - Productive Hours:
             \(productiveDaysDescription)
-
+            
             ## GOAL
             - Title: \(goal.name)
             - Description: \(goal.goalDescription ?? "No description provided")
             - Deadline: \(dateFormatter.string(from: goal.due))
             - Current Date: \(todayString)
-
+            
             ## TASK GENERATION RULES
             1. Generate between 2 and 5 milestone tasks that break the goal into clear, actionable steps. Maximum generate 5 task.
             3. If the time remaining between the current date (\(todayString)) and the goal deadline (\(dateFormatter.string(from: goal.due))) is **less than 24 hours**, generate **only 2 milestone tasks** that can realistically be completed within that limited time.
@@ -200,16 +211,16 @@ final class TaskViewModel: ObservableObject {
                - Try to distribute tasks evenly over the days leading up to the deadline.
             8. Return only valid JSON.
             """
-
+        
         do {
             var tasks: [AIGoalTask] = []
-
+            
             let response = try await session.respond(
                 to: prompt,
                 generating: [AIGoalTask].self
             )
             tasks = response.content
-
+            
             if tasks.isEmpty {
                 if let singleResp = try? await session.respond(
                     to: prompt,
@@ -218,25 +229,25 @@ final class TaskViewModel: ObservableObject {
                     tasks = [singleResp.content]
                 }
             }
-
+            
             if tasks.isEmpty {
                 let raw = try await session.respond(to: prompt)
                 if let data = raw.content.data(using: .utf8),
-                    let decoded = try? JSONDecoder().decode(
-                        [AIGoalTask].self,
-                        from: data
-                    )
+                   let decoded = try? JSONDecoder().decode(
+                    [AIGoalTask].self,
+                    from: data
+                   )
                 {
                     tasks = decoded
                 }
             }
-
+            
             if tasks.isEmpty {
                 errorMessage = "AI returned no valid tasks."
             } else {
                 self.tasks = tasks
             }
-
+            
         } catch {
             errorMessage = "AI generation failed: \(error.localizedDescription)"
         }
