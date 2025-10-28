@@ -13,7 +13,7 @@ struct RootView: View {
     var body: some View {
         Group {
             if hasCompletedOnboarding {
-                MainView()
+                TestCloud()
             } else {
                 OnboardingContainerView(hasCompletedOnboarding: $hasCompletedOnboarding)
             }
