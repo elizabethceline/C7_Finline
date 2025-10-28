@@ -273,23 +273,22 @@ class MainViewModel: ObservableObject {
 
     @MainActor
     func createTask(
-        goalId: String,
+        goal: Goal,
         name: String,
         workingTime: Date,
         focusDuration: Int
     ) {
         guard let modelContext = modelContext else { return }
 
-        if let newTask = taskManager.createTask(
-            goalId: goalId,
+        let newTask = taskManager.createTask(
+            goal: goal,
             name: name,
             workingTime: workingTime,
             focusDuration: focusDuration,
-            goals: goals,
             modelContext: modelContext
-        ) {
-            self.tasks.append(newTask)
-        }
+        )
+
+        self.tasks.append(newTask)
     }
 
     @MainActor

@@ -45,7 +45,8 @@ class TaskManager {
         // Sync from cloud
         for record in ckRecords {
             let goalId = record["goal_id"] as? String ?? ""
-            guard let parentGoal = goals.first(where: { $0.id == goalId }) else { continue }
+            guard let parentGoal = goals.first(where: { $0.id == goalId })
+            else { continue }
 
             let ckTask = GoalTask(record: record, goal: parentGoal)
             let taskID = ckTask.id
@@ -71,7 +72,8 @@ class TaskManager {
         let goalIdSet = Set(goalIds)
         let allLocalTasks = try modelContext.fetch(FetchDescriptor<GoalTask>())
         let tasksToDelete = allLocalTasks.filter { task in
-            guard let taskGoalId = task.goal?.id, goalIdSet.contains(taskGoalId) else {
+            guard let taskGoalId = task.goal?.id, goalIdSet.contains(taskGoalId)
+            else {
                 return false
             }
             return !cloudRecordIDs.contains(task.id) && !task.needsSync
@@ -80,32 +82,26 @@ class TaskManager {
         for task in tasksToDelete {
             modelContext.delete(task)
         }
-        
+
         try? modelContext.save()
 
         return try modelContext.fetch(FetchDescriptor<GoalTask>())
     }
 
     func createTask(
-        goalId: String,
+        goal: Goal,
         name: String,
         workingTime: Date,
         focusDuration: Int,
-        goals: [Goal],
         modelContext: ModelContext
-    ) -> GoalTask? {
-        guard let parentGoal = goals.first(where: { $0.id == goalId }) else {
-            return nil
-        }
-
-        let newTaskID = UUID().uuidString
+    ) -> GoalTask {
         let newTask = GoalTask(
-            id: newTaskID,
+            id: UUID().uuidString,
             name: name,
             workingTime: workingTime,
             focusDuration: focusDuration,
             isCompleted: false,
-            goal: parentGoal,
+            goal: goal,
             needsSync: true
         )
         modelContext.insert(newTask)
