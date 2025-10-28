@@ -13,6 +13,8 @@ struct CreateTaskView: View {
     let goalDeadline: Date
     @State private var isShowingModalCreateWithAI: Bool = false
     @State private var isShowingModalCreateManually: Bool = false
+    @State private var editingTask: AIGoalTask? = nil
+    
     @StateObject private var taskVM = TaskViewModel()
     @StateObject private var goalVM = GoalViewModel()
     @Environment(\.modelContext) private var modelContext
@@ -59,10 +61,13 @@ struct CreateTaskView: View {
                         VStack(spacing: 12) {
                             ForEach(taskVM.tasks) { task in
                                 TaskCardView(task: task)
+                                    .onTapGesture {
+                                        editingTask = task
+                                        isShowingModalCreateManually = true
+                                    }
                                     .transition(.move(edge: .bottom).combined(with: .opacity))
                                     .animation(.spring(response: 0.5, dampingFraction: 0.7), value: taskVM.tasks)
                             }
-                            
                         }
                         .listRowBackground(Color.clear)
                     }
@@ -123,6 +128,7 @@ struct CreateTaskView: View {
             }
         }
         .background(Color.gray.opacity(0.2).ignoresSafeArea())
+        
         .sheet(isPresented: $isShowingModalCreateWithAI) {
             NavigationStack {
                 GenerateTaskWithAIView(
@@ -140,12 +146,22 @@ struct CreateTaskView: View {
                 .presentationDetents([.medium])
             }
         }
-        .sheet(isPresented: $isShowingModalCreateManually) {
-            CreateTaskManuallyView(
-                taskVM: taskVM,
-                taskDeadline: goalDeadline
-            )
-            .presentationDetents([.medium])
+        .sheet(isPresented: $isShowingModalCreateManually, onDismiss: {
+            editingTask = nil
+        }) {
+            if let taskToEdit = editingTask {
+                CreateTaskManuallyView(
+                    taskVM: taskVM,
+                    existingTask: taskToEdit
+                )
+                .presentationDetents([.medium])
+            } else {
+                CreateTaskManuallyView(
+                    taskVM: taskVM,
+                    taskDeadline: goalDeadline
+                )
+                .presentationDetents([.medium])
+            }
         }
     }
     
@@ -167,9 +183,7 @@ struct CreateTaskView: View {
             .frame(maxWidth: .infinity, alignment: .center)
         }
     }
-    
 }
-
 
 #Preview {
     NavigationStack {

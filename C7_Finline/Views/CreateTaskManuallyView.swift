@@ -18,9 +18,21 @@ struct CreateTaskManuallyView: View {
     @State private var isShowingDatePicker: Bool = false
     @State private var isShowingTimePicker: Bool = false
     
-    init(taskVM: TaskViewModel, taskDeadline: Date = Date()) {
+    private var existingTask: AIGoalTask?
+    
+    init(taskVM: TaskViewModel, taskDeadline: Date = Date(), existingTask: AIGoalTask? = nil) {
         self.taskVM = taskVM
-        _taskDeadline = State(initialValue: taskDeadline)
+        self.existingTask = existingTask
+        
+        if let existingTask = existingTask {
+            _taskName = State(initialValue: existingTask.name)
+            let formatter = ISO8601DateFormatter()
+            let parsedDate = formatter.date(from: existingTask.workingTime) ?? Date()
+            _taskDeadline = State(initialValue: parsedDate)
+            _focusDuration = State(initialValue: existingTask.focusDuration)
+        } else {
+            _taskDeadline = State(initialValue: taskDeadline)
+        }
     }
     
     var body: some View {
@@ -88,7 +100,7 @@ struct CreateTaskManuallyView: View {
                 }
             }
             .scrollContentBackground(.hidden)
-            .navigationTitle("Create Task")
+            .navigationTitle(existingTask == nil ? "Create Task" : "Edit Task")
             .navigationBarTitleDisplayMode(.inline)
             .background(Color(.systemGroupedBackground))
             .toolbar {
@@ -101,11 +113,23 @@ struct CreateTaskManuallyView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button {
-                        taskVM.createTaskManually(
-                            name: taskName,
-                            workingTime: taskDeadline,
-                            focusDuration: focusDuration
-                        )
+                        let dateFormatter = ISO8601DateFormatter()
+                        let formattedDate = dateFormatter.string(from: taskDeadline)
+                        
+                        if let existingTask = existingTask {
+                            taskVM.updateTask(
+                                existingTask,
+                                name: taskName,
+                                workingTime: formattedDate,
+                                focusDuration: focusDuration
+                            )
+                        } else {
+                            taskVM.createTaskManually(
+                                name: taskName,
+                                workingTime: taskDeadline,
+                                focusDuration: focusDuration
+                            )
+                        }
                         dismiss()
                     } label: {
                         Image(systemName: "checkmark")
@@ -134,13 +158,8 @@ struct CreateTaskManuallyView: View {
 
 #Preview {
     let dummyTaskVM = TaskViewModel()
-    
     return NavigationStack {
-        CreateTaskManuallyView(
-            taskVM: dummyTaskVM,
-            taskDeadline: Date()
-        )
+        CreateTaskManuallyView(taskVM: dummyTaskVM, taskDeadline: Date())
     }
     .preferredColorScheme(.light)
 }
-
