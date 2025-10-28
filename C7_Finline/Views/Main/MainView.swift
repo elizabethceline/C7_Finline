@@ -55,7 +55,7 @@ struct MainView: View {
                                 Image(systemName: "plus")
                                     .font(.title)
                                     .foregroundColor(.black)
-                                    .padding()
+                                    .padding(.all, 8)
                             }
                             .background(Circle().fill(Color.blue.opacity(0.6)))
                             .buttonStyle(.glass)
