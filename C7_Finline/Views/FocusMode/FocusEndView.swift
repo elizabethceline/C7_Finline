@@ -5,23 +5,24 @@ struct FocusEndView: View {
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        ZStack {
-            //            Color.black.ignoresSafeArea()
-            //                .opacity(0.3)
+        VStack(spacing: 24) {
+            //Spacer()
+               // .frame(height: 40)
             
-            VStack(spacing: 20) {
-                Text("Session Complete!")
-                    .font(.largeTitle.bold())
-                    .foregroundColor(.white)
-                    .shadow(radius: 6)
-                    .padding(.top)
-                
-                if viewModel.fishCaught.isEmpty {
-                    Text("No fish caught this time!")
-                        .foregroundColor(.white.opacity(0.7))
-                        .padding(.top, 20)
-                } else {
-                    // Group and sort fish
+            Text("Focushing Session\nComplete")
+                .font(.largeTitle.bold())
+                .foregroundColor(.white)
+                .multilineTextAlignment(.center)
+                .shadow(radius: 6)
+                .padding(.top, 40)
+            
+            if viewModel.fishCaught.isEmpty {
+                Text("No fish caught this time!")
+                    .foregroundColor(.white.opacity(0.7))
+                    .padding(.top, 20)
+            } else {
+                // Single card with all fish
+                VStack(spacing: 12) {
                     let rarityOrder: [FishRarity] = [.common, .uncommon, .rare, .superRare, .legendary]
                     let groupedFish = Dictionary(grouping: viewModel.fishCaught, by: { $0.name })
                     let sortedNames = groupedFish.keys.sorted { name1, name2 in
@@ -38,84 +39,99 @@ struct FocusEndView: View {
                         return index1 < index2
                     }
                     
-                    
-                    VStack(spacing: 12) {
-                        ForEach(sortedNames, id: \.self) { name in
-                            if let fishes = groupedFish[name],
-                               let rarity = fishes.first?.rarity {
-                                FishResultCard(
-                                    name: name,
-                                    count: fishes.count,
-                                    totalPoints: fishes.reduce(0) { $0 + $1.points },
-                                    rarity: FishRarity(rawValue: rarity) ?? .common
-                                )
-                            }
-                        }
-                        if viewModel.bonusPoints > 0 {
-                            HStack {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text("Bonus Points")
-                                        .font(.headline)
-                                    Text("Nudge Confirmed")
-                                        .font(.subheadline)
-                                        .foregroundColor(.secondary)
-                                }
+                    ForEach(sortedNames, id: \.self) { name in
+                        if let fishes = groupedFish[name],
+                           let _ = fishes.first {
+                            let totalPoints =  fishes.reduce(0) { $0 + $1.points }
+                            HStack(spacing: 16) {
+                                // Fish emoji
+//                                Text(firstFish.emoji ?? "🐟")
+//                                    .font(.system(size: 40))
+                                
+                                // Fish name
+                                Text(name)
+                                    .font(.title3)
+                                    .foregroundColor(.primary)
+                                Text("+\(totalPoints)")
+                                    .font(.title3)
+
+                                
                                 Spacer()
-                                Text("+\(viewModel.bonusPoints)")
-                                    .font(.headline.bold())
-                                    .foregroundColor(.yellow) // Match points style
+                                
+                                // Count
+                                Text("\(fishes.count)x")
+                                    .font(.title.bold())
+                                    .foregroundColor(.primary)
+//                                Text("+\(totalPoints)")
+//                                    .font(.title.bold())
+                                
                             }
-                            .padding()
-                            .background(Color.white.opacity(0.15))
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                            .shadow(color: .black.opacity(0.1), radius: 3, x: 0, y: 2)
+                            
+                            if name != sortedNames.last {
+                                Divider()
+                                    .padding(.vertical, 4)
+                            }
                         }
                     }
-                    .padding(.horizontal)
+                    Divider()
+                    HStack(spacing: 16) {
+                        Text("Bonus Points")
+                            .font(.title3)
+                            .foregroundColor(.primary)
+                        Spacer()
+                        Text("+\(viewModel.bonusPoints)")
+                            .font(.title.bold())
+                            .foregroundColor(.primary)
+                    } // Match points style
                 }
+                .padding(.horizontal, 24)
+                .padding(.vertical, 20)
+                .background(Color.white.opacity(0.8))
+                .clipShape(RoundedRectangle(cornerRadius: 20))
+                //.padding(.horizontal)
                 
-                // Total summary
-                Text("Total: \(viewModel.grandTotal) points")
-                    .font(.title2.bold())
-                    .foregroundColor(.white)
-                    .padding(.top)
                 Spacer()
-                // Done button
-                //                Button() {
-                //                    dismiss()
-                //                }label: {
-                //                    Text("Done")
-                //                        .font(.headline)
-                //                        .frame(maxWidth: .infinity)
-                //                        .padding()
-                //                        .background(Color.white.opacity(0.2))
-                //                        .foregroundColor(.white)
-                //                        .clipShape(RoundedRectangle(cornerRadius: 16))
-                //                }
-                //                .padding()
-                //                //.padding(.horizontal, 80)
-                //                .padding(.bottom, 50)
+                
+                // Total points display
+                VStack(spacing: 16) {
+                    Text("+\(viewModel.grandTotal) pts")
+                        .font(.system(size: 60, weight: .bold))
+                        .foregroundColor(.primary)
+                    
+                    Button("Back to main Menu") {
+                        dismiss()
+                    }
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.blue)
+                    .foregroundColor(.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 24))
+                }
+                .padding(.horizontal)
+                .padding(.vertical)
+                .background(Color.white.opacity(0.8))
+                .clipShape(RoundedRectangle(cornerRadius: 24))
+                //.padding(.horizontal)
+                //.padding()
+                .padding(.vertical)
+                .padding(.bottom, 40)
             }
-            .padding(.horizontal)
-            .padding()
         }
     }
 }
 
-
 #Preview {
     let mockVM = MockFishResultViewModel()
     ZStack {
-        Color.black.ignoresSafeArea()
-            .opacity(0.3)
+        Color.gray
+            .ignoresSafeArea()
         FocusEndView(viewModel: mockVM)
     }
 }
 
-
 final class MockFishResultViewModel: FishResultViewModel {
     init() {
-        
         super.init(context: nil)
         self.currentResult = FishingResult(caughtFish: fishCaught)
         self.bonusPoints = 20
@@ -125,10 +141,15 @@ final class MockFishResultViewModel: FishResultViewModel {
         [
             Fish.sample(of: .common),
             Fish.sample(of: .common),
+            Fish.sample(of: .common),
+            Fish.sample(of: .common),
+            Fish.sample(of: .common),
+            Fish.sample(of: .common),
+            Fish.sample(of: .common),
+            Fish.sample(of: .uncommon),
+            Fish.sample(of: .uncommon),
             Fish.sample(of: .uncommon),
             Fish.sample(of: .rare),
-            Fish.sample(of: .rare),
-            Fish.sample(of: .superRare),
             Fish.sample(of: .legendary)
         ]
     }
@@ -136,8 +157,8 @@ final class MockFishResultViewModel: FishResultViewModel {
     override var totalPoints: Int {
         fishCaught.reduce(0) { $0 + $1.points }
     }
+    
     override var grandTotal: Int {
-           totalPoints + bonusPoints
-       }
+        totalPoints + bonusPoints
+    }
 }
-

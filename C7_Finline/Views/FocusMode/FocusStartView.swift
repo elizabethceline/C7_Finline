@@ -17,8 +17,8 @@ struct FocusStartView: View {
                         .font(.headline)
                     Stepper("\(Int(duration)) minutes",
                             value: $duration,
-                            in: 5...120,
-                            step: 5)
+                            in: 1...120,
+                            step: 1)
                         .frame(width: 200)
                 }
 

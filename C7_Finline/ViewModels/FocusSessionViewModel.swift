@@ -24,6 +24,8 @@ final class FocusSessionViewModel: ObservableObject {
     @Published var taskTitle: String = ""
     @Published var nudgeMeEnabled: Bool = false
     @Published var isShowingNudgeAlert: Bool = false
+    @Published var goalName: String?
+    //@Published var taskDescription: String?
     private var hasNudgeBeenTriggered: Bool = false
     var bonusPointsFromNudge: Int = 0
     @Published var accumulatedFish: [Fish] = []
@@ -57,13 +59,36 @@ final class FocusSessionViewModel: ObservableObject {
 //        loadSelection()
 //        updateAuthorizationStatus()
 //    }
-//    
-    init(networkMonitor: NetworkMonitor = NetworkMonitor()) {
+//
+    
+    private(set) var goal: Goal?
+       private(set) var task: GoalTask?
+
+      
+//    init(networkMonitor: NetworkMonitor = NetworkMonitor()) {
+//        self.networkMonitor = networkMonitor
+//        self.userProfileManager = UserProfileManager(networkMonitor: networkMonitor)
+//        loadSelection()
+//        updateAuthorizationStatus()
+//    }
+    
+    init(goal: Goal? = nil, task: GoalTask? = nil, networkMonitor: NetworkMonitor = NetworkMonitor()) {
+        self.goal = goal
+        self.task = task
         self.networkMonitor = networkMonitor
         self.userProfileManager = UserProfileManager(networkMonitor: networkMonitor)
+
         loadSelection()
         updateAuthorizationStatus()
+
+        if let goal = goal, let task = task {
+            self.goalName = goal.name
+            self.taskTitle = task.name
+            self.sessionDuration = TimeInterval(task.focusDuration * 60)
+            self.remainingTime = self.sessionDuration
+        }
     }
+
 //    init(userProfileManager: UserProfileManager? = nil) {
 //           self.userProfileManager = userProfileManager
 //           self.fishingVM = FishingViewModel(userProfileManager: userProfileManager)
@@ -101,6 +126,7 @@ final class FocusSessionViewModel: ObservableObject {
     func endSession() async {
         guard isFocusing else { return }
         isFocusing = false
+        task?.isCompleted = true
 
         timer?.invalidate()
         timer = nil
