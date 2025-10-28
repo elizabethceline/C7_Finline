@@ -10,30 +10,22 @@ import SwiftUI
 struct EditProductiveHoursView: View {
     @ObservedObject var viewModel: ProfileViewModel
     @State private var productiveHoursState: [ProductiveHours] = []
+    @State private var selectedDay: DayOfWeek = .monday
     @State private var hasChanges = false
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        List {
-            ForEach($productiveHoursState, id: \.day) { $dayHours in
-                Section(dayHours.day.rawValue) {
-                    ForEach(TimeSlot.allCases, id: \.self) { slot in
-                        Button {
-                            toggleTimeSlot(day: dayHours.day, slot: slot)
-                        } label: {
-                            HStack {
-                                Text("\(slot.rawValue), \(slot.hours)")
-                                    .foregroundColor(.primary)
-                                Spacer()
-                                if dayHours.timeSlots.contains(slot) {
-                                    Image(systemName: "checkmark")
-                                        .foregroundColor(.blue)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+        VStack(spacing: 16) {
+            DaySelectorView(selectedDay: $selectedDay)
+                .padding(.top)
+
+            TimeSlotListView(
+                productiveHours: $productiveHoursState,
+                selectedDay: selectedDay,
+                onChange: { hasChanges = true }
+            )
+
+            Spacer()
         }
         .navigationTitle("Activity Time")
         .toolbar {
@@ -54,24 +46,8 @@ struct EditProductiveHoursView: View {
             productiveHoursState = viewModel.productiveHours
         }
     }
-
-    private func toggleTimeSlot(day: DayOfWeek, slot: TimeSlot) {
-        if let index = productiveHoursState.firstIndex(where: { $0.day == day })
-        {
-            if productiveHoursState[index].timeSlots.contains(slot) {
-                productiveHoursState[index].timeSlots.removeAll { $0 == slot }
-            } else {
-                productiveHoursState[index].timeSlots.append(slot)
-            }
-            if !hasChanges { hasChanges = true }
-        }
-    }
 }
 
 #Preview {
-    NavigationStack {
-        EditProductiveHoursView(
-            viewModel: ProfileViewModel()
-        )
-    }
+    EditProductiveHoursView(viewModel: ProfileViewModel())
 }
