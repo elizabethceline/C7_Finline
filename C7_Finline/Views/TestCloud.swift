@@ -15,9 +15,13 @@ struct TestCloud: View {
     @Environment(\.modelContext) private var modelContext
     @State private var showingAddGoal = false
     @State private var showingEditProfile = false
+    //TEST FOCUS MODE IGNORE THIS
+    @State private var navigateToFocus = false
+    //
+
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ZStack {
                 if viewModel.isLoading && viewModel.goals.isEmpty {
                     ProgressView("Loading...")
@@ -81,10 +85,36 @@ struct TestCloud: View {
                                 }
                                 .onDelete(perform: deleteGoals)
                             }
+                            
                         }
+                        
+                        //TEST FOCUS MODE IGNORE THIS
+                        Section("Focus Mode") {
+                            Button {
+                                navigateToFocus = true
+                            } label: {
+                                HStack {
+                                    Image(systemName: "timer")
+                                        .foregroundColor(.blue)
+                                    Text("Start Focus Mode")
+                                        .fontWeight(.semibold)
+                                    Spacer()
+                                    Image(systemName: "chevron.right")
+                                        .foregroundColor(.secondary)
+                                }
+                                .padding(.vertical, 8)
+                            }
+                        }
+                        
                     }
+                    //TEST FOCUS MODE
+                    .navigationDestination(isPresented: $navigateToFocus) {
+                            FocusStartView()
+                                .environmentObject(FocusSessionViewModel())
+                        }
                     .refreshable {
                         viewModel.fetchUserProfile()
+                    
                     }
                 }
 
