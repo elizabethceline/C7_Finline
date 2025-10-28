@@ -12,6 +12,7 @@ struct CreateTaskView: View {
     let goalName: String
     let goalDeadline: Date
     @State private var isShowingModalCreateWithAI: Bool = false
+    @State private var isShowingModalCreateManually: Bool = false
     @StateObject private var taskVM = TaskViewModel()
     @StateObject private var goalVM = GoalViewModel()
     @Environment(\.modelContext) private var modelContext
@@ -61,12 +62,12 @@ struct CreateTaskView: View {
                                     .transition(.move(edge: .bottom).combined(with: .opacity))
                                     .animation(.spring(response: 0.5, dampingFraction: 0.7), value: taskVM.tasks)
                             }
-
+                            
                         }
                         .listRowBackground(Color.clear)
                     }
                 }
-
+                
             }
             .scrollContentBackground(.hidden)
             
@@ -84,7 +85,7 @@ struct CreateTaskView: View {
                 }
                 
                 Button(action: {
-                    print("Create Task Manually tapped")
+                    isShowingModalCreateManually = true
                 }) {
                     Text("Create Task Manually")
                         .font(.headline)
@@ -92,6 +93,16 @@ struct CreateTaskView: View {
                         .padding()
                         .background(Color.gray.opacity(0.3))
                         .foregroundColor(.primary)
+                        .cornerRadius(10)
+                }
+                
+                NavigationLink(destination: DebugDataView()) {
+                    Text("Open Debug Data")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.orange.opacity(0.8))
+                        .foregroundColor(.white)
                         .cornerRadius(10)
                 }
             }
@@ -103,7 +114,7 @@ struct CreateTaskView: View {
                 Button {
                     Task {
                         let goal = await goalVM.createGoal(name: goalName, deadline: goalDeadline, description: "", modelContext: modelContext)
-                        await taskVM.createAllTasks(for: goal, modelContext: modelContext)
+                        await taskVM.saveAllTasks(for: goal, modelContext: modelContext)
                     }
                 } label: {
                     Image(systemName: "checkmark")
@@ -119,7 +130,7 @@ struct CreateTaskView: View {
                     goalDeadline: goalDeadline
                 ) { description in
                     Task {
-                        await taskVM.generate(
+                        await taskVM.generateTaskWithAI(
                             for: goalName,
                             goalDescription: description,
                             goalDeadline: goalDeadline
@@ -129,11 +140,18 @@ struct CreateTaskView: View {
                 .presentationDetents([.medium])
             }
         }
+        .sheet(isPresented: $isShowingModalCreateManually) {
+            CreateTaskManuallyView(
+                taskVM: taskVM,
+                taskDeadline: goalDeadline
+            )
+            .presentationDetents([.medium])
+        }
     }
     
     struct TaskCardView: View {
-        let task: AIGoalTask 
-
+        let task: AIGoalTask
+        
         var body: some View {
             VStack(alignment: .leading, spacing: 6) {
                 Text(task.name)
@@ -149,7 +167,7 @@ struct CreateTaskView: View {
             .frame(maxWidth: .infinity, alignment: .center)
         }
     }
-
+    
 }
 
 
