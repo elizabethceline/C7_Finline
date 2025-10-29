@@ -26,6 +26,8 @@ final class FocusSessionViewModel: ObservableObject {
     @Published var isShowingNudgeAlert: Bool = false
     @Published var goalName: String?
     //@Published var taskDescription: String?
+    private var nudgesTriggered = Set<Int>()
+    
     private var hasNudgeBeenTriggered: Bool = false
     var bonusPointsFromNudge: Int = 0
     @Published var accumulatedFish: [Fish] = []
@@ -100,11 +102,14 @@ final class FocusSessionViewModel: ObservableObject {
         guard !isFocusing else { return }
         accumulatedFish.removeAll()
         shouldReturnToStart = false
-        hasNudgeBeenTriggered = false
+        //hasNudgeBeenTriggered = false
         bonusPointsFromNudge = 0
         isFocusing = true
         remainingTime = sessionDuration
         lastTickDate = Date()
+        
+        nudgesTriggered.removeAll()
+        isShowingNudgeAlert = false
 
         if deepFocusEnabled {
             if isAuthorized {
@@ -149,6 +154,8 @@ final class FocusSessionViewModel: ObservableObject {
 
 
     private func startTimer() {
+        nudgesTriggered.removeAll()
+        
         timer?.invalidate()
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             Task { @MainActor in
@@ -157,14 +164,15 @@ final class FocusSessionViewModel: ObservableObject {
                 if self.remainingTime > 1 {
                     self.remainingTime -= 1
                     self.lastTickDate = Date()
-                    let halfwayPoint = self.sessionDuration / 2
-                    if self.nudgeMeEnabled &&
-                        !self.hasNudgeBeenTriggered &&
-                        self.remainingTime <= halfwayPoint {
-
-                        self.isShowingNudgeAlert = true
-                        self.hasNudgeBeenTriggered = true
-                    }
+//                    let halfwayPoint = self.sessionDuration / 2
+//                    if self.nudgeMeEnabled &&
+//                        !self.hasNudgeBeenTriggered &&
+//                        self.remainingTime <= halfwayPoint {
+//
+//                        self.isShowingNudgeAlert = true
+//                        self.hasNudgeBeenTriggered = true
+//                    }
+                    self.checkNudgeAlerts()
                 } else {
                     self.remainingTime = 0
                     await self.endSession()
@@ -172,6 +180,35 @@ final class FocusSessionViewModel: ObservableObject {
             }
         }
         RunLoop.current.add(timer!, forMode: .common)
+    }
+    
+    private func checkNudgeAlerts() {
+        guard nudgeMeEnabled else { return }
+        let totalSeconds = sessionDuration
+        var maxNudges = 0
+        switch totalSeconds {
+        case 0..<5*60:
+            maxNudges = 0
+        case 5*60..<30*60:
+            maxNudges = 1
+        case 30*60..<2*60*60:
+            maxNudges = 2
+        default:
+            maxNudges = 3
+        }
+        
+        guard maxNudges > 0 else { return }
+        
+        let interval = totalSeconds / Double(maxNudges + 1)
+        
+        for i in 1...maxNudges {
+            let triggerTime = totalSeconds - interval * Double(i)
+            if !nudgesTriggered.contains(i) && remainingTime <= triggerTime {
+                isShowingNudgeAlert = true
+                nudgesTriggered.insert(i)
+                print("Nudge \(i) triggered at remaining time: \(remainingTime)")
+            }
+        }
     }
     
     private func bankCaughtFish(){
@@ -251,7 +288,7 @@ final class FocusSessionViewModel: ObservableObject {
 
     func userConfirmedNudge() {
         isShowingNudgeAlert = false
-        self.bonusPointsFromNudge = 20
+        self.bonusPointsFromNudge += 20
         print("User confirmed nudge, 20 points awarded.")
     }
     
