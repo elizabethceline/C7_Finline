@@ -32,6 +32,8 @@ class ProfileViewModel: ObservableObject {
     private let userProfileManager: UserProfileManager
     private let goalManager: GoalManager
     private let taskManager: TaskManager
+    
+    var errorMessage = ""
 
     var isSignedInToiCloud: Bool {
         CloudKitManager.shared.isSignedInToiCloud
@@ -284,8 +286,28 @@ class ProfileViewModel: ObservableObject {
         guard !tempUsername.trimmingCharacters(in: .whitespaces).isEmpty else {
             tempUsername = username
             isEditingName = false
+            errorMessage = "Username cannot be empty."
+            print(errorMessage)
             return
         }
+        
+        guard tempUsername.count >= 2 else {
+            tempUsername = username
+            isEditingName = false
+            errorMessage = "Username must be at least 2 characters long."
+            print(errorMessage)
+            return
+        }
+        
+        guard tempUsername.count <= 16 else {
+            tempUsername = username
+            isEditingName = false
+            errorMessage = "Username cannot exceed 16 characters."
+            print(errorMessage)
+            return
+        }
+        
+        errorMessage = ""
         username = tempUsername
         saveUserProfile(
             username: username,
