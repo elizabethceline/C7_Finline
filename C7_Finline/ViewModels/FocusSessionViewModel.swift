@@ -19,7 +19,7 @@ final class FocusSessionViewModel: ObservableObject {
     @Published var deepFocusEnabled = true
     @Published var totalFocusedSeconds: TimeInterval = 0
     @Published var isAuthorized: Bool = false
-    @Published var authorizationError: String?
+    @Published var errorMessage: String?
     @Published var shouldReturnToStart = false
     @Published var taskTitle: String = ""
     @Published var nudgeMeEnabled: Bool = false
@@ -122,7 +122,10 @@ final class FocusSessionViewModel: ObservableObject {
     }
     
     func startSession() {
-        guard !isFocusing else { return }
+        guard !isFocusing else {
+            errorMessage = "Session is already in progress."
+            return
+        }
         accumulatedFish.removeAll()
         shouldReturnToStart = false
         //hasNudgeBeenTriggered = false
@@ -139,7 +142,7 @@ final class FocusSessionViewModel: ObservableObject {
                 applyShield()
             } else {
                 configureAuthorizationIfNeeded()
-                authorizationError = "Screen Time authorization required."
+                errorMessage = "Screen Time authorization required."
             }
         }
         
@@ -152,13 +155,25 @@ final class FocusSessionViewModel: ObservableObject {
     }
     
     func endSession() async {
-        guard isFocusing else { return }
+        guard isFocusing else {
+            errorMessage = "No active session to end"
+            return
+        }
         isFocusing = false
         isContinuingSession = false
-        task?.isCompleted = true
         
-        timer?.invalidate()
-        timer = nil
+        if let task = task {
+            task.isCompleted = true
+        } else {
+            errorMessage = "No task found to complete."
+        }
+        
+        if let timer = timer {
+            timer.invalidate()
+            self.timer = nil
+        } else {
+            errorMessage = "Timer not found - session may not have started properly"
+        }
         
         bankCaughtFish()
         fishingVM.stopFishing()
@@ -387,7 +402,7 @@ final class FocusSessionViewModel: ObservableObject {
                     applyShield()
                 }
             } catch {
-                self.authorizationError = error.localizedDescription
+                self.errorMessage = error.localizedDescription
                 print("FamilyControls authorization error: \(error)")
             }
         }
