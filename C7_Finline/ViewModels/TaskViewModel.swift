@@ -25,9 +25,48 @@ final class TaskViewModel: ObservableObject {
     
     private let model = SystemLanguageModel.default
     
+    func updateTaskSD(
+        _ task: GoalTask,
+        name: String,
+        workingTime: Date,
+        focusDuration: Int,
+        isCompleted: Bool,
+        modelContext: ModelContext
+    ) async {
+        taskManager.updateTask(
+            task: task,
+            name: name,
+            workingTime: workingTime,
+            focusDuration: focusDuration,
+            isCompleted: isCompleted
+        )
+        
+        do {
+            try modelContext.save()
+            print("Task '\(name)' updated successfully.")
+        } catch {
+            print("Failed to save updated task: \(error.localizedDescription)")
+        }
+    }
+    
     func createTaskManually(name: String, workingTime: Date, focusDuration: Int) {
+        guard !name.trimmingCharacters(in: .whitespaces).isEmpty else {
+            errorMessage = "Task name cannot be empty."
+            return
+        }
+        
+        guard focusDuration > 0 else {
+            errorMessage = "Focus duration must be greater than 0."
+            return
+        }
+        
         let dateFormatter = ISO8601DateFormatter()
         let formattedTime = dateFormatter.string(from: workingTime)
+        
+        guard !formattedTime.isEmpty else {
+            errorMessage = "Failed to format working time."
+            return
+        }
         
         let newTask = AIGoalTask(
             name: name,
@@ -38,18 +77,40 @@ final class TaskViewModel: ObservableObject {
         
         tasks.append(newTask)
         sortTasksByDate()
+        errorMessage = nil
+        print("Task '\(name)' created successfully.")
     }
     
+    
     func updateTask(_ task: AIGoalTask, name: String, workingTime: String, focusDuration: Int) {
-        if let index = tasks.firstIndex(where: { $0.id == task.id }) {
-            tasks[index].name = name
-            tasks[index].workingTime = workingTime
-            tasks[index].focusDuration = focusDuration
-            print("Task updated: \(name)")
-        } else {
-            print("Task not found for update")
+        guard !name.trimmingCharacters(in: .whitespaces).isEmpty else {
+            errorMessage = "Task name cannot be empty."
+            return
         }
+        
+        guard !workingTime.trimmingCharacters(in: .whitespaces).isEmpty else {
+            errorMessage = "Working time cannot be empty."
+            return
+        }
+        
+        guard focusDuration > 0 else {
+            errorMessage = "Focus duration must be greater than 0."
+            return
+        }
+        
+        guard let index = tasks.firstIndex(where: { $0.id == task.id }) else {
+            errorMessage = "Task not found for update."
+            return
+        }
+        
+        tasks[index].name = name
+        tasks[index].workingTime = workingTime
+        tasks[index].focusDuration = focusDuration
+        
+        errorMessage = nil
+        print("✅ Task '\(name)' updated successfully.")
     }
+    
     
     func deleteTask(_ task: AIGoalTask) {
         if let index = tasks.firstIndex(where: { $0.id == task.id }) {

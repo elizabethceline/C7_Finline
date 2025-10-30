@@ -10,6 +10,7 @@ import SwiftData
 
 struct DebugDataView: View {
     @Environment(\.modelContext) private var modelContext
+    @StateObject private var taskViewModel = TaskViewModel()
     
     @State private var goals: [Goal] = []
     @State private var tasks: [GoalTask] = []
@@ -18,6 +19,10 @@ struct DebugDataView: View {
     
     private let goalManager: GoalManager
     private let taskManager: TaskManager
+    
+    @State private var selectedTask: GoalTask? = nil
+    @State private var showDetailModal = false
+
 
     init() {
         let networkMonitor = NetworkMonitor()
@@ -63,23 +68,36 @@ struct DebugDataView: View {
 
                     Section("Stored Tasks (\(tasks.count))") {
                         ForEach(tasks) { task in
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(task.name)
-                                    .font(.headline)
-                                Text("\(task.workingTime.formatted(date: .abbreviated, time: .shortened))")
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
-                                Text("Focus: \(task.focusDuration) mins | Goal: \(task.goal?.name ?? "-")")
-                                    .font(.caption)
-                                    .foregroundColor(.gray)
-                                if task.needsSync {
-                                    Text("⚠️ Pending Sync")
-                                        .font(.caption2)
-                                        .foregroundColor(.orange)
+                            Button {
+                                selectedTask = task
+                                showDetailModal = true
+                            } label: {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(task.name)
+                                        .font(.headline)
+                                    Text("\(task.workingTime.formatted(date: .abbreviated, time: .shortened))")
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                    Text("Focus: \(task.focusDuration) mins | Goal: \(task.goal?.name ?? "-")")
+                                        .font(.caption)
+                                        .foregroundColor(.gray)
+                                    if task.needsSync {
+                                        Text("⚠️ Pending Sync")
+                                            .font(.caption2)
+                                            .foregroundColor(.orange)
+                                    }
                                 }
                             }
+                            .buttonStyle(.plain)
                         }
                     }
+                    .sheet(isPresented: $showDetailModal) {
+                        if let selectedTask {
+                            DetailTaskView(task: selectedTask, taskManager: taskManager, viewModel: taskViewModel)
+
+                        }
+                    }
+
                 }
             }
             .navigationTitle("SwiftData Debug")
@@ -100,9 +118,6 @@ struct DebugDataView: View {
             }
         }
     }
-
-    // MARK: - Data Methods
-
     private func loadData() async {
         await MainActor.run {
             isLoading = true
@@ -110,7 +125,6 @@ struct DebugDataView: View {
         }
 
         do {
-            // 1️⃣ Fetch Goals and Tasks
             let fetchedGoals = try await goalManager.fetchGoals(modelContext: modelContext)
             let fetchedTasks = try await taskManager.fetchTasks(for: fetchedGoals, modelContext: modelContext)
             
@@ -120,11 +134,8 @@ struct DebugDataView: View {
                 self.syncMessage = "Fetched from iCloud successfully ✅"
             }
 
-            // 2️⃣ Sync pending changes to iCloud
             await goalManager.syncPendingGoals(modelContext: modelContext)
             await taskManager.syncPendingTasks(modelContext: modelContext)
-            
-            // 3️⃣ Sync pending deletions
             await goalManager.syncPendingDeletions()
             await taskManager.syncPendingDeletions()
 
