@@ -14,20 +14,23 @@ struct FocusModeView: View {
     @State private var isShowingTimesUpAlert = false
     @State private var isShowingAddTimeModal = false
     @State private var extraTimeInMinutes: Int = 5
+    @State private var hasExtendedTime = false
     
     private var isEarlyFinishAllowed: Bool {
         guard viewModel.sessionDuration > 0 else {
             return false
         }
-        let fifteenPercentMark = viewModel.sessionDuration * 0.15
-        return viewModel.remainingTime <= fifteenPercentMark
+        if hasExtendedTime == false {
+            let fifteenPercentMark = viewModel.sessionDuration * 0.15
+            return viewModel.remainingTime <= fifteenPercentMark
+        } else { return true }
     }
     
     private var buttonLabel: String {
         if resultVM != nil {
             return "Done"
         }
-        if isEarlyFinishAllowed {
+        if hasExtendedTime || isEarlyFinishAllowed {
             return "I'm Done!"
         }
         return "Give Up"
@@ -184,6 +187,7 @@ struct FocusModeView: View {
         .onAppear {
             isGivingUp = false
             resultVM = nil
+            viewModel.setModelContext(modelContext)
         }
         .alert("Are you sure?", isPresented: $isShowingGiveUpAlert) {
             Button("Yes", role: .destructive) {
@@ -226,15 +230,24 @@ struct FocusModeView: View {
         } message: {
             Text("Answering this will get 20 points")
         }
-        .sheet(isPresented: $isShowingAddTimeModal, onDismiss: {
-            if extraTimeInMinutes > 0 {
+//        .sheet(isPresented: $isShowingAddTimeModal, onDismiss: {
+//            if extraTimeInMinutes > 0 {
+//                Task {
+//                    await viewModel.addMoreTime(minutes: extraTimeInMinutes)
+//                }
+//            }
+//        }) {
+//            AddTimeView(minutes: $extraTimeInMinutes)
+//        }
+        .sheet(isPresented: $isShowingAddTimeModal) {
+            AddTimeView { hours, minutes, seconds in
                 Task {
-                    await viewModel.addMoreTime(minutes: extraTimeInMinutes)
+                    await viewModel.addMoreTime(hours: hours, minutes: minutes, seconds: seconds)
                 }
+                hasExtendedTime = true
             }
-        }) {
-            AddTimeView(minutes: $extraTimeInMinutes)
         }
+
     }
     
     private func saveResult() {

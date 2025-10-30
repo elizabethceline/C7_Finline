@@ -15,6 +15,7 @@ class ProfileViewModel: ObservableObject {
     @Published var productiveHours: [ProductiveHours] = DayOfWeek.allCases.map {
         ProductiveHours(day: $0)
     }
+    @Published var bestFocusTime: TimeInterval = 0
     @Published var goals: [Goal] = []
     @Published var tasks: [GoalTask] = []
     @Published var isLoading = false
@@ -118,6 +119,7 @@ class ProfileViewModel: ObservableObject {
             ?? DayOfWeek.allCases.map {
                 ProductiveHours(day: $0)
             }
+        self.bestFocusTime = profile?.bestFocusTime ?? 0
     }
 
     @MainActor
@@ -160,7 +162,8 @@ class ProfileViewModel: ObservableObject {
     func saveUserProfile(
         username: String,
         productiveHours: [ProductiveHours],
-        points: Int
+        points: Int,
+        bestFocusTime: TimeInterval? = nil
     ) {
         guard let modelContext = modelContext else { return }
 
@@ -174,6 +177,9 @@ class ProfileViewModel: ObservableObject {
             userProfile.username = username
             userProfile.productiveHours = productiveHours
             userProfile.points = points
+            if let bestFocusTime = bestFocusTime {
+                userProfile.bestFocusTime = bestFocusTime
+            }
             userProfile.needsSync = true
 
             updatePublishedProfile(userProfile)

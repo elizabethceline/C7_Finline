@@ -1,11 +1,12 @@
 import SwiftUI
 
 struct AddTimeView: View {
-    @Binding var minutes: Int
+    //@Binding var minutes: Int
+    var onAddTime: (Int, Int, Int) -> Void
     @Environment(\.dismiss) private var dismiss
     
     @State private var selectedHours = 0
-    @State private var selectedMinutes = 20
+    @State private var selectedMinutes = 5
     @State private var selectedSeconds = 0
     
     private var isTimeValid: Bool {
@@ -67,8 +68,9 @@ struct AddTimeView: View {
             
             Button("Add Time") {
                 // Convert to total minutes (rounded up if there are seconds)
-                let totalMinutes = selectedHours * 60 + selectedMinutes + (selectedSeconds > 0 ? 1 : 0)
-                minutes = totalMinutes
+//                let totalMinutes = selectedHours * 60 + selectedMinutes + (selectedSeconds > 0 ? 1 : 0)
+//                minutes = totalMinutes
+                onAddTime(selectedHours, selectedMinutes, selectedSeconds)
                 dismiss()
             }
             .font(.headline)
@@ -81,18 +83,20 @@ struct AddTimeView: View {
             .padding(.bottom, 30)
             .disabled(!isTimeValid)
         }
-        .onAppear {
-            // Initialize with the current binding value
-            if minutes >= 60 {
-                selectedHours = minutes / 60
-                selectedMinutes = minutes % 60
-            } else {
-                selectedMinutes = minutes
-            }
-        }
+//        .onAppear {
+//            // Initialize with the current binding value
+//            if minutes >= 60 {
+//                selectedHours = minutes / 60
+//                selectedMinutes = minutes % 60
+//            } else {
+//                selectedMinutes = minutes
+//            }
+//        }
         .presentationDetents([.height(400)])
     }
 }
 #Preview {
-    AddTimeView(minutes: .constant(5))
+    AddTimeView { hours, minutes, seconds in
+        print("Preview Add: \(hours)h \(minutes)m \(seconds)s")
+    }
 }
