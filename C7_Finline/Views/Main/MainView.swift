@@ -38,7 +38,6 @@ struct MainView: View {
                         ContentCardView(
                             viewModel: viewModel,
                             selectedDate: $selectedDate,
-                            filteredTasks: filteredTasks
                         )
                         .refreshable {
                             viewModel.fetchUserProfile()

@@ -23,7 +23,6 @@ struct TaskListView: View {
             ForEach(goals) { goal in
                 let goalTasks = tasks.filter { task in
                     goal.tasks.contains(where: { $0.id == task.id })
-                        && !task.isCompleted
                 }
                 .sorted { $0.workingTime < $1.workingTime }
 
