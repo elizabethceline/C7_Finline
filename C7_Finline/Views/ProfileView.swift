@@ -20,15 +20,6 @@ struct ProfileView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
                     HStack {
-                        Circle()
-                            .fill(Color.gray.opacity(0.3))
-                            .frame(width: 60, height: 60)
-                            .overlay(
-                                Image(systemName: "person.fill")
-                                    .foregroundColor(.gray)
-                                    .font(.title)
-                            )
-
                         VStack(alignment: .leading) {
                             if viewModel.isEditingName {
                                 TextField(
