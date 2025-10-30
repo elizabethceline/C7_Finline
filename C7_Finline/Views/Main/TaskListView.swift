@@ -12,13 +12,17 @@ struct TaskListView: View {
     let tasks: [GoalTask]
     let goals: [Goal]
     let selectedDate: Date
+    
+    @State private var removingTaskIds: Set<String> = []
 
     var body: some View {
         List {
             ForEach(goals) { goal in
                 let goalTasks = tasks.filter { task in
                     goal.tasks.contains(where: { $0.id == task.id })
-                }.sorted { $0.workingTime < $1.workingTime }
+                        && !task.isCompleted
+                }
+                .sorted { $0.workingTime < $1.workingTime }
 
                 if !goalTasks.isEmpty {
                     Section {
@@ -46,14 +50,21 @@ struct TaskListView: View {
                                 )
                                 .listRowSeparator(.hidden)
                                 .listRowBackground(Color.clear)
+                                .opacity(removingTaskIds.contains(task.id) ? 0 : 1)
+                                .offset(y: removingTaskIds.contains(task.id) ? -10 : 0)
                                 .swipeActions(
                                     edge: .trailing,
                                     allowsFullSwipe: false
                                 ) {
                                     Button {
-                                        viewModel.toggleTaskCompletion(
-                                            task: task
-                                        )
+                                        _ = withAnimation(.easeInOut(duration: 0.3)) {
+                                            removingTaskIds.insert(task.id)
+                                        }
+                                        
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                            viewModel.toggleTaskCompletion(task: task)
+                                            removingTaskIds.remove(task.id)
+                                        }
                                     } label: {
                                         Label(
                                             "Complete",
@@ -63,7 +74,14 @@ struct TaskListView: View {
                                     .tint(.green)
 
                                     Button(role: .destructive) {
-                                        viewModel.deleteTask(task: task)
+                                        _ = withAnimation(.easeInOut(duration: 0.3)) {
+                                            removingTaskIds.insert(task.id)
+                                        }
+                                        
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                            viewModel.deleteTask(task: task)
+                                            removingTaskIds.remove(task.id)
+                                        }
                                     } label: {
                                         Label("Delete", systemImage: "trash")
                                     }
@@ -76,7 +94,8 @@ struct TaskListView: View {
                 }
             }
         }
-        .animation(.default, value: viewModel.tasks)
+        .animation(.easeInOut(duration: 0.3), value: tasks)
+        .animation(.easeInOut(duration: 0.3), value: removingTaskIds)
         .listStyle(.plain)
         .scrollIndicators(.hidden)
         .ignoresSafeArea(edges: .bottom)
