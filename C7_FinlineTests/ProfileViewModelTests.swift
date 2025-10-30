@@ -18,7 +18,7 @@ struct ProfileViewModelTests {
         func saveValidUsername() async {
             let newUsername = "Celineeee"
             let viewModel = ProfileViewModel()
-            
+
             viewModel.tempUsername = newUsername
             viewModel.isEditingName = true
             viewModel.saveUsername()
@@ -26,7 +26,39 @@ struct ProfileViewModelTests {
             #expect(viewModel.username == newUsername)
             #expect(viewModel.isEditingName == false)
             #expect(
-                viewModel.errorMessage == "Username updated to \(newUsername)."
+                viewModel.errorMessage == ""
+            )
+        }
+
+        @MainActor
+        @Test("boundary testing with max length username")
+        func saveMaxLengthUsername() async {
+            let newUsername = String(repeating: "A", count: 16)
+            let viewModel = ProfileViewModel()
+            viewModel.tempUsername = newUsername
+            viewModel.isEditingName = true
+            viewModel.saveUsername()
+
+            #expect(viewModel.username == newUsername)
+            #expect(viewModel.isEditingName == false)
+            #expect(
+                viewModel.errorMessage == ""
+            )
+        }
+        
+        @MainActor
+        @Test("boundary testing with min length username")
+        func saveMinLengthUsername() async {
+            let newUsername = String(repeating: "A", count: 2)
+            let viewModel = ProfileViewModel()
+            viewModel.tempUsername = newUsername
+            viewModel.isEditingName = true
+            viewModel.saveUsername()
+
+            #expect(viewModel.username == newUsername)
+            #expect(viewModel.isEditingName == false)
+            #expect(
+                viewModel.errorMessage == ""
             )
         }
     }
@@ -48,6 +80,40 @@ struct ProfileViewModelTests {
             #expect(viewModel.username == currentUsername)
             #expect(viewModel.isEditingName == false)
             #expect(viewModel.errorMessage == "Username cannot be empty.")
+        }
+        
+        @MainActor
+        @Test("testing with more than max length username")
+        func save20CharactersUsername() async {
+            let newUsername = String(repeating: "A", count: 20)
+            let viewModel = ProfileViewModel()
+
+            let currentUsername = viewModel.username
+
+            viewModel.tempUsername = newUsername
+            viewModel.isEditingName = true
+            viewModel.saveUsername()
+
+            #expect(viewModel.username == currentUsername)
+            #expect(viewModel.isEditingName == false)
+            #expect(viewModel.errorMessage == "Username cannot exceed 16 characters.")
+        }
+        
+        @MainActor
+        @Test("testing with less than min length username")
+        func save1CharacterUsername() async {
+            let newUsername = "A"
+            let viewModel = ProfileViewModel()
+
+            let currentUsername = viewModel.username
+
+            viewModel.tempUsername = newUsername
+            viewModel.isEditingName = true
+            viewModel.saveUsername()
+
+            #expect(viewModel.username == currentUsername)
+            #expect(viewModel.isEditingName == false)
+            #expect(viewModel.errorMessage == "Username must be at least 2 characters long.")
         }
     }
 }
