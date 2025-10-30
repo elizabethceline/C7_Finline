@@ -6,7 +6,13 @@
 	<string>development</string>
 	<key>com.apple.developer.aps-environment</key>
 	<string>development</string>
+	<key>com.apple.developer.family-controls</key>
+	<true/>
 	<key>com.apple.developer.icloud-container-identifiers</key>
+	<array>
+		<string>iCloud.c7.finline</string>
+	</array>
+	<key>com.apple.developer.icloud-extended-share-access</key>
 	<array/>
 	<key>com.apple.developer.icloud-services</key>
 	<array>
