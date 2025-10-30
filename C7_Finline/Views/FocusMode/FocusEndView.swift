@@ -73,16 +73,18 @@ struct FocusEndView: View {
                             }
                         }
                     }
-                    Divider()
-                    HStack(spacing: 16) {
-                        Text("Bonus Points")
-                            .font(.title3)
-                            .foregroundColor(.primary)
-                        Spacer()
-                        Text("+\(viewModel.bonusPoints)")
-                            .font(.title.bold())
-                            .foregroundColor(.primary)
-                    } // Match points style
+                    if viewModel.bonusPoints > 0 {
+                        Divider()
+                        HStack(spacing: 16) {
+                            Text("Bonus Points")
+                                .font(.title3)
+                                .foregroundColor(.primary)
+                            Spacer()
+                            Text("+\(viewModel.bonusPoints)")
+                                .font(.title.bold())
+                                .foregroundColor(.primary)
+                        } // Match points style
+                    }
                 }
                 .padding(.horizontal, 24)
                 .padding(.vertical, 20)

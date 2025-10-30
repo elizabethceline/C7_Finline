@@ -15,6 +15,7 @@ class UserProfile {
     var username: String
     var points: Int
     var productiveHoursJSON: String
+    var bestFocusTime: TimeInterval = 0
     var needsSync: Bool = false
 
     init(
@@ -22,12 +23,14 @@ class UserProfile {
         username: String,
         points: Int,
         productiveHours: [ProductiveHours],
+        bestFocusTime: TimeInterval = 0,
         needsSync: Bool = false
     ) {
         self.id = id
         self.username = username
         self.points = points
         self.productiveHoursJSON = UserProfile.encode(productiveHours)
+        self.bestFocusTime = bestFocusTime
         self.needsSync = needsSync
     }
 
@@ -46,11 +49,13 @@ class UserProfile {
         let productiveHours = UserProfile.decode(
             record["productive_hours"] as? String
         )
+        let bestFocusTime = record["bestFocusTime"] as? Double ?? 0
         self.init(
             id: id,
             username: username,
             points: points,
-            productiveHours: productiveHours
+            productiveHours: productiveHours,
+            bestFocusTime: bestFocusTime
         )
     }
 
@@ -58,6 +63,7 @@ class UserProfile {
         record["username"] = username as CKRecordValue
         record["points"] = points as CKRecordValue
         record["productive_hours"] = productiveHoursJSON as CKRecordValue
+        record["bestFocusTime"] = bestFocusTime as CKRecordValue
         return record
     }
 

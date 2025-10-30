@@ -98,7 +98,7 @@ struct ProfileView: View {
                         Text("Best Focus Time")
                             .font(.body)
                         Spacer()
-                        Text("12:09:10")
+                        Text(formatTime(viewModel.bestFocusTime))
                             .font(.title3)
                             .fontWeight(.semibold)
                     }
@@ -145,6 +145,14 @@ struct ProfileView: View {
             .navigationBarTitleDisplayMode(.inline)
         }
     }
+    
+    private func formatTime(_ seconds: TimeInterval) -> String {
+        let hrs = Int(seconds) / 3600
+        let mins = (Int(seconds) % 3600) / 60
+        let secs = Int(seconds) % 60
+        return String(format: "%02d:%02d:%02d", hrs, mins, secs)
+    }
+
 }
 
 struct StatCard: View {
@@ -168,6 +176,7 @@ struct StatCard: View {
         )
     }
 }
+
 
 #Preview {
     ProfileView(viewModel: ProfileViewModel())
