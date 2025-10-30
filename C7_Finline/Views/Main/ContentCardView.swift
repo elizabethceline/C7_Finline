@@ -10,7 +10,13 @@ import SwiftUI
 struct ContentCardView: View {
     @ObservedObject var viewModel: MainViewModel
     @Binding var selectedDate: Date
-    let filteredTasks: [GoalTask]
+
+    private var filteredTasks: [GoalTask] {
+        viewModel.tasks.filter { task in
+            Calendar.current.isDate(task.workingTime, inSameDayAs: selectedDate)
+            && !task.isCompleted
+        }
+    }
 
     private var goalsForSelectedDate: [Goal] {
         viewModel.goals.filter { goal in
@@ -19,6 +25,7 @@ struct ContentCardView: View {
                     task.workingTime,
                     inSameDayAs: selectedDate
                 )
+                && !task.isCompleted
             }
         }
     }
@@ -60,6 +67,5 @@ struct ContentCardView: View {
     ContentCardView(
         viewModel: MainViewModel(),
         selectedDate: .constant(Date()),
-        filteredTasks: []
     )
 }

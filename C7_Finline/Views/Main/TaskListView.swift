@@ -12,13 +12,19 @@ struct TaskListView: View {
     let tasks: [GoalTask]
     let goals: [Goal]
     let selectedDate: Date
+    
+    @State private var removingTaskIds: Set<String> = []
+    @State private var showCompleteAlert = false
+    @State private var showDeleteAlert = false
+    @State private var selectedTask: GoalTask?
 
     var body: some View {
         List {
             ForEach(goals) { goal in
                 let goalTasks = tasks.filter { task in
                     goal.tasks.contains(where: { $0.id == task.id })
-                }.sorted { $0.workingTime < $1.workingTime }
+                }
+                .sorted { $0.workingTime < $1.workingTime }
 
                 if !goalTasks.isEmpty {
                     Section {
@@ -46,26 +52,28 @@ struct TaskListView: View {
                                 )
                                 .listRowSeparator(.hidden)
                                 .listRowBackground(Color.clear)
+                                .opacity(removingTaskIds.contains(task.id) ? 0 : 1)
+                                .offset(y: removingTaskIds.contains(task.id) ? -10 : 0)
                                 .swipeActions(
                                     edge: .trailing,
                                     allowsFullSwipe: false
                                 ) {
                                     Button {
-                                        viewModel.toggleTaskCompletion(
-                                            task: task
-                                        )
+                                        selectedTask = task
+                                        showCompleteAlert = true
                                     } label: {
-                                        Image(
-                                            systemName: task.isCompleted
-                                                ? "xmark" : "checkmark"
+                                        Label(
+                                            "Complete",
+                                            systemImage: "checkmark"
                                         )
                                     }
-                                    .tint(task.isCompleted ? .gray : .green)
+                                    .tint(.green)
 
-                                    Button(role: .destructive) {
-                                        viewModel.deleteTask(task: task)
+                                    Button {
+                                        selectedTask = task
+                                        showDeleteAlert = true
                                     } label: {
-                                        Image(systemName: "trash")
+                                        Label("Delete", systemImage: "trash")
                                     }
                                     .tint(.red)
                                 }
@@ -76,10 +84,63 @@ struct TaskListView: View {
                 }
             }
         }
-        .animation(.default, value: viewModel.tasks)
+        .animation(.easeInOut(duration: 0.3), value: tasks)
+        .animation(.easeInOut(duration: 0.3), value: removingTaskIds)
         .listStyle(.plain)
         .scrollIndicators(.hidden)
         .ignoresSafeArea(edges: .bottom)
+        .alert("Did you finish it already?", isPresented: $showCompleteAlert) {
+            Button("Not yet", role: .cancel) {
+                selectedTask = nil
+            }
+            Button("Yes") {
+                if let task = selectedTask {
+                    completeTask(task)
+                }
+            }
+        } message: {
+            if let task = selectedTask {
+                Text("Are you sure you want to mark '\(task.name)' as completed?")
+            }
+        }
+        .alert("Delete Task", isPresented: $showDeleteAlert) {
+            Button("Cancel", role: .cancel) {
+                selectedTask = nil
+            }
+            Button("Delete", role: .destructive) {
+                if let task = selectedTask {
+                    deleteTask(task)
+                }
+            }
+        } message: {
+            if let task = selectedTask {
+                Text("Are you sure you want to delete '\(task.name)'? This action cannot be undone.")
+            }
+        }
+    }
+    
+    private func completeTask(_ task: GoalTask) {
+        _ = withAnimation(.easeInOut(duration: 0.3)) {
+            removingTaskIds.insert(task.id)
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            viewModel.toggleTaskCompletion(task: task)
+            removingTaskIds.remove(task.id)
+            selectedTask = nil
+        }
+    }
+    
+    private func deleteTask(_ task: GoalTask) {
+        _ = withAnimation(.easeInOut(duration: 0.3)) {
+            removingTaskIds.insert(task.id)
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            viewModel.deleteTask(task: task)
+            removingTaskIds.remove(task.id)
+            selectedTask = nil
+        }
     }
 }
 
