@@ -32,6 +32,8 @@ class ProfileViewModel: ObservableObject {
     private let userProfileManager: UserProfileManager
     private let goalManager: GoalManager
     private let taskManager: TaskManager
+    
+    var errorMessage = ""
 
     var isSignedInToiCloud: Bool {
         CloudKitManager.shared.isSignedInToiCloud
@@ -284,6 +286,8 @@ class ProfileViewModel: ObservableObject {
         guard !tempUsername.trimmingCharacters(in: .whitespaces).isEmpty else {
             tempUsername = username
             isEditingName = false
+            errorMessage = "Username cannot be empty."
+            print(errorMessage)
             return
         }
         username = tempUsername
@@ -293,6 +297,9 @@ class ProfileViewModel: ObservableObject {
             points: points
         )
         isEditingName = false
+        
+        errorMessage = "Username updated to \(username)."
+        print(errorMessage)
     }
 
 }
