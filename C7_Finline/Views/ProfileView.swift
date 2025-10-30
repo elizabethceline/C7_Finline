@@ -13,6 +13,7 @@ struct ProfileView: View {
     @Environment(\.dismiss) var dismiss
     @Environment(\.modelContext) private var modelContext
     @FocusState private var isNameFieldFocused: Bool
+    @State private var showAlert = false
 
     var body: some View {
         NavigationStack {
@@ -39,7 +40,7 @@ struct ProfileView: View {
                                 .font(.headline)
                                 .focused($isNameFieldFocused)
                                 .onSubmit {
-                                    viewModel.saveUsername()
+                                    handleSaveUsername()
                                 }
                             } else {
                                 Text(
@@ -56,7 +57,7 @@ struct ProfileView: View {
                         Button {
                             withAnimation {
                                 if viewModel.isEditingName {
-                                    viewModel.saveUsername()
+                                    handleSaveUsername()
                                     isNameFieldFocused = false
                                 } else {
                                     viewModel.startEditingUsername()
@@ -143,9 +144,23 @@ struct ProfileView: View {
             }
             .navigationTitle("Profile")
             .navigationBarTitleDisplayMode(.inline)
+            .alert(isPresented: $showAlert) {
+                Alert(
+                    title: Text("Invalid Username"),
+                    message: Text(viewModel.errorMessage),
+                    dismissButton: .default(Text("OK"))
+                )
+            }
         }
     }
-    
+
+    private func handleSaveUsername() {
+        viewModel.saveUsername()
+        if viewModel.errorMessage != "" {
+            showAlert = true
+        }
+    }
+
     private func formatTime(_ seconds: TimeInterval) -> String {
         let hrs = Int(seconds) / 3600
         let mins = (Int(seconds) % 3600) / 60

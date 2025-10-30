@@ -290,6 +290,24 @@ class ProfileViewModel: ObservableObject {
             print(errorMessage)
             return
         }
+        
+        guard tempUsername.count >= 2 else {
+            tempUsername = username
+            isEditingName = false
+            errorMessage = "Username must be at least 2 characters long."
+            print(errorMessage)
+            return
+        }
+        
+        guard tempUsername.count <= 16 else {
+            tempUsername = username
+            isEditingName = false
+            errorMessage = "Username cannot exceed 16 characters."
+            print(errorMessage)
+            return
+        }
+        
+        errorMessage = ""
         username = tempUsername
         saveUserProfile(
             username: username,
@@ -297,9 +315,6 @@ class ProfileViewModel: ObservableObject {
             points: points
         )
         isEditingName = false
-        
-        errorMessage = "Username updated to \(username)."
-        print(errorMessage)
     }
 
 }
