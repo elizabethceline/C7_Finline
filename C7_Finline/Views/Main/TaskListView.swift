@@ -55,17 +55,17 @@ struct TaskListView: View {
                                             task: task
                                         )
                                     } label: {
-                                        Image(
-                                            systemName: task.isCompleted
-                                                ? "xmark" : "checkmark"
+                                        Label(
+                                            "Complete",
+                                            systemImage: "checkmark"
                                         )
                                     }
-                                    .tint(task.isCompleted ? .gray : .green)
+                                    .tint(.green)
 
                                     Button(role: .destructive) {
                                         viewModel.deleteTask(task: task)
                                     } label: {
-                                        Image(systemName: "trash")
+                                        Label("Delete", systemImage: "trash")
                                     }
                                     .tint(.red)
                                 }
