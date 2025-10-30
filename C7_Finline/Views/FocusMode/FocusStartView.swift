@@ -38,7 +38,7 @@ struct FocusStartView: View {
                 .toggleStyle(SwitchToggleStyle(tint: .blue))
                 .padding(.horizontal)
 
-                if let error = viewModel.authorizationError {
+                if let error = viewModel.errorMessage {
                     Text(error)
                         .foregroundColor(.red)
                         .font(.footnote)
@@ -79,7 +79,7 @@ struct FocusStartView: View {
 
 #Preview {
     let mockViewModel = FocusSessionViewModel()
-    mockViewModel.authorizationError = nil
+    mockViewModel.errorMessage = nil
     mockViewModel.taskTitle = "Preview Focus Task"
 
     return FocusStartView()
