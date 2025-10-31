@@ -15,7 +15,7 @@ struct MainView: View {
     @State private var navigateToProfile: Bool = false
     
     //NITIP FOCUS MODE START//
-    @State private var navigateToFocus: Bool = false
+//    @State private var navigateToFocus: Bool = false
     //NITIP DOCUS MODE END//
 
     private var filteredTasks: [GoalTask] {
@@ -94,14 +94,14 @@ struct MainView: View {
                         }
                         
                         //NITIP FOCUS MODE START
-                        Button {
-                            navigateToFocus = true
-                        } label: {
-                            Label(
-                                "Focus Mode",
-                                systemImage: "lock.desktopcomputer"
-                            )
-                        }
+//                        Button {
+//                            navigateToFocus = true
+//                        } label: {
+//                            Label(
+//                                "Focus Mode",
+//                                systemImage: "lock.desktopcomputer"
+//                            )
+//                        }
                         //NITIP FOCUS MODE END//
                         
                     } label: {
@@ -117,9 +117,9 @@ struct MainView: View {
             }
             
             //NITIP FOCUS MODE START
-            .navigationDestination(isPresented: $navigateToFocus) {
-                    TestCloud()
-                }
+//            .navigationDestination(isPresented: $navigateToFocus) {
+//                    TestCloud()
+//                }
             //NITIP FOCUS MODE END
         }
     }
