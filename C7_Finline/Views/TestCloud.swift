@@ -108,10 +108,10 @@ struct TestCloud: View {
                         
                     }
                     //TEST FOCUS MODE
-//                    .navigationDestination(isPresented: $navigateToFocus) {
-//                            FocusStartView()
-//                                .environmentObject(FocusSessionViewModel())
-//                        }
+                    .navigationDestination(isPresented: $navigateToFocus) {
+                            FocusStartView()
+                                .environmentObject(FocusSessionViewModel())
+                        }
                     .refreshable {
                         viewModel.fetchUserProfile()
                     
