@@ -27,7 +27,7 @@ struct SplashScreenView: View {
                         .opacity(opacity)
                     
                     // app name
-                    Text("FinLine")
+                    Text("FinLine100")
                         .font(.largeTitle)
                         .fontWeight(.bold)
                         .opacity(opacity)
