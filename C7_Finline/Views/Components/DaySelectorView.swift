@@ -22,15 +22,20 @@ struct DaySelectorView: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 10)
                         .background(
-                            selectedDay == day ? Color.blue : Color.white
+                            selectedDay == day
+                                ? Color.primary
+                                : Color(uiColor: .systemBackground)
                         )
                         .foregroundColor(
-                            selectedDay == day ? .white : .primary
+                            selectedDay == day
+                                ? Color.white : Color(uiColor: .label)
                         )
                         .clipShape(RoundedRectangle(cornerRadius: 10))
                         .shadow(
-                            color: selectedDay == day ? .blue.opacity(0.2) : .clear,
-                            radius: 2, y: 2
+                            color: selectedDay == day
+                                ? .blue.opacity(0.2) : .clear,
+                            radius: 2,
+                            y: 2
                         )
                 }
             }
