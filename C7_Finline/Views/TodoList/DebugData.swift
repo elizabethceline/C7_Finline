@@ -11,6 +11,7 @@ import SwiftData
 struct DebugDataView: View {
     @Environment(\.modelContext) private var modelContext
     @StateObject private var taskViewModel = TaskViewModel()
+    @StateObject private var goalVM = GoalViewModel()
     
     @State private var goals: [Goal] = []
     @State private var tasks: [GoalTask] = []
@@ -22,14 +23,16 @@ struct DebugDataView: View {
     
     @State private var selectedTask: GoalTask? = nil
     @State private var showDetailModal = false
-
-
+    
+    @State private var selectedGoal: Goal? = nil
+    @State private var showGoalDetailModal = false
+    
     init() {
         let networkMonitor = NetworkMonitor()
         self.goalManager = GoalManager(networkMonitor: networkMonitor)
         self.taskManager = TaskManager(networkMonitor: networkMonitor)
     }
-
+    
     var body: some View {
         NavigationStack {
             List {
@@ -46,26 +49,30 @@ struct DebugDataView: View {
                     
                     Section("Stored Goals (\(goals.count))") {
                         ForEach(goals) { goal in
-                            VStack(alignment: .leading) {
-                                Text(goal.name)
-                                    .font(.headline)
-                                Text("Due: \(goal.due.formatted(date: .long, time: .shortened))")
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
-                                if let desc = goal.goalDescription {
-                                    Text(desc)
-                                        .font(.caption)
-                                        .foregroundColor(.gray)
-                                }
-                                if goal.needsSync {
-                                    Text("⚠️ Pending Sync")
-                                        .font(.caption2)
-                                        .foregroundColor(.orange)
+                            NavigationLink {
+                                DetailGoalView(goal: goal, goalVM: goalVM)
+                            } label: {
+                                VStack(alignment: .leading) {
+                                    Text(goal.name)
+                                        .font(.headline)
+                                    Text("Due: \(goal.due.formatted(date: .long, time: .shortened))")
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                    if let desc = goal.goalDescription {
+                                        Text(desc)
+                                            .font(.caption)
+                                            .foregroundColor(.gray)
+                                    }
+                                    if goal.needsSync {
+                                        Text("⚠️ Pending Sync")
+                                            .font(.caption2)
+                                            .foregroundColor(.orange)
+                                    }
                                 }
                             }
                         }
                     }
-
+                    
                     Section("Stored Tasks (\(tasks.count))") {
                         ForEach(tasks) { task in
                             Button {
@@ -94,10 +101,8 @@ struct DebugDataView: View {
                     .sheet(isPresented: $showDetailModal) {
                         if let selectedTask {
                             DetailTaskView(task: selectedTask, taskManager: taskManager, viewModel: taskViewModel)
-
                         }
                     }
-
                 }
             }
             .navigationTitle("SwiftData Debug")
@@ -118,12 +123,13 @@ struct DebugDataView: View {
             }
         }
     }
+    
     private func loadData() async {
         await MainActor.run {
             isLoading = true
             syncMessage = "Fetching & syncing with iCloud..."
         }
-
+        
         do {
             let fetchedGoals = try await goalManager.fetchGoals(modelContext: modelContext)
             let fetchedTasks = try await taskManager.fetchTasks(for: fetchedGoals, modelContext: modelContext)
@@ -133,17 +139,17 @@ struct DebugDataView: View {
                 self.tasks = fetchedTasks
                 self.syncMessage = "Fetched from iCloud successfully ✅"
             }
-
+            
             await goalManager.syncPendingGoals(modelContext: modelContext)
             await taskManager.syncPendingTasks(modelContext: modelContext)
             await goalManager.syncPendingDeletions()
             await taskManager.syncPendingDeletions()
-
+            
             await MainActor.run {
                 self.syncMessage = "Sync completed ✅"
                 self.isLoading = false
             }
-
+            
         } catch {
             await MainActor.run {
                 syncMessage = "❌ Sync failed: \(error.localizedDescription)"
@@ -151,7 +157,7 @@ struct DebugDataView: View {
             }
         }
     }
-
+    
     private func clearAllData() {
         for goal in goals { modelContext.delete(goal) }
         for task in tasks { modelContext.delete(task) }
