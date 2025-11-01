@@ -11,6 +11,7 @@ import SwiftData
 struct DebugDataView: View {
     @Environment(\.modelContext) private var modelContext
     @StateObject private var taskViewModel = TaskViewModel()
+    @StateObject private var goalVM = GoalViewModel()
     
     @State private var goals: [Goal] = []
     @State private var tasks: [GoalTask] = []
@@ -49,7 +50,7 @@ struct DebugDataView: View {
                     Section("Stored Goals (\(goals.count))") {
                         ForEach(goals) { goal in
                             NavigationLink {
-                                DetailGoalView(goal: goal, goalManager: goalManager)
+                                DetailGoalView(goal: goal, goalVM: goalVM)
                             } label: {
                                 VStack(alignment: .leading) {
                                     Text(goal.name)

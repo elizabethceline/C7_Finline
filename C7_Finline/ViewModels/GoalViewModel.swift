@@ -29,5 +29,14 @@ final class GoalViewModel: ObservableObject {
         )
     }
     
+    func updateGoal(goal: Goal, name: String, deadline: Date, description: String?) {
+        goalManager.updateGoal(
+            goal: goal,
+            name: name,
+            due: deadline,
+            description: description
+        )
+    }
+
     
 }

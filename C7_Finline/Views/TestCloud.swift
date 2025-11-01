@@ -365,7 +365,7 @@ struct GoalDetailView1: View {
             AddTaskView(viewModel: viewModel, goal: goal)
         }
         .sheet(isPresented: $showingEditGoal) {
-            EditGoalView(viewModel: viewModel, goal: goal)
+            EditGoalView1(viewModel: viewModel, goal: goal)
         }
     }
 
@@ -374,7 +374,7 @@ struct GoalDetailView1: View {
     }
 }
 
-struct EditGoalView: View {
+struct EditGoalView1: View {
     @ObservedObject var viewModel: TestCloudViewModel
     let goal: Goal
     @Environment(\.dismiss) var dismiss
