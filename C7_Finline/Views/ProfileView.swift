@@ -19,6 +19,14 @@ struct ProfileView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
+                    Image("finley")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 240)
+                        .padding(.top, 16)
+                        .padding(.horizontal)
+
                     HStack {
                         VStack(alignment: .leading) {
                             if viewModel.isEditingName {
@@ -61,7 +69,7 @@ struct ProfileView: View {
                             }
                         } label: {
                             Image(systemName: "pencil")
-                                .foregroundColor(.black)
+                                .foregroundColor(Color(uiColor: .label))
                                 .font(.title2)
                                 .padding(8)
                         }
@@ -69,7 +77,7 @@ struct ProfileView: View {
                     .padding()
                     .background(
                         RoundedRectangle(cornerRadius: 20)
-                            .fill(Color(uiColor: .systemGray6))
+                            .fill(Color(uiColor: .systemBackground))
                     )
                     .padding(.horizontal)
 
@@ -98,7 +106,7 @@ struct ProfileView: View {
                     .padding(.horizontal)
                     .background(
                         RoundedRectangle(cornerRadius: 16)
-                            .fill(Color(uiColor: .systemGray6))
+                            .fill(Color(uiColor: .systemBackground))
                     )
                     .padding(.horizontal)
 
@@ -120,7 +128,7 @@ struct ProfileView: View {
                         .padding(.horizontal)
                         .background(
                             RoundedRectangle(cornerRadius: 16)
-                                .fill(Color(uiColor: .systemGray6))
+                                .fill(Color(uiColor: .systemBackground))
                         )
                         .padding(.horizontal)
                         .contentShape(Rectangle())
@@ -132,6 +140,10 @@ struct ProfileView: View {
                     viewModel.setModelContext(modelContext)
                 }
                 .padding(.vertical)
+            }
+            .background(Color(uiColor: .systemGray6).ignoresSafeArea())
+            .refreshable {
+                viewModel.fetchUserProfile()
             }
             .navigationTitle("Profile")
             .navigationBarTitleDisplayMode(.inline)
@@ -178,11 +190,10 @@ struct StatCard: View {
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color(uiColor: .systemGray6))
+                .fill(Color(uiColor: .systemBackground))
         )
     }
 }
-
 
 #Preview {
     ProfileView(viewModel: ProfileViewModel())
