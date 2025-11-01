@@ -15,11 +15,11 @@ struct CharacterIntroView: View {
     @FocusState private var isTextFieldFocused: Bool
 
     let messages = [
-        "Hi there, nice to meet you. I’m Finley",
-        "Lately, it’s hard for me to go out and fish so i can eat.",
-        "I’m not lazy, I just… kinda lose focus sometimes.",
+        "Hi there, nice to meet you. I'm Finley",
+        "Lately, it's hard for me to go out and fish so I can eat.",
+        "I'm not lazy, I just… kinda lose focus sometimes.",
         "So I need a friend to focus together!",
-        "And its’ you! well what is your name?",
+        "And it's you! Well, what is your name?",
     ]
 
     var body: some View {
@@ -29,14 +29,14 @@ struct CharacterIntroView: View {
                 OnboardingBackground()
 
                 // Content
-                VStack(spacing: 36) {
+                VStack(spacing: 24) {
                     Image("finley")
                         .resizable()
                         .scaledToFit()
                         .frame(width: geometry.size.width * 0.8)
 
                     if showNameInput {
-                        VStack {
+                        VStack(spacing: 12) {
                             HStack {
                                 VStack(alignment: .leading) {
                                     TextField(
@@ -61,36 +61,69 @@ struct CharacterIntroView: View {
                                 RoundedRectangle(cornerRadius: 20)
                                     .fill(Color(uiColor: .systemBackground))
                             )
-                            .padding(.horizontal)
+                            .frame(height: 120)
 
                             Text("Tap the arrow to continue")
                                 .font(.subheadline)
-                                .foregroundColor(.gray)
-                                .padding(.top, 4)
-                        }
-                    } else {
-                        VStack(spacing: 16) {
-                            Text(messages[currentMessageIndex])
-                                .font(.body)
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal, 28)
-                                .padding(.vertical, 20)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 20)
-                                        .fill(Color(uiColor: .systemBackground))
+                                .foregroundColor(
+                                    Color(uiColor: .secondaryLabel)
                                 )
-                                .id(currentMessageIndex)
-                                .transition(.scale.combined(with: .opacity))
+                        }
+                        .padding(.horizontal, 28)
+                    } else {
+                        VStack(spacing: 12) {
+                            ZStack(alignment: .topLeading) {
+                                Text(messages[currentMessageIndex])
+                                    .font(.body)
+                                    .fixedSize(
+                                        horizontal: false,
+                                        vertical: true
+                                    )
+                                    .frame(
+                                        maxWidth: .infinity,
+                                        alignment: .leading
+                                    )
+                                    .padding(.horizontal, 28)
+                                    .frame(height: 120, alignment: .center)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 20)
+                                            .fill(
+                                                Color(
+                                                    uiColor: .systemBackground
+                                                )
+                                            )
+                                    )
+                                    .id(currentMessageIndex)
+                                //                                    .transition(.scale.combined(with: .opacity))
+
+                                // Name tag
+                                Text("Finley")
+                                    .font(.title)
+                                    .fontWeight(.semibold)
+                                    .padding(.horizontal)
+                                    .padding(.vertical, 8)
+                                    .background(
+                                        Capsule()
+                                            .fill(
+                                                Color(
+                                                    uiColor: .systemBackground
+                                                )
+                                            )
+                                    )
+                                    .offset(x: 20, y: -20)
+                            }
+                            .padding(.horizontal, 28)
 
                             Text("Tap anywhere to continue")
                                 .font(.subheadline)
-                                .foregroundColor(.gray)
+                                .foregroundColor(
+                                    Color(uiColor: .secondaryLabel)
+                                )
                         }
-                        .frame(maxWidth: .infinity)
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding()
+                .contentShape(Rectangle())
                 .onTapGesture {
                     guard !showNameInput else { return }
                     withAnimation(.spring(response: 0.4, dampingFraction: 0.7))
