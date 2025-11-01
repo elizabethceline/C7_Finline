@@ -18,24 +18,26 @@ struct DaySelectorView: View {
                 } label: {
                     Text(day.shortLabel)
                         .font(.subheadline)
-                        .fontWeight(.medium)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 10)
                         .background(
-                            selectedDay == day
-                                ? Color.primary
-                                : Color(uiColor: .systemBackground)
+                            Color(uiColor: .systemBackground)
                         )
                         .foregroundColor(
-                            selectedDay == day
-                                ? Color.white : Color(uiColor: .label)
+                            Color(uiColor: .label)
                         )
                         .clipShape(RoundedRectangle(cornerRadius: 10))
-                        .shadow(
-                            color: selectedDay == day
-                                ? .blue.opacity(0.2) : .clear,
-                            radius: 2,
-                            y: 2
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(
+                                    selectedDay == day
+                                        ? Color.primary : Color.clear,
+                                    lineWidth: 2
+                                )
+                        )
+                        .animation(
+                            .easeInOut(duration: 0.2),
+                            value: selectedDay == day
                         )
                 }
             }
