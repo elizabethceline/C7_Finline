@@ -102,7 +102,6 @@ struct CharacterIntroView: View {
                         }
                     } else {
                         VStack(spacing: 12) {
-                            // Bubble tetap statis, hanya message yang berubah
                             ChatBubble(
                                 message: messages[currentMessageIndex],
                                 showNameTag: true
