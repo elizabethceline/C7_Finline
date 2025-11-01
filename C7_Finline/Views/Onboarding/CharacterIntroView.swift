@@ -11,6 +11,7 @@ struct CharacterIntroView: View {
     let onComplete: () -> Void
     @State private var currentMessageIndex = 0
     @State private var showNameInput = false
+    @State private var showFinalMessage = false
     @Binding var username: String
     @FocusState private var isTextFieldFocused: Bool
 
@@ -35,7 +36,21 @@ struct CharacterIntroView: View {
                         .scaledToFit()
                         .frame(width: geometry.size.width * 0.8)
 
-                    if showNameInput {
+                    if showFinalMessage {
+                        VStack(spacing: 12) {
+                            ChatBubble(
+                                message:
+                                    "Alright \(username), let's do our best!",
+                                showNameTag: true
+                            )
+
+                            Text("Tap the arrow to continue")
+                                .font(.subheadline)
+                                .foregroundColor(
+                                    Color(uiColor: .secondaryLabel)
+                                )
+                        }
+                    } else if showNameInput {
                         VStack(spacing: 12) {
                             HStack {
                                 VStack(alignment: .leading) {
@@ -47,6 +62,21 @@ struct CharacterIntroView: View {
                                     .disableAutocorrection(true)
                                     .font(.headline)
                                     .focused($isTextFieldFocused)
+                                    .onSubmit {
+                                        if !username.trimmingCharacters(
+                                            in: .whitespaces
+                                        ).isEmpty {
+                                            isTextFieldFocused = false
+                                            withAnimation(
+                                                .spring(
+                                                    response: 0.4,
+                                                    dampingFraction: 0.7
+                                                )
+                                            ) {
+                                                showFinalMessage = true
+                                            }
+                                        }
+                                    }
                                 }
 
                                 Spacer()
@@ -62,57 +92,21 @@ struct CharacterIntroView: View {
                                     .fill(Color(uiColor: .systemBackground))
                             )
                             .frame(height: 120)
+                            .padding(.horizontal, 28)
 
-                            Text("Tap the arrow to continue")
+                            Text("Press return/enter to continue")
                                 .font(.subheadline)
                                 .foregroundColor(
                                     Color(uiColor: .secondaryLabel)
                                 )
                         }
-                        .padding(.horizontal, 28)
                     } else {
                         VStack(spacing: 12) {
-                            ZStack(alignment: .topLeading) {
-                                Text(messages[currentMessageIndex])
-                                    .font(.body)
-                                    .fixedSize(
-                                        horizontal: false,
-                                        vertical: true
-                                    )
-                                    .frame(
-                                        maxWidth: .infinity,
-                                        alignment: .leading
-                                    )
-                                    .padding(.horizontal, 28)
-                                    .frame(height: 120, alignment: .center)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 20)
-                                            .fill(
-                                                Color(
-                                                    uiColor: .systemBackground
-                                                )
-                                            )
-                                    )
-                                    .id(currentMessageIndex)
-                                //                                    .transition(.scale.combined(with: .opacity))
-
-                                // Name tag
-                                Text("Finley")
-                                    .font(.title)
-                                    .fontWeight(.semibold)
-                                    .padding(.horizontal)
-                                    .padding(.vertical, 8)
-                                    .background(
-                                        Capsule()
-                                            .fill(
-                                                Color(
-                                                    uiColor: .systemBackground
-                                                )
-                                            )
-                                    )
-                                    .offset(x: 20, y: -20)
-                            }
-                            .padding(.horizontal, 28)
+                            ChatBubble(
+                                message: messages[currentMessageIndex],
+                                showNameTag: true
+                            )
+                            .id(currentMessageIndex)
 
                             Text("Tap anywhere to continue")
                                 .font(.subheadline)
@@ -125,7 +119,7 @@ struct CharacterIntroView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .contentShape(Rectangle())
                 .onTapGesture {
-                    guard !showNameInput else { return }
+                    guard !showNameInput && !showFinalMessage else { return }
                     withAnimation(.spring(response: 0.4, dampingFraction: 0.7))
                     {
                         if currentMessageIndex < messages.count - 1 {
@@ -141,10 +135,7 @@ struct CharacterIntroView: View {
                     }
                 }
 
-                // Next button
-                if showNameInput
-                    && !username.trimmingCharacters(in: .whitespaces).isEmpty
-                {
+                if showFinalMessage {
                     Button {
                         onComplete()
 
