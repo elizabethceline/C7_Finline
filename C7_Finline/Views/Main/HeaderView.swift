@@ -11,6 +11,8 @@ struct HeaderView: View {
     @ObservedObject var viewModel: MainViewModel
     let unfinishedTasks: [GoalTask]
 
+    @State private var navigateToProfile: Bool = false
+
     var body: some View {
         HStack(alignment: .bottom) {
 
@@ -39,13 +41,20 @@ struct HeaderView: View {
 
             Spacer()
 
-            Image("finley")
-                .resizable()
-                .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
-                .frame(width: 55, height: 55)
-                .clipShape(Circle())
+            Button {
+                navigateToProfile = true
+            } label: {
+                Image("finley")
+                    .resizable()
+                    .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
+                    .frame(width: 55, height: 55)
+                    .clipShape(Circle())
+            }
         }
         .padding()
+        .navigationDestination(isPresented: $navigateToProfile) {
+            ProfileView(viewModel: ProfileViewModel())
+        }
     }
 }
 
