@@ -21,13 +21,13 @@ struct ChatBubble: View {
                         .fill(
                             Color(
                                 uiColor: .systemBackground
-                            )
+                            ).opacity(0.5)
                         )
                 )
             
             if showNameTag {
                 Text("Finley")
-                    .font(.title)
+                    .font(.title2)
                     .fontWeight(.semibold)
                     .padding(.horizontal)
                     .padding(.vertical, 8)
