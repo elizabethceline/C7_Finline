@@ -33,99 +33,96 @@ struct MainView: View {
 
     var body: some View {
         NavigationStack {
-            VStack {
-                HeaderView(
-                    viewModel: viewModel,
-                    unfinishedTasks: unfinishedTasks
-                )
-                ContentCardView(
-                    viewModel: viewModel,
-                    selectedDate: $selectedDate,
-                )
+            ZStack(alignment: .bottomTrailing) {
+
+                ScrollView {
+                    VStack {
+                        HeaderView(
+                            viewModel: viewModel,
+                            unfinishedTasks: unfinishedTasks
+                        )
+
+                        ContentCardView(
+                            viewModel: viewModel,
+                            selectedDate: $selectedDate
+                        )
+                    }
+                    .onAppear {
+                        viewModel.setModelContext(modelContext)
+                        selectedDate = Calendar.current.startOfDay(for: Date())
+                    }
+                }
                 .refreshable {
                     viewModel.fetchUserProfile()
                 }
 
                 // add task button
-                VStack {
-                    Spacer()
-                    HStack {
-                        Spacer()
-                        HStack {
-                            Spacer()
-                            Button(action: {
-                                // Add task action
-                            }) {
-                                Image(systemName: "plus")
-                                    .font(.title2)
-                                    .foregroundColor(.black)
-                                    .padding(.all, 8)
-                            }
-                            .buttonStyle(.glass)
-                            .background(Circle().fill(Color.primary))
-                            .padding(.trailing, 28)
-                            .padding(.bottom, 16)
-                        }
-                    }
+                Button(action: {
+                    // Add task action
+                }) {
+                    Image(systemName: "plus")
+                        .font(.title2)
+                        .foregroundColor(.black)
+                        .padding(14)
+                        .background(Circle().fill(Color.primary))
+                        .shadow(radius: 4)
                 }
-                .onAppear {
-                    viewModel.setModelContext(modelContext)
-                    selectedDate = Calendar.current.startOfDay(for: Date())
-                }
+                .padding(.trailing, 24)
+                .padding(.bottom, 24)
             }
 
             .background(Color(uiColor: .systemGray6).ignoresSafeArea())
 
         }
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Menu {
-                    Button {
-                        navigateToProfile = true
-                    } label: {
-                        Label(
-                            "Profile",
-                            systemImage: "person"
-                        )
-                    }
-
-                    Button {
-                        // to shop
-                    } label: {
-                        Label(
-                            "Shop",
-                            systemImage: "cart"
-                        )
-                    }
-
-                    //NITIP FOCUS MODE START
-                    Button {
-                        navigateToFocus = true
-                    } label: {
-                        Label(
-                            "Focus Mode",
-                            systemImage: "lock.desktopcomputer"
-                        )
-                    }
-                    //NITIP FOCUS MODE END//
-
-                } label: {
-                    Image(systemName: "ellipsis")
-                        .imageScale(.large)
-                        .foregroundColor(.primary)
-                }
-            }
-        }
-        .navigationBarTitleDisplayMode(.inline)
-        .navigationDestination(isPresented: $navigateToProfile) {
-            ProfileView(viewModel: ProfileViewModel())
-        }
-
-        //NITIP FOCUS MODE START
-        .navigationDestination(isPresented: $navigateToFocus) {
-            TestCloud()
-        }
-        //NITIP FOCUS MODE END
+        //        .toolbar {
+        //            ToolbarItem(placement: .topBarTrailing) {
+        //                Menu {
+        //                    Button {
+        //                        navigateToProfile = true
+        //                    } label: {
+        //                        Label(
+        //                            "Profile",
+        //                            systemImage: "person"
+        //                        )
+        //                    }
+        //
+        //                    Button {
+        //                        // to shop
+        //                    } label: {
+        //                        Label(
+        //                            "Shop",
+        //                            systemImage: "cart"
+        //                        )
+        //                    }
+        //
+        //                    //NITIP FOCUS MODE START
+        //                    Button {
+        //                        navigateToFocus = true
+        //                    } label: {
+        //                        Label(
+        //                            "Focus Mode",
+        //                            systemImage: "lock.desktopcomputer"
+        //                        )
+        //                    }
+        //                    //NITIP FOCUS MODE END//
+        //
+        //                } label: {
+        //                    Image(systemName: "ellipsis")
+        //                        .imageScale(.large)
+        //                        .foregroundColor(.primary)
+        //                }
+        //            }
+        //        }
+        //        .navigationBarTitleDisplayMode(.inline)
+        //        .navigationDestination(isPresented: $navigateToProfile) {
+        //            ProfileView(viewModel: ProfileViewModel())
+        //        }
+        //
+        //        //NITIP FOCUS MODE START
+        //        .navigationDestination(isPresented: $navigateToFocus) {
+        //            TestCloud()
+        //        }
+        //        //NITIP FOCUS MODE END
     }
 }
 
