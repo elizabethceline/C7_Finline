@@ -19,13 +19,28 @@ struct ProfileView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
-                    Image("finley")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 240)
-                        .padding(.top, 16)
-                        .padding(.horizontal)
+                    ZStack(alignment: .bottomTrailing) {
+
+                        Image("finley")
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 240, height: 240)
+
+                        Button {
+                            // ke shop
+                        } label: {
+                            Image(systemName: "hanger")
+                                .font(.body)
+                                .fontWeight(.bold)
+                                .foregroundColor(.white)
+                                .padding(12)
+                                .background(
+                                    Circle()
+                                        .fill(Color.primary)
+                                )
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
 
                     HStack {
                         VStack(alignment: .leading) {
