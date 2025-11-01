@@ -24,10 +24,20 @@ struct MainView: View {
         }
     }
 
+    private var unfinishedTasks: [GoalTask] {
+        viewModel.tasks.filter { task in
+            task.workingTime < Calendar.current.startOfDay(for: Date())
+                && !task.isCompleted
+        }
+    }
+
     var body: some View {
         NavigationStack {
             VStack {
-                HeaderView(viewModel: viewModel)
+                HeaderView(
+                    viewModel: viewModel,
+                    unfinishedTasks: unfinishedTasks
+                )
                 ContentCardView(
                     viewModel: viewModel,
                     selectedDate: $selectedDate,
