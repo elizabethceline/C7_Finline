@@ -13,55 +13,62 @@ struct SetProductiveHoursView: View {
     @State private var selectedDay: DayOfWeek = .monday
 
     var body: some View {
-        VStack(spacing: 16) {
-            // Header
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Find Your Best Time to Work")
-                    .font(.largeTitle)
-                    .fontWeight(.medium)
-                    .multilineTextAlignment(.leading)
+        ZStack {
+            // Background
+            OnboardingBackground()
 
-                Text("Our AI analyzes your activity and shows you the time when you are most focused.")
-                    .font(.body)
-                    .foregroundColor(.secondary)
-            }
-            .padding(.horizontal)
-
-            // Day selector
-            DaySelectorView(selectedDay: $selectedDay)
-
-            // Time slots
-            TimeSlotListView(
-                productiveHours: $productiveHours,
-                selectedDay: selectedDay,
-                onChange: {}
-            )
-
-            // Buttons
             VStack(spacing: 16) {
-                Button {
-                    onComplete()
-                } label: {
-                    Text("Start Productivity")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.blue)
-                        .clipShape(RoundedRectangle(cornerRadius: 50))
-                }
+                // Header
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("What’s your best productivity time?")
+                        .font(.largeTitle)
+                        .fontWeight(.medium)
+                        .multilineTextAlignment(.leading)
+                        .foregroundColor(Color(uiColor: .label))
 
-                Button {
-                    onComplete()
-                } label: {
-                    Text("Skip for now")
-                        .font(.subheadline)
-                        .foregroundColor(.blue)
+                    Text(
+                        "Finley will analyze your activity and shows you the time when you are most focused."
+                    )
+                    .font(.body)
+                    .foregroundColor(Color(uiColor: .secondaryLabel))
                 }
+                .padding()
+
+                // Day selector
+                DaySelectorView(selectedDay: $selectedDay)
+
+                // Time slots
+                TimeSlotListView(
+                    productiveHours: $productiveHours,
+                    selectedDay: selectedDay,
+                    onChange: {}
+                )
+
+                // Buttons
+                VStack(spacing: 16) {
+                    Button {
+                        onComplete()
+                    } label: {
+                        Text("Next")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.primary)
+                            .clipShape(RoundedRectangle(cornerRadius: 50))
+                    }
+
+                    Button {
+                        onComplete()
+                    } label: {
+                        Text("Skip for now")
+                            .font(.subheadline)
+                            .foregroundColor(.primary)
+                    }
+                }
+                .padding()
             }
-            .padding()
         }
-        .background(Color(.systemBackground))
     }
 }
 
