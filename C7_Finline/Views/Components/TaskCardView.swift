@@ -21,10 +21,11 @@ struct TaskCardView: View {
             VStack(alignment: .leading) {
                 Text(formattedTime(task.workingTime))
                     .font(.caption)
-                    .foregroundColor(.gray)
+                    .foregroundColor(Color(uiColor: .secondaryLabel))
                 Text(task.name)
                     .font(.body)
                     .fontWeight(.medium)
+                    .foregroundColor(Color(uiColor: .label))
             }
 
             Spacer()
@@ -33,11 +34,12 @@ struct TaskCardView: View {
                 .font(.caption)
                 .fontWeight(.bold)
                 .padding(6)
-                .background(Color.blue.opacity(0.4))
+                .foregroundColor(.black)
+                .background(Color.secondary)
                 .cornerRadius(12)
         }
         .padding()
-        .background(Color.white)
+        .background(Color(uiColor: .systemBackground))
         .cornerRadius(30)
     }
 }

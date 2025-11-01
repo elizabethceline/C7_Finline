@@ -23,22 +23,22 @@ struct DateItemView: View {
             VStack(spacing: 4) {
                 Text(shortWeekday(from: date))
                     .font(.caption)
-                    .foregroundColor(.black.opacity(0.6))
+                    .foregroundColor(Color(uiColor: .secondaryLabel))
 
                 Text("\(Calendar.current.component(.day, from: date))")
                     .font(.title3)
                     .fontWeight(.semibold)
-                    .foregroundColor(.black)
+                    .foregroundColor(Color(uiColor: .label))
             }
             .frame(width: 60, height: 55)
             .background(
                 RoundedRectangle(cornerRadius: 14)
-                    .fill(Color.white)
+                    .fill(Color(uiColor: .systemBackground))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
                     .stroke(
-                        isSelected ? Color.blue.opacity(0.3) : Color.clear,
+                        isSelected ? Color.primary : Color.clear,
                         lineWidth: 2
                     )
             )

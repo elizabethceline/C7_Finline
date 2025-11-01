@@ -14,7 +14,7 @@ struct ContentCardView: View {
     private var filteredTasks: [GoalTask] {
         viewModel.tasks.filter { task in
             Calendar.current.isDate(task.workingTime, inSameDayAs: selectedDate)
-            && !task.isCompleted
+                && !task.isCompleted
         }
     }
 
@@ -25,41 +25,40 @@ struct ContentCardView: View {
                     task.workingTime,
                     inSameDayAs: selectedDate
                 )
-                && !task.isCompleted
+                    && !task.isCompleted
             }
         }
     }
 
     var body: some View {
-        ZStack(alignment: .top) {
-            RoundedRectangle(cornerRadius: 20)
-                .fill(Color(uiColor: .systemGray6))
-                .ignoresSafeArea(edges: .bottom)
+        VStack(spacing: 16) {
+            HStack(spacing: 0) {
+                Text(selectedDate.formatted(.dateTime.month(.wide)) + " ")
+                    .foregroundColor(.primary)
 
-            VStack(spacing: 16) {
-                Text(selectedDate.formatted(.dateTime.month(.wide).year()))
-                    .font(.title)
-                    .fontWeight(.bold)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                DateSelectorView(selectedDate: $selectedDate)
-
-                Divider()
-
-                if filteredTasks.isEmpty {
-                    EmptyStateView()
-                        .padding(.top, 24)
-                } else {
-                    TaskListView(
-                        viewModel: viewModel,
-                        tasks: filteredTasks,
-                        goals: goalsForSelectedDate,
-                        selectedDate: selectedDate
-                    )
-                }
+                Text(selectedDate.formatted(.dateTime.year()))
             }
-            .padding()
+            .font(.title)
+            .fontWeight(.bold)
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            DateSelectorView(selectedDate: $selectedDate)
+
+            Divider()
+
+            if filteredTasks.isEmpty {
+                EmptyStateView()
+                    .padding(.top, 24)
+            } else {
+                TaskListView(
+                    viewModel: viewModel,
+                    tasks: filteredTasks,
+                    goals: goalsForSelectedDate,
+                    selectedDate: selectedDate
+                )
+            }
         }
-        .ignoresSafeArea(edges: .bottom)
+        .padding(.horizontal)
     }
 }
 

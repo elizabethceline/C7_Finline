@@ -13,7 +13,7 @@ struct MainView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var selectedDate: Date = Date()
     @State private var navigateToProfile: Bool = false
-    
+
     //NITIP FOCUS MODE START//
     @State private var navigateToFocus: Bool = false
     //NITIP DOCUS MODE END//
@@ -26,23 +26,14 @@ struct MainView: View {
 
     var body: some View {
         NavigationStack {
-            GeometryReader { geo in
-                let headerHeight = geo.size.height * 0.5
-
-                ZStack(alignment: .top) {
-                    HeaderImageView(height: headerHeight, width: geo.size.width)
-
-                    VStack(spacing: 0) {
-                        Spacer(minLength: headerHeight / 2)
-
-                        ContentCardView(
-                            viewModel: viewModel,
-                            selectedDate: $selectedDate,
-                        )
-                        .refreshable {
-                            viewModel.fetchUserProfile()
-                        }
-                    }
+            VStack {
+                HeaderView(viewModel: viewModel)
+                ContentCardView(
+                    viewModel: viewModel,
+                    selectedDate: $selectedDate,
+                )
+                .refreshable {
+                    viewModel.fetchUserProfile()
                 }
 
                 // add task button
@@ -60,8 +51,8 @@ struct MainView: View {
                                     .foregroundColor(.black)
                                     .padding(.all, 8)
                             }
-                            .background(Circle().fill(Color.blue.opacity(0.6)))
                             .buttonStyle(.glass)
+                            .background(Circle().fill(Color.primary))
                             .padding(.trailing, 28)
                             .padding(.bottom, 16)
                         }
@@ -72,56 +63,59 @@ struct MainView: View {
                     selectedDate = Calendar.current.startOfDay(for: Date())
                 }
             }
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Menu {
-                        Button {
-                            navigateToProfile = true
-                        } label: {
-                            Label(
-                                "Profile",
-                                systemImage: "person"
-                            )
-                        }
 
-                        Button {
-                            // to shop
-                        } label: {
-                            Label(
-                                "Shop",
-                                systemImage: "cart"
-                            )
-                        }
-                        
-                        //NITIP FOCUS MODE START
-                        Button {
-                            navigateToFocus = true
-                        } label: {
-                            Label(
-                                "Focus Mode",
-                                systemImage: "lock.desktopcomputer"
-                            )
-                        }
-                        //NITIP FOCUS MODE END//
-                        
-                    } label: {
-                        Image(systemName: "ellipsis")
-                            .imageScale(.large)
-                            .foregroundColor(.primary)
-                    }
-                }
-            }
-            .navigationBarTitleDisplayMode(.inline)
-            .navigationDestination(isPresented: $navigateToProfile) {
-                ProfileView(viewModel: ProfileViewModel())
-            }
-            
-            //NITIP FOCUS MODE START
-            .navigationDestination(isPresented: $navigateToFocus) {
-                    TestCloud()
-                }
-            //NITIP FOCUS MODE END
+            .background(Color(uiColor: .systemGray6).ignoresSafeArea())
+
         }
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Menu {
+                    Button {
+                        navigateToProfile = true
+                    } label: {
+                        Label(
+                            "Profile",
+                            systemImage: "person"
+                        )
+                    }
+
+                    Button {
+                        // to shop
+                    } label: {
+                        Label(
+                            "Shop",
+                            systemImage: "cart"
+                        )
+                    }
+
+                    //NITIP FOCUS MODE START
+                    Button {
+                        navigateToFocus = true
+                    } label: {
+                        Label(
+                            "Focus Mode",
+                            systemImage: "lock.desktopcomputer"
+                        )
+                    }
+                    //NITIP FOCUS MODE END//
+
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .imageScale(.large)
+                        .foregroundColor(.primary)
+                }
+            }
+        }
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationDestination(isPresented: $navigateToProfile) {
+            ProfileView(viewModel: ProfileViewModel())
+        }
+
+        //NITIP FOCUS MODE START
+        .navigationDestination(isPresented: $navigateToFocus) {
+            TestCloud()
+        }
+        //NITIP FOCUS MODE END
     }
 }
 
