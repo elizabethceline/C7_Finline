@@ -102,11 +102,11 @@ struct CharacterIntroView: View {
                         }
                     } else {
                         VStack(spacing: 12) {
+                            // Bubble tetap statis, hanya message yang berubah
                             ChatBubble(
                                 message: messages[currentMessageIndex],
                                 showNameTag: true
                             )
-                            .id(currentMessageIndex)
 
                             Text("Tap anywhere to continue")
                                 .font(.subheadline)
@@ -120,17 +120,18 @@ struct CharacterIntroView: View {
                 .contentShape(Rectangle())
                 .onTapGesture {
                     guard !showNameInput && !showFinalMessage else { return }
-                    withAnimation(.spring(response: 0.4, dampingFraction: 0.7))
-                    {
-                        if currentMessageIndex < messages.count - 1 {
-                            currentMessageIndex += 1
-                        } else {
+                    if currentMessageIndex < messages.count - 1 {
+                        currentMessageIndex += 1
+                    } else {
+                        withAnimation(
+                            .spring(response: 0.4, dampingFraction: 0.7)
+                        ) {
                             showNameInput = true
-                            DispatchQueue.main.asyncAfter(
-                                deadline: .now() + 0.3
-                            ) {
-                                isTextFieldFocused = true
-                            }
+                        }
+                        DispatchQueue.main.asyncAfter(
+                            deadline: .now() + 0.3
+                        ) {
+                            isTextFieldFocused = true
                         }
                     }
                 }

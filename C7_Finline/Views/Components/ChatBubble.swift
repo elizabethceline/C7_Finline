@@ -13,16 +13,7 @@ struct ChatBubble: View {
     
     var body: some View {
         ZStack(alignment: .topLeading) {
-            Text(message)
-                .font(.body)
-                .fixedSize(
-                    horizontal: false,
-                    vertical: true
-                )
-                .frame(
-                    maxWidth: .infinity,
-                    alignment: .leading
-                )
+            TypingText(text: message)
                 .padding(.horizontal, 28)
                 .frame(height: 120, alignment: .center)
                 .background(
