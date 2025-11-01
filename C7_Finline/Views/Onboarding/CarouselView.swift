@@ -16,19 +16,19 @@ struct CarouselView: View {
             title: "Big Task?",
             description:
                 "Add a task and our AI breaks it into simple steps so you can start, stay on track, and finish with ease.",
-            imageName: "square.stack.3d.up"
+            imageName: "carousel_1"
         ),
         OnboardingCard(
             title: "Focus Now",
             description:
                 "Activate Focus Mode to silence distractions, keep your mind clear, and stay in flow.",
-            imageName: "brain.head.profile"
+            imageName: "carousel_2"
         ),
         OnboardingCard(
             title: "Be Rewarded",
             description:
                 "Stay focused, earn points, and unlock rewards that make every task feel rewarding.",
-            imageName: "star.fill"
+            imageName: "carousel_3"
         ),
     ]
 
@@ -37,7 +37,10 @@ struct CarouselView: View {
             ZStack(alignment: .bottomTrailing) {
                 // Background
                 LinearGradient(
-                    colors: [Color.white, Color.blue.opacity(0.15)],
+                    colors: [
+                        Color(uiColor: .systemGray6),
+                        Color.primary.opacity(0.25),
+                    ],
                     startPoint: .top,
                     endPoint: .bottom
                 )
@@ -49,7 +52,7 @@ struct CarouselView: View {
                         ForEach(Array(cards.enumerated()), id: \.element.id) {
                             index,
                             card in
-                            OnboardingCardView(card: card)
+                            Image(card.imageName)
                                 .frame(
                                     width: geometry.size.width * 0.7,
                                     height: geometry.size.height * 0.45
@@ -127,19 +130,13 @@ struct CarouselView: View {
                     Image(
                         systemName: "arrow.right"
                     )
-                    .font(
-                        .system(size: geometry.size.width * 0.05, weight: .bold)
-                    )
-                    .foregroundColor(.white)
-                    .frame(
-                        width: geometry.size.width * 0.15,
-                        height: geometry.size.width * 0.15
-                    )
-                    .background(Color.blue)
-                    .clipShape(Circle())
+                    .font(.title2)
+                    .foregroundColor(Color(uiColor: .label))
+                    .padding()
                 }
                 .padding(.trailing, 28)
             }
+            .buttonStyle(.glass)
         }
     }
 
