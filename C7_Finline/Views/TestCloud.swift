@@ -70,7 +70,7 @@ struct TestCloud: View {
                             } else {
                                 ForEach(viewModel.goals) { goal in
                                     NavigationLink(
-                                        destination: GoalDetailView(
+                                        destination: GoalDetailView1(
                                             viewModel: viewModel,
                                             goal: goal
                                         )
@@ -272,7 +272,7 @@ struct AddGoalView: View {
 }
 
 // goal detail
-struct GoalDetailView: View {
+struct GoalDetailView1: View {
     @ObservedObject var viewModel: TestCloudViewModel
     let goal: Goal
     @State private var showingAddTask = false
