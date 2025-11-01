@@ -18,12 +18,6 @@ struct MainView: View {
     @State private var navigateToFocus: Bool = false
     //NITIP DOCUS MODE END//
 
-    private var filteredTasks: [GoalTask] {
-        viewModel.tasks.filter { task in
-            Calendar.current.isDate(task.workingTime, inSameDayAs: selectedDate)
-        }
-    }
-
     private var unfinishedTasks: [GoalTask] {
         viewModel.tasks.filter { task in
             task.workingTime < Calendar.current.startOfDay(for: Date())
@@ -34,26 +28,22 @@ struct MainView: View {
     var body: some View {
         NavigationStack {
             ZStack(alignment: .bottomTrailing) {
+                VStack {
+                    HeaderView(
+                        viewModel: viewModel,
+                        unfinishedTasks: unfinishedTasks
+                    )
 
-                ScrollView {
-                    VStack {
-                        HeaderView(
-                            viewModel: viewModel,
-                            unfinishedTasks: unfinishedTasks
-                        )
+                    ContentCardView(
+                        viewModel: viewModel,
+                        selectedDate: $selectedDate
+                    )
 
-                        ContentCardView(
-                            viewModel: viewModel,
-                            selectedDate: $selectedDate
-                        )
-                    }
-                    .onAppear {
-                        viewModel.setModelContext(modelContext)
-                        selectedDate = Calendar.current.startOfDay(for: Date())
-                    }
+                    Spacer()
                 }
-                .refreshable {
-                    viewModel.fetchUserProfile()
+                .onAppear {
+                    viewModel.setModelContext(modelContext)
+                    selectedDate = Calendar.current.startOfDay(for: Date())
                 }
 
                 // add task button
@@ -72,7 +62,6 @@ struct MainView: View {
             }
 
             .background(Color(uiColor: .systemGray6).ignoresSafeArea())
-
         }
         //        .toolbar {
         //            ToolbarItem(placement: .topBarTrailing) {

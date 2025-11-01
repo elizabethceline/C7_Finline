@@ -47,8 +47,14 @@ struct ContentCardView: View {
             Divider()
 
             if filteredTasks.isEmpty {
-                EmptyStateView()
-                    .padding(.top, 24)
+                ScrollView(showsIndicators: false) {
+
+                    EmptyStateView()
+                        .padding(.top, 24)
+                }
+                .refreshable {
+                    viewModel.fetchUserProfile()
+                }
             } else {
                 TaskListView(
                     viewModel: viewModel,
@@ -56,6 +62,9 @@ struct ContentCardView: View {
                     goals: goalsForSelectedDate,
                     selectedDate: selectedDate
                 )
+                .refreshable {
+                    viewModel.fetchUserProfile()
+                }
             }
         }
         .padding(.horizontal)
