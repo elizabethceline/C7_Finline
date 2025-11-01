@@ -36,15 +36,7 @@ struct CarouselView: View {
         GeometryReader { geometry in
             ZStack(alignment: .bottomTrailing) {
                 // Background
-                LinearGradient(
-                    colors: [
-                        Color(uiColor: .systemGray6),
-                        Color.primary.opacity(0.25),
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .ignoresSafeArea()
+                OnboardingBackground()
 
                 VStack(spacing: geometry.size.height * 0.04) {
                     // Card carousel
@@ -135,8 +127,8 @@ struct CarouselView: View {
                     .padding()
                 }
                 .padding(.trailing, 28)
+                .buttonStyle(.glass)
             }
-            .buttonStyle(.glass)
         }
     }
 

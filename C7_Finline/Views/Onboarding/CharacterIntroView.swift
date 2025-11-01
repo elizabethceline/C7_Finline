@@ -15,52 +15,59 @@ struct CharacterIntroView: View {
     @FocusState private var isTextFieldFocused: Bool
 
     let messages = [
-        "Hey, I’m Finly 🐧 I’m not lazy, I just… kinda lose focus sometimes.",
-        "My brain just goes whoosh a million thoughts at once. Then I forget what I was even doing.",
-        "But when I focus, I can fishing and eat. I just need someone who can help me stay on track… maybe that’s you?",
-        "Let’s do this together. You focus on your tasks, and I’ll focus too. The more we focus, the more fish we catch and maybe I won’t go hungry this time.",
+        "Hi there, nice to meet you. I’m Finley",
+        "Lately, it’s hard for me to go out and fish so i can eat.",
+        "I’m not lazy, I just… kinda lose focus sometimes.",
+        "So I need a friend to focus together!",
+        "And its’ you! well what is your name?",
     ]
 
     var body: some View {
         GeometryReader { geometry in
-            ZStack(alignment: .bottomLeading) {
+            ZStack(alignment: .bottomTrailing) {
                 // Background
-                LinearGradient(
-                    colors: [Color.white, Color.blue.opacity(0.15)],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .ignoresSafeArea()
+                OnboardingBackground()
 
                 // Content
                 VStack(spacing: 36) {
-
-                    Spacer()
+                    Image("finley")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: geometry.size.width * 0.8)
 
                     if showNameInput {
-                        VStack(spacing: 16) {
-                            Text("Before we start... what should I call you?")
-                                .font(.body)
-                                .multilineTextAlignment(.center)
+                        VStack {
+                            HStack {
+                                VStack(alignment: .leading) {
+                                    TextField(
+                                        "Your name",
+                                        text: $username
+                                    )
+                                    .textInputAutocapitalization(.words)
+                                    .disableAutocorrection(true)
+                                    .font(.headline)
+                                    .focused($isTextFieldFocused)
+                                }
 
-                            TextField("Enter your name", text: $username)
-                                .multilineTextAlignment(.center)
-                                .focused($isTextFieldFocused)
-                                .padding(.vertical, 6)
-                                .overlay(
-                                    Rectangle()
-                                        .frame(height: 1)
-                                        .foregroundColor(.gray)
-                                        .padding(.horizontal, 16),
-                                    alignment: .bottom
-                                )
+                                Spacer()
+
+                                Image(systemName: "pencil")
+                                    .foregroundColor(Color(uiColor: .label))
+                                    .font(.title2)
+                                    .padding(8)
+                            }
+                            .padding()
+                            .background(
+                                RoundedRectangle(cornerRadius: 20)
+                                    .fill(Color(uiColor: .systemBackground))
+                            )
+                            .padding(.horizontal)
+
+                            Text("Tap the arrow to continue")
+                                .font(.subheadline)
+                                .foregroundColor(.gray)
+                                .padding(.top, 4)
                         }
-                        .padding(.horizontal, 28)
-                        .padding(.vertical, 20)
-                        .background(
-                            RoundedRectangle(cornerRadius: 20)
-                                .fill(Color.white)
-                        )
                     } else {
                         VStack(spacing: 16) {
                             Text(messages[currentMessageIndex])
@@ -70,7 +77,7 @@ struct CharacterIntroView: View {
                                 .padding(.vertical, 20)
                                 .background(
                                     RoundedRectangle(cornerRadius: 20)
-                                        .fill(Color.white)
+                                        .fill(Color(uiColor: .systemBackground))
                                 )
                                 .id(currentMessageIndex)
                                 .transition(.scale.combined(with: .opacity))
@@ -79,73 +86,51 @@ struct CharacterIntroView: View {
                                 .font(.subheadline)
                                 .foregroundColor(.gray)
                         }
+                        .frame(maxWidth: .infinity)
                     }
-
-                    Spacer()
-
-                    Image("penguin")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: geometry.size.width * 0.8)
-                        .opacity(0)
                 }
-                .padding()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .contentShape(Rectangle())
+                .padding()
                 .onTapGesture {
                     guard !showNameInput else { return }
-                    withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.7))
+                    {
                         if currentMessageIndex < messages.count - 1 {
                             currentMessageIndex += 1
                         } else {
                             showNameInput = true
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                            DispatchQueue.main.asyncAfter(
+                                deadline: .now() + 0.3
+                            ) {
                                 isTextFieldFocused = true
                             }
                         }
                     }
                 }
 
-                // Penguin
-                Image("penguin")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: geometry.size.width * 0.8)
-                    .alignmentGuide(.bottom) { d in d[.bottom] }
-                    .ignoresSafeArea(edges: .bottom)
-
                 // Next button
-                if showNameInput && !username.trimmingCharacters(in: .whitespaces).isEmpty {
-                    VStack {
-                        Spacer()
-                        HStack {
-                            Spacer()
-                            Button {
-                                withAnimation {
-                                    onComplete()
-                                }
-                            } label: {
-                                Image(systemName: "arrow.right")
-                                    .font(.system(size: geometry.size.width * 0.05, weight: .bold))
-                                    .foregroundColor(.white)
-                                    .frame(
-                                        width: geometry.size.width * 0.15,
-                                        height: geometry.size.width * 0.15
-                                    )
-                                    .background(Color.blue)
-                                    .clipShape(Circle())
-                            }
-                            .padding(.trailing, 28)
-                            .padding(.bottom, 40)
-                        }
+                if showNameInput
+                    && !username.trimmingCharacters(in: .whitespaces).isEmpty
+                {
+                    Button {
+                        onComplete()
+
+                    } label: {
+                        Image(
+                            systemName: "arrow.right"
+                        )
+                        .font(.title2)
+                        .foregroundColor(Color(uiColor: .label))
+                        .padding()
                     }
+                    .padding(.trailing, 28)
+                    .buttonStyle(.glass)
                 }
             }
-            .ignoresSafeArea(edges: .bottom)
         }
     }
 }
 
 #Preview {
-    CharacterIntroView(onComplete: {}, username: .constant("Budi") )
+    CharacterIntroView(onComplete: {}, username: .constant("Budi"))
 }
