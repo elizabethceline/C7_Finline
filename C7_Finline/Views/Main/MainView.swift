@@ -63,12 +63,12 @@ struct MainView: View {
                     Image(systemName: "plus")
                         .font(.title2)
                         .foregroundColor(.black)
-                        .padding(14)
-                        .background(Circle().fill(Color.primary))
-                        .shadow(radius: 4)
+                        .padding(.all, 8)
                 }
-                .padding(.trailing, 24)
-                .padding(.bottom, 24)
+                .buttonStyle(.glass)
+                .background(Circle().fill(Color.primary))
+                .padding(.trailing, 28)
+                .padding(.bottom, 16)
             }
 
             .background(Color(uiColor: .systemGray6).ignoresSafeArea())
