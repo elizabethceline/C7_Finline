@@ -55,14 +55,11 @@ struct CreateTaskView: View {
                 }
                 
                 if !taskVM.tasks.isEmpty {
-                    ForEach(taskVM.groupedTasksByDate(), id: \.date) { group in
-                        let dateFormatter = DateFormatter()
-                        let dateString = group.date.formatted(.dateTime.day().month(.wide).year())
-                        
+                    ForEach(taskVM.groupedGoalTaskAI(), id: \.date) { group in
                         Section(header:
-                                    Text(dateString)
-                            .font(.headline)
-                            .foregroundColor(.primary)
+                            Text(group.date, format: .dateTime.day().month(.wide).year())
+                                .font(.title3)
+                                .foregroundColor(.primary)
                         ) {
                             ForEach(group.tasks) { aiTask in
                                 let workingDate = taskVM.computeWorkingDate(from: aiTask.workingTime)
@@ -138,7 +135,7 @@ struct CreateTaskView: View {
                             description: "",
                             modelContext: modelContext
                         )
-                        await taskVM.saveAllTasks(for: goal, modelContext: modelContext)
+                        await taskVM.createAllGoalTasks(for: goal, modelContext: modelContext)
                     }
                 } label: {
                     Image(systemName: "checkmark")

@@ -157,7 +157,7 @@ struct DetailTaskView: View {
     
     private func saveChanges() {
         Task {
-            await taskVM.updateTaskSD(
+            await taskVM.updateGoalTask(
                 task,
                 name: taskName,
                 workingTime: taskDate,

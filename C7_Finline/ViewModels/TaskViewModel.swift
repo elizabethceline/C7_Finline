@@ -13,6 +13,7 @@ import SwiftUI
 @MainActor
 final class TaskViewModel: ObservableObject {
     @Published var tasks: [AIGoalTask] = []
+    @Published var goalTasks: [GoalTask] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
     private let taskManager: TaskManager
@@ -25,8 +26,72 @@ final class TaskViewModel: ObservableObject {
     
     private let model = SystemLanguageModel.default
     
+    //saved to Swift Data
+    func createAllGoalTasks(for goal: Goal, modelContext: ModelContext) async {
+        guard !tasks.isEmpty else {
+            print("No generated tasks to save.")
+            return
+        }
+        
+        let dateFormatter = ISO8601DateFormatter()
+        
+        for task in tasks {
+            guard let workingDate = dateFormatter.date(from: task.workingTime)
+            else {
+                print("Invalid workingTime: \(task.workingTime)")
+                continue
+            }
+            
+            _ = taskManager.createTask(
+                goal: goal,
+                name: task.name,
+                workingTime: workingDate,
+                focusDuration: task.focusDuration,
+                modelContext: modelContext
+            )
+        }
+        
+        do {
+            try modelContext.save()
+            print("Saved \(tasks.count) AI tasks for goal \(goal.name)")
+        } catch {
+            print("Failed to save AI tasks: \(error.localizedDescription)")
+        }
+    }
     
-    func updateTaskSD(
+    func getGoalTaskByGoalId(for goal: Goal, modelContext: ModelContext) async {
+        isLoading = true
+        errorMessage = nil
+        
+        let goalId = goal.id
+        
+        let descriptor = FetchDescriptor<GoalTask>(
+            predicate: #Predicate { task in
+                task.goal?.id == goalId
+            },
+            sortBy: [SortDescriptor(\.workingTime, order: .forward)]
+        )
+        
+        do {
+            let results = try modelContext.fetch(descriptor)
+            await MainActor.run {
+                self.goalTasks = results
+                print("Successfully fetched \(results.count) tasks for goal \(goal.name)")
+            }
+        } catch {
+            await MainActor.run {
+                self.errorMessage = "Failed to fetch tasks: \(error.localizedDescription)"
+                print("Error fetching tasks for goal \(goal.name): \(error.localizedDescription)")
+            }
+        }
+        
+        await MainActor.run {
+            self.isLoading = false
+        }
+    }
+    
+    
+    func updateGoalTask(
         _ task: GoalTask,
         name: String,
         workingTime: Date,
@@ -50,29 +115,39 @@ final class TaskViewModel: ObservableObject {
         }
     }
     
-    func groupedTasksByDate() -> [(date: Date, tasks: [AIGoalTask])] {
-        let dateFormatter = ISO8601DateFormatter()
-        let calendar = Calendar.current
+    func deleteGoalTask(_ task: GoalTask, modelContext: ModelContext) async {
+        await MainActor.run {
+            self.isLoading = true
+            self.errorMessage = nil
+        }
         
-        let grouped = Dictionary(grouping: tasks) { task -> Date in
-            if let date = dateFormatter.date(from: task.workingTime) {
-                return calendar.startOfDay(for: date)
-            } else {
-                return calendar.startOfDay(for: Date())
+        do {
+            // Panggil TaskManager untuk hapus task dari lokal + sinkronisasi CloudKit
+            taskManager.deleteTask(task: task, modelContext: modelContext)
+            
+            // Simpan perubahan ke SwiftData
+            try modelContext.save()
+            
+            // Update UI (hapus dari array goalTasks)
+            await MainActor.run {
+                self.goalTasks.removeAll { $0.id == task.id }
+                print("✅ Deleted task: \(task.name)")
+            }
+        } catch {
+            await MainActor.run {
+                self.errorMessage = "Failed to delete task: \(error.localizedDescription)"
+                print("❌ Error deleting task '\(task.name)': \(error.localizedDescription)")
             }
         }
         
-        return grouped
-            .sorted { $0.key < $1.key }
-            .map { (key: $0.key, value: $0.value.sorted {
-                guard
-                    let d1 = dateFormatter.date(from: $0.workingTime),
-                    let d2 = dateFormatter.date(from: $1.workingTime)
-                else { return false }
-                return d1 < d2
-            }) }
+        await MainActor.run {
+            self.isLoading = false
+        }
     }
+
     
+    
+    //temporary CRUD before saved to Swift Data
     func createTaskManually(name: String, workingTime: Date, focusDuration: Int) {
         guard !name.trimmingCharacters(in: .whitespaces).isEmpty else {
             errorMessage = "Task name cannot be empty."
@@ -132,7 +207,7 @@ final class TaskViewModel: ObservableObject {
         tasks[index].focusDuration = focusDuration
         
         errorMessage = nil
-        print("✅ Task '\(name)' updated successfully.")
+        print("Task '\(name)' updated successfully.")
     }
     
     
@@ -153,39 +228,6 @@ final class TaskViewModel: ObservableObject {
                 return false
             }
             return d1 < d2
-        }
-    }
-    
-    
-    func saveAllTasks(for goal: Goal, modelContext: ModelContext) async {
-        guard !tasks.isEmpty else {
-            print("No generated tasks to save.")
-            return
-        }
-        
-        let dateFormatter = ISO8601DateFormatter()
-        
-        for task in tasks {
-            guard let workingDate = dateFormatter.date(from: task.workingTime)
-            else {
-                print("Invalid workingTime: \(task.workingTime)")
-                continue
-            }
-            
-            _ = taskManager.createTask(
-                goal: goal,
-                name: task.name,
-                workingTime: workingDate,
-                focusDuration: task.focusDuration,
-                modelContext: modelContext
-            )
-        }
-        
-        do {
-            try modelContext.save()
-            print("Saved \(tasks.count) AI tasks for goal \(goal.name)")
-        } catch {
-            print("Failed to save AI tasks: \(error.localizedDescription)")
         }
     }
     
@@ -349,6 +391,39 @@ final class TaskViewModel: ObservableObject {
 }
 
 extension TaskViewModel {
+    
+    var groupedGoalTasks: [(date: Date, tasks: [GoalTask])] {
+        let grouped = Dictionary(grouping: goalTasks) { task in
+            Calendar.current.startOfDay(for: task.workingTime)
+        }
+        return grouped
+            .sorted { $0.key < $1.key }
+            .map { (key: $0.key, value: $0.value) }
+    }
+    
+    func groupedGoalTaskAI() -> [(date: Date, tasks: [AIGoalTask])] {
+        let dateFormatter = ISO8601DateFormatter()
+        let calendar = Calendar.current
+        
+        let grouped = Dictionary(grouping: tasks) { task -> Date in
+            if let date = dateFormatter.date(from: task.workingTime) {
+                return calendar.startOfDay(for: date)
+            } else {
+                return calendar.startOfDay(for: Date())
+            }
+        }
+        
+        return grouped
+            .sorted { $0.key < $1.key }
+            .map { (key: $0.key, value: $0.value.sorted {
+                guard
+                    let d1 = dateFormatter.date(from: $0.workingTime),
+                    let d2 = dateFormatter.date(from: $1.workingTime)
+                else { return false }
+                return d1 < d2
+            }) }
+    }
+    
     func computeWorkingDate(from timeString: String) -> Date {
         if let timeOnly = DateFormatter.readableTime.date(from: timeString) {
             let calendar = Calendar.current
@@ -368,7 +443,7 @@ extension TaskViewModel {
             return Date()
         }
     }
-
+    
     func makeGoalTask(
         from aiTask: AIGoalTask,
         workingDate: Date,
