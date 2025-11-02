@@ -9,6 +9,11 @@ final class FishingViewModel: ObservableObject {
     @Published var elapsedTime: TimeInterval = 0
     @Published var totalDuration: TimeInterval = 0
     
+    @Published var isPaused: Bool = false
+    private let pauseContinuation = PassthroughSubject<Void, Never>()
+    private var cancellables = Set<AnyCancellable>()
+
+    
     private var fishingTask: Task<Void, Never>?
     private let userProfileManager: UserProfileManager?
     
@@ -58,6 +63,16 @@ final class FishingViewModel: ObservableObject {
             while elapsed < duration {
                 if Task.isCancelled { break }
 
+                if isPaused{
+                    print("Fishing paused. Waiting to resume..")
+                    await withCheckedContinuation { continuation in
+                        Task { [weak self] in
+                            self?.pauseContinuation.sink {
+                                continuation.resume()
+                            }.store(in: &self!.cancellables)
+                        }
+                    }
+                }
                 let baseWait = Double.random(in: 60...120)
                 let wait = deepFocusEnabled ? baseWait * 0.7 : baseWait
 
@@ -112,6 +127,20 @@ final class FishingViewModel: ObservableObject {
             print("Fishing loop ended. Total fish caught: \(caughtFish.count)")
             isFishing = false
         }
+    
+    func pauseFishing() {
+        guard isFishing, !isPaused else { return }
+        isPaused = true
+        print("Fishing paused")
+    }
+
+    func resumeFishing() {
+        guard isFishing, isPaused else { return }
+        isPaused = false
+        pauseContinuation.send(())
+        print("Fishing resumed")
+    }
+
 
     private static func rollRarity(probabilities: [FishRarity: Double]) -> FishRarity {
         let ordered: [FishRarity] = [.common, .uncommon, .rare, .superRare, .legendary]

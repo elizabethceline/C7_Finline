@@ -64,7 +64,7 @@ struct AddTimeView: View {
             }
             .padding(.horizontal)
             
-            Spacer()
+           // Spacer()
             
             Button("Add Time") {
                 // Convert to total minutes (rounded up if there are seconds)
@@ -76,9 +76,9 @@ struct AddTimeView: View {
             .font(.headline)
             .frame(maxWidth: .infinity)
             .padding()
-            .background(isTimeValid ? Color.blue : Color.gray)
+            .background(isTimeValid ? Color.primary : Color.gray)
             .foregroundColor(.white)
-            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .clipShape(RoundedRectangle(cornerRadius: 24))
             .padding(.horizontal, 40)
             .padding(.bottom, 30)
             .disabled(!isTimeValid)

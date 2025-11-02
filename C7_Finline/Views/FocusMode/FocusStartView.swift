@@ -1,6 +1,6 @@
 //ini sementara sambil nunggu TaskDetailView
 import SwiftUI
-import FamilyControls
+//import FamilyControls
 
 struct FocusStartView: View {
     @EnvironmentObject var viewModel: FocusSessionViewModel
