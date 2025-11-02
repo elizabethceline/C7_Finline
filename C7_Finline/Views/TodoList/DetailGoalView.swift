@@ -23,7 +23,7 @@ struct DetailGoalView: View {
                     .listRowSeparator(.hidden)
                     .listRowBackground(Color.clear)
             }
-
+            
             if taskVM.isLoading {
                 Section {
                     ProgressView("Loading tasks...")
@@ -53,33 +53,41 @@ struct DetailGoalView: View {
     private var taskSection: some View {
         ForEach(taskVM.groupedGoalTasks, id: \.date) { date, tasks in
             Section(header:
-                Text(date, format: .dateTime.day().month(.wide).year())
-                    .font(.title3)
-                    .foregroundColor(.primary)
+                        Text(date, format: .dateTime.day().month(.wide).year())
+                .font(.title3)
+                .foregroundColor(.primary)
             ) {
                 ForEach(tasks) { task in
-                    TaskCardView(task: task)
-                        .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
-                        .listRowSeparator(.hidden)
-                        .listRowBackground(Color.clear)
-                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                            Button(role: .destructive) {
-                                Task{
-                                    await taskVM.deleteGoalTask(task, modelContext: modelContext)
-                                }
-                            } label: {
-                                Image(systemName: "trash")
+                    NavigationLink {
+                        DetailTaskView(
+                            task: task,
+                            taskManager: TaskManager(networkMonitor: NetworkMonitor()),
+                            viewModel: taskVM
+                        )
+                    } label: {
+                        TaskCardView(task: task)
+                    }
+                    .buttonStyle(.plain)
+                    .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
+                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                        Button(role: .destructive) {
+                            Task{
+                                await taskVM.deleteGoalTask(task, modelContext: modelContext)
                             }
-                            Button(role: .confirm) {
-                                Task{
-                                    await taskVM.updateGoalTask(task, name: task.name, workingTime: task.workingTime, focusDuration: task.focusDuration, isCompleted: true, modelContext: modelContext)
-                                }
-                            } label: {
-                                Image(systemName: "checkmark")
-                            }
-                            .tint(.blue)
+                        } label: {
+                            Image(systemName: "trash")
                         }
-                    
+                        Button(role: .confirm) {
+                            Task{
+                                await taskVM.updateGoalTask(task, name: task.name, workingTime: task.workingTime, focusDuration: task.focusDuration, isCompleted: true, modelContext: modelContext)
+                            }
+                        } label: {
+                            Image(systemName: "checkmark")
+                        }
+                        .tint(.blue)
+                    }
                 }
             }
         }

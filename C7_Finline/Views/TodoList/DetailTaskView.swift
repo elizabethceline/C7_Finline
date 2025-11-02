@@ -105,14 +105,6 @@ struct DetailTaskView: View {
             .navigationTitle("Task Details")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button {
-                        dismiss()
-                    } label: {
-                        Image(systemName: "xmark")
-                    }
-                }
-                
                 ToolbarItem(placement: .confirmationAction) {
                     Button {
                         saveChanges()
