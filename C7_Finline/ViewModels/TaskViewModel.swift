@@ -122,21 +122,17 @@ final class TaskViewModel: ObservableObject {
         }
         
         do {
-            // Panggil TaskManager untuk hapus task dari lokal + sinkronisasi CloudKit
             taskManager.deleteTask(task: task, modelContext: modelContext)
             
-            // Simpan perubahan ke SwiftData
             try modelContext.save()
-            
-            // Update UI (hapus dari array goalTasks)
             await MainActor.run {
                 self.goalTasks.removeAll { $0.id == task.id }
-                print("✅ Deleted task: \(task.name)")
+                print("Deleted task: \(task.name)")
             }
         } catch {
             await MainActor.run {
                 self.errorMessage = "Failed to delete task: \(error.localizedDescription)"
-                print("❌ Error deleting task '\(task.name)': \(error.localizedDescription)")
+                print("Error deleting task '\(task.name)': \(error.localizedDescription)")
             }
         }
         
@@ -424,27 +420,7 @@ extension TaskViewModel {
             }) }
     }
     
-    func computeWorkingDate(from timeString: String) -> Date {
-        if let timeOnly = DateFormatter.readableTime.date(from: timeString) {
-            let calendar = Calendar.current
-            let now = Date()
-            let components = calendar.dateComponents([.year, .month, .day], from: now)
-            let timeComponents = calendar.dateComponents([.hour, .minute], from: timeOnly)
-            
-            var merged = DateComponents()
-            merged.year = components.year
-            merged.month = components.month
-            merged.day = components.day
-            merged.hour = timeComponents.hour
-            merged.minute = timeComponents.minute
-            
-            return calendar.date(from: merged) ?? now
-        } else {
-            return Date()
-        }
-    }
-    
-    func makeGoalTask(
+    func toGoalTask(
         from aiTask: AIGoalTask,
         workingDate: Date,
         goalName: String,

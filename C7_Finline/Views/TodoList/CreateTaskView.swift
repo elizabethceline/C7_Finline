@@ -58,12 +58,13 @@ struct CreateTaskView: View {
                     ForEach(taskVM.groupedGoalTaskAI(), id: \.date) { group in
                         Section(header:
                             Text(group.date, format: .dateTime.day().month(.wide).year())
-                                .font(.title3)
+                            .font(.title3)
                                 .foregroundColor(.primary)
                         ) {
                             ForEach(group.tasks) { aiTask in
-                                let workingDate = taskVM.computeWorkingDate(from: aiTask.workingTime)
-                                let goalTask = taskVM.makeGoalTask(from: aiTask, workingDate: workingDate, goalName: goalName, goalDeadline: goalDeadline)
+                                let workingDate: Date? = ISO8601DateFormatter.parse(aiTask.workingTime)
+                                let finalWorkingDate = workingDate ?? Date()
+                                let goalTask = taskVM.toGoalTask(from: aiTask, workingDate: finalWorkingDate, goalName: goalName, goalDeadline: goalDeadline)
                                 
                                 
                                 TaskCardView(task: goalTask)
