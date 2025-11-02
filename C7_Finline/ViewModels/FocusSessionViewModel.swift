@@ -5,7 +5,7 @@ import Combine
 
 #if os(iOS)
 import ManagedSettings
-import FamilyControls
+//import FamilyControls
 import UIKit
 #elseif os(macOS)
 import AppKit
@@ -34,7 +34,7 @@ final class FocusSessionViewModel: ObservableObject {
     @Published var accumulatedFish: [Fish] = []
     
 #if os(iOS)
-    @Published var selection = FamilyActivitySelection()
+   // @Published var selection = FamilyActivitySelection()
     private let managedStore = ManagedSettingsStore()
 #else
     @Published var selection = FamilyActivitySelectionFallback()
@@ -446,98 +446,98 @@ final class FocusSessionViewModel: ObservableObject {
     
     private func applyShield() {
 #if os(iOS)
-        if selection.applicationTokens.isEmpty && selection.webDomainTokens.isEmpty {
-            managedStore.shield.applicationCategories = .all()
-            managedStore.shield.webDomainCategories = .all()
-        } else {
-            managedStore.shield.applications = selection.applicationTokens
-            managedStore.shield.webDomains = selection.webDomainTokens
-        }
+//        if selection.applicationTokens.isEmpty && selection.webDomainTokens.isEmpty {
+//            managedStore.shield.applicationCategories = .all()
+//            managedStore.shield.webDomainCategories = .all()
+//        } else {
+//            managedStore.shield.applications = selection.applicationTokens
+//            managedStore.shield.webDomains = selection.webDomainTokens
+//        }
 #endif
     }
     
     private func clearShield() {
 #if os(iOS)
-        managedStore.shield.applications = nil
-        managedStore.shield.webDomains = nil
-        managedStore.shield.applicationCategories = nil
-        managedStore.shield.webDomainCategories = nil
+//        managedStore.shield.applications = nil
+//        managedStore.shield.webDomains = nil
+//        managedStore.shield.applicationCategories = nil
+//        managedStore.shield.webDomainCategories = nil
 #endif
     }
     
     private func saveSelection() {
-        do {
-            let data = try JSONEncoder().encode(selection)
-            UserDefaults.standard.set(data, forKey: selectionDefaultsKey)
-        } catch {
-            print("Failed to encode selection: \(error)")
-        }
+//        do {
+//            let data = try JSONEncoder().encode(selection)
+//            UserDefaults.standard.set(data, forKey: selectionDefaultsKey)
+//        } catch {
+//            print("Failed to encode selection: \(error)")
+//        }
     }
     
     private func loadSelection() {
-        guard let data = UserDefaults.standard.data(forKey: selectionDefaultsKey) else { return }
-#if os(iOS)
-        if let decoded = try? JSONDecoder().decode(FamilyActivitySelection.self, from: data) {
-            selection = decoded
-        }
-#else
-        if let decoded = try? JSONDecoder().decode(FamilyActivitySelectionFallback.self, from: data) {
-            selection = decoded
-        }
-#endif
+//        guard let data = UserDefaults.standard.data(forKey: selectionDefaultsKey) else { return }
+//#if os(iOS)
+//        if let decoded = try? JSONDecoder().decode(FamilyActivitySelection.self, from: data) {
+//            selection = decoded
+//        }
+//#else
+//        if let decoded = try? JSONDecoder().decode(FamilyActivitySelectionFallback.self, from: data) {
+//            selection = decoded
+//        }
+//#endif
     }
     
     func configureAuthorizationIfNeeded() {
-#if os(iOS)
-        Task { @MainActor in
-            do {
-                let center = AuthorizationCenter.shared
-                switch center.authorizationStatus {
-                case .notDetermined, .denied:
-                    try await center.requestAuthorization(for: .individual)
-                default:
-                    break
-                }
-                updateAuthorizationStatus()
-                if isAuthorized && isFocusing && deepFocusEnabled {
-                    applyShield()
-                }
-            } catch {
-                self.errorMessage = error.localizedDescription
-                print("FamilyControls authorization error: \(error)")
-            }
-        }
-#else
-        isAuthorized = false
-#endif
+//#if os(iOS)
+//        Task { @MainActor in
+//            do {
+//                let center = AuthorizationCenter.shared
+//                switch center.authorizationStatus {
+//                case .notDetermined, .denied:
+//                    try await center.requestAuthorization(for: .individual)
+//                default:
+//                    break
+//                }
+//                updateAuthorizationStatus()
+//                if isAuthorized && isFocusing && deepFocusEnabled {
+//                    applyShield()
+//                }
+//            } catch {
+//                self.errorMessage = error.localizedDescription
+//                print("FamilyControls authorization error: \(error)")
+//            }
+//        }
+//#else
+//        isAuthorized = false
+//#endif
     }
     
     private func updateAuthorizationStatus() {
-#if os(iOS)
-        let status = AuthorizationCenter.shared.authorizationStatus
-        isAuthorized = (status == .approved)
-        if !isAuthorized {
-            print("Screen Time access not yet granted.")
-        }
-#else
-        isAuthorized = false
-#endif
-    }
-    
-    func openSettings() {
-#if os(iOS)
-        if let url = URL(string: UIApplication.openSettingsURLString) {
-            UIApplication.shared.open(url)
-        }
-#elseif os(macOS)
-        if let url = URL(string: "x-apple.systempreferences:com.apple.ScreenTime-Settings.extension") {
-            NSWorkspace.shared.open(url)
-        } else {
-            NSWorkspace.shared.open(
-                URL(fileURLWithPath: "/System/Applications/System Settings.app")
-            )
-        }
-#endif
+//#if os(iOS)
+//        let status = AuthorizationCenter.shared.authorizationStatus
+//        isAuthorized = (status == .approved)
+//        if !isAuthorized {
+//            print("Screen Time access not yet granted.")
+//        }
+//#else
+//        isAuthorized = false
+//#endif
+//    }
+//    
+//    func openSettings() {
+//#if os(iOS)
+//        if let url = URL(string: UIApplication.openSettingsURLString) {
+//            UIApplication.shared.open(url)
+//        }
+//#elseif os(macOS)
+//        if let url = URL(string: "x-apple.systempreferences:com.apple.ScreenTime-Settings.extension") {
+//            NSWorkspace.shared.open(url)
+//        } else {
+//            NSWorkspace.shared.open(
+//                URL(fileURLWithPath: "/System/Applications/System Settings.app")
+//            )
+//        }
+//#endif
     }
     
     @MainActor
