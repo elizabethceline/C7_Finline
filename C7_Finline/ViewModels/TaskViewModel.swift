@@ -25,6 +25,7 @@ final class TaskViewModel: ObservableObject {
     
     private let model = SystemLanguageModel.default
     
+    
     func updateTaskSD(
         _ task: GoalTask,
         name: String,
@@ -47,6 +48,29 @@ final class TaskViewModel: ObservableObject {
         } catch {
             print("Failed to save updated task: \(error.localizedDescription)")
         }
+    }
+    
+    func groupedTasksByDate() -> [(date: Date, tasks: [AIGoalTask])] {
+        let dateFormatter = ISO8601DateFormatter()
+        let calendar = Calendar.current
+        
+        let grouped = Dictionary(grouping: tasks) { task -> Date in
+            if let date = dateFormatter.date(from: task.workingTime) {
+                return calendar.startOfDay(for: date)
+            } else {
+                return calendar.startOfDay(for: Date())
+            }
+        }
+        
+        return grouped
+            .sorted { $0.key < $1.key }
+            .map { (key: $0.key, value: $0.value.sorted {
+                guard
+                    let d1 = dateFormatter.date(from: $0.workingTime),
+                    let d2 = dateFormatter.date(from: $1.workingTime)
+                else { return false }
+                return d1 < d2
+            }) }
     }
     
     func createTaskManually(name: String, workingTime: Date, focusDuration: Int) {
@@ -321,5 +345,48 @@ final class TaskViewModel: ObservableObject {
         } catch {
             errorMessage = "AI generation failed: \(error.localizedDescription)"
         }
+    }
+}
+
+extension TaskViewModel {
+    func computeWorkingDate(from timeString: String) -> Date {
+        if let timeOnly = DateFormatter.readableTime.date(from: timeString) {
+            let calendar = Calendar.current
+            let now = Date()
+            let components = calendar.dateComponents([.year, .month, .day], from: now)
+            let timeComponents = calendar.dateComponents([.hour, .minute], from: timeOnly)
+            
+            var merged = DateComponents()
+            merged.year = components.year
+            merged.month = components.month
+            merged.day = components.day
+            merged.hour = timeComponents.hour
+            merged.minute = timeComponents.minute
+            
+            return calendar.date(from: merged) ?? now
+        } else {
+            return Date()
+        }
+    }
+
+    func makeGoalTask(
+        from aiTask: AIGoalTask,
+        workingDate: Date,
+        goalName: String,
+        goalDeadline: Date
+    ) -> GoalTask {
+        GoalTask(
+            id: aiTask.id,
+            name: aiTask.name,
+            workingTime: workingDate,
+            focusDuration: aiTask.focusDuration,
+            isCompleted: false,
+            goal: Goal(
+                id: "temp_goal",
+                name: goalName,
+                due: goalDeadline,
+                goalDescription: ""
+            )
+        )
     }
 }
