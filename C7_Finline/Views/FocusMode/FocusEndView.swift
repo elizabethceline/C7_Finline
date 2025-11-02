@@ -51,7 +51,7 @@ struct FocusEndView: View {
                                 // Fish name
                                 Text(name)
                                     .font(.title3)
-                                    .foregroundColor(.primary)
+                                    //.foregroundColor(.primary)
                                 Text("+\(totalPoints)")
                                     .font(.title3)
 
@@ -78,7 +78,7 @@ struct FocusEndView: View {
                         HStack(spacing: 16) {
                             Text("Bonus Points")
                                 .font(.title3)
-                                .foregroundColor(.primary)
+                                //.foregroundColor(.primary)
                             Spacer()
                             Text("+\(viewModel.bonusPoints)")
                                 .font(.title.bold())
@@ -98,7 +98,7 @@ struct FocusEndView: View {
                 VStack(spacing: 16) {
                     Text("+\(viewModel.grandTotal) pts")
                         .font(.system(size: 60, weight: .bold))
-                        .foregroundColor(.primary)
+                        //.foregroundColor(.primary)
                     
                     Button("Back to main Menu") {
                         dismiss()
@@ -106,7 +106,7 @@ struct FocusEndView: View {
                     .font(.headline)
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(Color.blue)
+                    .background(Color.primary)
                     .foregroundColor(.white)
                     .clipShape(RoundedRectangle(cornerRadius: 24))
                 }

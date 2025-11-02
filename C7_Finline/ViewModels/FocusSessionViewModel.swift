@@ -15,7 +15,7 @@ import AppKit
 final class FocusSessionViewModel: ObservableObject {
     @Published var isFocusing = false
     @Published var remainingTime: TimeInterval = 0
-    @Published var sessionDuration: TimeInterval = 25 * 60
+    @Published var sessionDuration: TimeInterval = 30 * 60
     @Published var deepFocusEnabled = true
     @Published var totalFocusedSeconds: TimeInterval = 0
     @Published var isAuthorized: Bool = false
@@ -50,6 +50,28 @@ final class FocusSessionViewModel: ObservableObject {
     private var lastTickDate: Date?
     private let selectionDefaultsKey = "FocusSelectionData"
     private var cancellables = Set<AnyCancellable>()
+    
+    var earnedRestMinutes: Int {
+        let restSeconds = (sessionDuration / (30 * 60)) * (5 * 60)
+        return Int(restSeconds / 60)
+    }
+    var canTakeMoreRest: Bool {
+        let earnedRestSeconds = Double(earnedRestMinutes * 60)
+        return totalRestSeconds < earnedRestSeconds
+    }
+    var remainingRestSeconds: TimeInterval {
+        max(0, restAllowanceSeconds - totalRestSeconds)
+    }
+    var canRest: Bool {
+        remainingRestSeconds >= 300
+    }
+    @Published var totalRestSeconds: TimeInterval = 0
+    @Published var restAllowanceSeconds: TimeInterval = 0
+    @Published var isResting: Bool = false
+    private var currentRestStart: Date?
+    
+
+
     
     private var modelContext: ModelContext?
     private var currentUserProfile: UserProfile?
@@ -134,6 +156,14 @@ final class FocusSessionViewModel: ObservableObject {
         remainingTime = sessionDuration
         lastTickDate = Date()
         
+        isResting = false
+        totalRestSeconds = 0
+        //restAllowanceSeconds = (sessionDuration / (30 * 60)) * (5 * 60)
+        let fullBlocks = floor(sessionDuration / (30 * 60))
+        restAllowanceSeconds = fullBlocks * (5 * 60)
+        currentRestStart = nil
+        print("Starting session — rest allowance: \(restAllowanceSeconds) seconds")
+        
         nudgesTriggered.removeAll()
         isShowingNudgeAlert = false
         
@@ -194,8 +224,10 @@ final class FocusSessionViewModel: ObservableObject {
     
     
     
-    private func startTimer() {
-        nudgesTriggered.removeAll()
+    private func startTimer(isResuming: Bool = false) {
+        if !isResuming{
+            nudgesTriggered.removeAll()
+        }
         
         timer?.invalidate()
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
@@ -306,6 +338,8 @@ final class FocusSessionViewModel: ObservableObject {
         }
     }
     
+    
+    
     func giveUp() async{
         guard isFocusing else { return }
         
@@ -320,6 +354,73 @@ final class FocusSessionViewModel: ObservableObject {
         isFocusing = false
         shouldReturnToStart = true
     }
+    
+    func initializeRestAllowance() {
+        restAllowanceSeconds = TimeInterval(earnedRestMinutes * 60)
+        totalRestSeconds = 0
+    }
+    
+    func startRest(for seconds: TimeInterval) {
+        guard !isResting, seconds > 0, seconds <= remainingRestSeconds else { return }
+        isResting = true
+        currentRestStart = Date()
+        pauseSession()
+    }
+    
+    func pauseSession() {
+        guard isFocusing else { return }
+        timer?.invalidate()
+        timer = nil
+        isFocusing = false
+        //isResting = true
+        //currentRestStart = Date ()
+        fishingVM.pauseFishing()
+        
+        if deepFocusEnabled {
+            clearShield()
+            print("Deep focus shield cleared for rest.")
+        }
+        
+        print("Session paused at \(remainingTime) seconds remaining.")
+    }
+    
+    func endRest() {
+        guard isResting else { return } // not !isResting
+        if let restStart = currentRestStart {
+            let restDuration = Date().timeIntervalSince(restStart)
+            totalRestSeconds += restDuration
+            currentRestStart = nil
+            print("User rest for \(Int(restDuration)) seconds (total rest: \(Int(totalRestSeconds))s")
+        }
+        isResting = false
+        resumeSession()
+    }
+
+    func resumeSession() {
+        guard !isFocusing, remainingTime > 0 else { return }
+//        if let restStart = currentRestStart {
+//            let restDuration = Date().timeIntervalSince(restStart)
+//            totalRestSeconds += restDuration
+//            currentRestStart = nil
+//           // print("User rest for \(Int(restDuration)) seconds (total rest: \(Int(totalRestSeconds))s")
+//        }
+        isFocusing = true
+        lastTickDate = Date()
+        startTimer(isResuming: true)
+        isResting = false
+        fishingVM.resumeFishing()
+        
+        if deepFocusEnabled && isAuthorized {
+            applyShield()
+            print("Deep Focus shield reapplied")
+        } else if deepFocusEnabled && !isAuthorized {
+            configureAuthorizationIfNeeded()
+        }
+        
+        print("Session resumed with \(remainingTime) seconds remaining.")
+    }
+
+
     
     func resetSession() {
         timer?.invalidate()
