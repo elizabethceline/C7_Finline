@@ -23,6 +23,8 @@ struct DetailTaskView: View {
     @State private var isNudgeMeOn: Bool = false
     
     @ObservedObject var taskVM: TaskViewModel
+    @EnvironmentObject var focusVM: FocusSessionViewModel
+    @State private var showFocusView: Bool = false
     
     let task: GoalTask
     let taskManager: TaskManager
@@ -125,6 +127,13 @@ struct DetailTaskView: View {
             }
             .safeAreaInset(edge: .bottom) {
                 Button(action: {
+                    focusVM.taskTitle = self.taskName
+                    focusVM.goalName = self.task.goal?.name
+                    focusVM.sessionDuration = TimeInterval(focusDuration * 60)
+                    focusVM.deepFocusEnabled = isDeepFocusOn
+                    focusVM.nudgeMeEnabled = isNudgeMeOn
+                    focusVM.startSession()
+                    showFocusView = true
                 }) {
                     Text("Start Focus")
                         .font(.headline)
@@ -152,6 +161,10 @@ struct DetailTaskView: View {
                 )
             }
             .presentationDetents([.large])
+            .fullScreenCover(isPresented: $showFocusView) {
+                FocusModeView()
+                    .environmentObject(focusVM)
+            }
         }
     }
     
@@ -191,6 +204,7 @@ struct DetailTaskView: View {
         isCompleted: false,
         goal: sampleGoal
     )
+    let mockFocusVM = FocusSessionViewModel()
     
     return DetailTaskView(
         task: sampleTask,
@@ -198,4 +212,5 @@ struct DetailTaskView: View {
         viewModel: dummyViewModel
     )
     .modelContainer(for: [Goal.self, GoalTask.self])
+    .environmentObject(mockFocusVM)
 }
