@@ -11,6 +11,7 @@ import SwiftData
 struct CreateTaskView: View {
     let goalName: String
     let goalDeadline: Date
+    
     @State private var isShowingModalCreateWithAI: Bool = false
     @State private var isShowingModalCreateManually: Bool = false
     @State private var editingTask: AIGoalTask? = nil
@@ -24,15 +25,12 @@ struct CreateTaskView: View {
             Form {
                 Section(header: Text("Goal Info").font(.headline).foregroundColor(.secondary)) {
                     HStack {
-                        Text("Goal")
-                            .foregroundStyle(.secondary)
+                        Text("Goal").foregroundStyle(.secondary)
                         Spacer()
-                        Text(goalName)
-                            .multilineTextAlignment(.trailing)
+                        Text(goalName).multilineTextAlignment(.trailing)
                     }
                     HStack {
-                        Text("Deadline")
-                            .foregroundStyle(.secondary)
+                        Text("Deadline").foregroundStyle(.secondary)
                         Spacer()
                         Text("\(goalDeadline.formatted(date: .long, time: .omitted)) | \(goalDeadline.formatted(date: .omitted, time: .shortened))")
                             .multilineTextAlignment(.trailing)
@@ -57,29 +55,45 @@ struct CreateTaskView: View {
                 }
                 
                 if !taskVM.tasks.isEmpty {
-                    Section(header: Text("Generated Tasks")) {
-                        VStack(spacing: 12) {
-                            ForEach(taskVM.tasks) { task in
-                                TaskCardView(task: task)
+                    ForEach(taskVM.groupedGoalTaskAI(), id: \.date) { group in
+                        Section(header:
+                            Text(group.date, format: .dateTime.day().month(.wide).year())
+                            .font(.title3)
+                                .foregroundColor(.primary)
+                        ) {
+                            ForEach(group.tasks) { aiTask in
+                                let workingDate: Date? = ISO8601DateFormatter.parse(aiTask.workingTime)
+                                let finalWorkingDate = workingDate ?? Date()
+                                let goalTask = taskVM.toGoalTask(from: aiTask, workingDate: finalWorkingDate, goalName: goalName, goalDeadline: goalDeadline)
+                                
+                                
+                                TaskCardView(task: goalTask)
+                                    .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
+                                    .listRowSeparator(.hidden)
+                                    .listRowBackground(Color.clear)
                                     .onTapGesture {
-                                        editingTask = task
+                                        editingTask = aiTask
                                         isShowingModalCreateManually = true
                                     }
-                                    .transition(.move(edge: .bottom).combined(with: .opacity))
-                                    .animation(.spring(response: 0.5, dampingFraction: 0.7), value: taskVM.tasks)
+                                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                        Button(role: .destructive) {
+                                            withAnimation(.easeInOut) {
+                                                taskVM.deleteTask(aiTask)
+                                            }
+                                        } label: {
+                                            Image(systemName: "trash")
+                                        }
+                                        .tint(.red)
+                                    }
                             }
                         }
-                        .listRowBackground(Color.clear)
                     }
                 }
-                
             }
             .scrollContentBackground(.hidden)
             
             VStack(spacing: 16) {
-                Button(action: {
-                    isShowingModalCreateWithAI = true
-                }) {
+                Button(action: { isShowingModalCreateWithAI = true }) {
                     Text("Create with AI")
                         .font(.headline)
                         .frame(maxWidth: .infinity)
@@ -89,9 +103,7 @@ struct CreateTaskView: View {
                         .cornerRadius(10)
                 }
                 
-                Button(action: {
-                    isShowingModalCreateManually = true
-                }) {
+                Button(action: { isShowingModalCreateManually = true }) {
                     Text("Create Task Manually")
                         .font(.headline)
                         .frame(maxWidth: .infinity)
@@ -118,8 +130,13 @@ struct CreateTaskView: View {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     Task {
-                        let goal = await goalVM.createGoal(name: goalName, deadline: goalDeadline, description: "", modelContext: modelContext)
-                        await taskVM.saveAllTasks(for: goal, modelContext: modelContext)
+                        let goal = await goalVM.createGoal(
+                            name: goalName,
+                            deadline: goalDeadline,
+                            description: "",
+                            modelContext: modelContext
+                        )
+                        await taskVM.createAllGoalTasks(for: goal, modelContext: modelContext)
                     }
                 } label: {
                     Image(systemName: "checkmark")
@@ -150,47 +167,34 @@ struct CreateTaskView: View {
             editingTask = nil
         }) {
             if let taskToEdit = editingTask {
-                CreateTaskManuallyView(
-                    taskVM: taskVM,
-                    existingTask: taskToEdit
-                )
-                .presentationDetents([.medium])
+                CreateTaskManuallyView(taskVM: taskVM, existingTask: taskToEdit)
+                    .presentationDetents([.medium])
             } else {
-                CreateTaskManuallyView(
-                    taskVM: taskVM,
-                    taskDeadline: goalDeadline
-                )
-                .presentationDetents([.medium])
+                CreateTaskManuallyView(taskVM: taskVM, taskDeadline: goalDeadline)
+                    .presentationDetents([.medium])
             }
-        }
-    }
-    
-    struct TaskCardView: View {
-        let task: AIGoalTask
-        
-        var body: some View {
-            VStack(alignment: .leading, spacing: 6) {
-                Text(task.name)
-                    .font(.headline)
-                Text("Start: \(task.workingTime), Duration: \(task.focusDuration) mins")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-            }
-            .padding()
-            .background(Color.white)
-            .cornerRadius(12)
-            .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-            .frame(maxWidth: .infinity, alignment: .center)
         }
     }
 }
 
-#Preview {
-    NavigationStack {
-        CreateTaskView(
+extension CreateTaskView {
+    static var previewWithDummyTasks: some View {
+        let view = CreateTaskView(
             goalName: "Finish SwiftUI Project",
             goalDeadline: Calendar.current.date(byAdding: .day, value: 3, to: Date()) ?? Date()
         )
+        
+        view.taskVM.tasks = [
+            AIGoalTask(id: "1", name: "Design UI Layout", workingTime: "09.00", focusDuration: 60),
+            AIGoalTask(id: "2", name: "Implement Login Feature", workingTime: "11.00", focusDuration: 90),
+            AIGoalTask(id: "3", name: "Test & Debug", workingTime: "14.00", focusDuration: 45)
+        ]
+        
+        return NavigationStack { view }
     }
-    .preferredColorScheme(.light)
+}
+
+#Preview {
+    CreateTaskView.previewWithDummyTasks
+        .preferredColorScheme(.light)
 }

@@ -107,14 +107,6 @@ struct DetailTaskView: View {
             .navigationTitle("Task Details")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button {
-                        dismiss()
-                    } label: {
-                        Image(systemName: "xmark")
-                    }
-                }
-                
                 ToolbarItem(placement: .confirmationAction) {
                     Button {
                         saveChanges()
@@ -170,7 +162,7 @@ struct DetailTaskView: View {
     
     private func saveChanges() {
         Task {
-            await taskVM.updateTaskSD(
+            await taskVM.updateGoalTask(
                 task,
                 name: taskName,
                 workingTime: taskDate,
