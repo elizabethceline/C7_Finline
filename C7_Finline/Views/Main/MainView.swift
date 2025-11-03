@@ -19,12 +19,7 @@ struct MainView: View {
     @State private var navigateToFocus: Bool = false
     //NITIP DOCUS MODE END//
 
-    private var unfinishedTasks: [GoalTask] {
-        viewModel.tasks.filter { task in
-            task.workingTime < Calendar.current.startOfDay(for: Date())
-                && !task.isCompleted
-        }
-    }
+    private var unfinishedTasks: [GoalTask] { viewModel.unfinishedTasks }
 
     var body: some View {
         NavigationStack {

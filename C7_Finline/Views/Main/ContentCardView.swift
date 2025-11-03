@@ -11,25 +11,14 @@ struct ContentCardView: View {
     @ObservedObject var viewModel: MainViewModel
     @Binding var selectedDate: Date
 
-    private var filteredTasks: [GoalTask] {
-        viewModel.tasks.filter { task in
-            Calendar.current.isDate(task.workingTime, inSameDayAs: selectedDate)
-                && !task.isCompleted
-        }
+    var tasks: [GoalTask] {
+        viewModel.filterTasksByDate(for: selectedDate)
     }
 
-    private var goalsForSelectedDate: [Goal] {
-        viewModel.goals.filter { goal in
-            goal.tasks.contains { task in
-                Calendar.current.isDate(
-                    task.workingTime,
-                    inSameDayAs: selectedDate
-                )
-                    && !task.isCompleted
-            }
-        }
+    var goals: [Goal] {
+        viewModel.filterGoalsByDate(for: selectedDate)
     }
-
+    
     var body: some View {
         VStack(spacing: 16) {
             HStack(spacing: 0) {
@@ -45,8 +34,8 @@ struct ContentCardView: View {
             DateSelectorView(selectedDate: $selectedDate)
 
             Divider()
-
-            if filteredTasks.isEmpty {
+            
+            if tasks.isEmpty {
                 ScrollView(showsIndicators: false) {
 
                     EmptyStateView()
@@ -58,8 +47,8 @@ struct ContentCardView: View {
             } else {
                 TaskListView(
                     viewModel: viewModel,
-                    tasks: filteredTasks,
-                    goals: goalsForSelectedDate,
+                    tasks: tasks,
+                    goals: goals,
                     selectedDate: selectedDate
                 )
                 .refreshable {
