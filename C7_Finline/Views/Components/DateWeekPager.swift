@@ -10,6 +10,7 @@ import SwiftUI
 struct DateWeekPagerView: View {
     @Binding var selectedDate: Date
     @Binding var weekIndex: Int
+    @Binding var isWeekChange: Bool
 
     private let calendar = Calendar.current
 
@@ -49,8 +50,12 @@ struct DateWeekPagerView: View {
             from: currentWeek,
             to: targetWeek
         ).weekOfYear {
+            isWeekChange = true
             withAnimation {
                 weekIndex = diff
+            }
+            DispatchQueue.main.async {
+                isWeekChange = false
             }
         }
     }
@@ -91,7 +96,11 @@ struct DateWeekPagerView: View {
 }
 
 #Preview {
-    DateWeekPagerView(selectedDate: .constant(Date()), weekIndex: .constant(0))
-        .padding()
-        .background(Color.gray.opacity(0.2))
+    DateWeekPagerView(
+        selectedDate: .constant(Date()),
+        weekIndex: .constant(0),
+        isWeekChange: .constant(false)
+    )
+    .padding()
+    .background(Color.gray.opacity(0.2))
 }

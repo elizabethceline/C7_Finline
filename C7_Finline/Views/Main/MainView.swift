@@ -95,7 +95,8 @@ struct MainView: View {
 
                     DateWeekPagerView(
                         selectedDate: $selectedDate,
-                        weekIndex: $currentWeekIndex
+                        weekIndex: $currentWeekIndex,
+                        isWeekChange: $isWeekChange
                     )
 
                     Divider()
