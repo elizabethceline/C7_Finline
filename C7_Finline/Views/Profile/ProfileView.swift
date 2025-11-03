@@ -14,18 +14,21 @@ struct ProfileView: View {
     @Environment(\.modelContext) private var modelContext
     @FocusState private var isNameFieldFocused: Bool
     @State private var showAlert = false
-
+    //NITIP FOCUS MODE START//
+    @State private var navigateToFocus: Bool = false
+    //NITIP DOCUS MODE END//
+    
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
                     ZStack(alignment: .bottomTrailing) {
-
+                        
                         Image("finley")
                             .resizable()
                             .scaledToFill()
                             .frame(width: 240, height: 240)
-
+                        
                         Button {
                             // ke shop
                         } label: {
@@ -41,7 +44,7 @@ struct ProfileView: View {
                         }
                     }
                     .frame(maxWidth: .infinity)
-
+                    
                     HStack {
                         VStack(alignment: .leading) {
                             if viewModel.isEditingName {
@@ -59,15 +62,15 @@ struct ProfileView: View {
                             } else {
                                 Text(
                                     viewModel.username.isEmpty
-                                        ? "Your Name" : viewModel.username
+                                    ? "Your Name" : viewModel.username
                                 )
                                 .font(.headline)
                             }
                         }
                         .padding(.leading, 8)
-
+                        
                         Spacer()
-
+                        
                         Button {
                             withAnimation {
                                 if viewModel.isEditingName {
@@ -95,7 +98,7 @@ struct ProfileView: View {
                             .fill(Color(uiColor: .systemBackground))
                     )
                     .padding(.horizontal)
-
+                    
                     HStack(spacing: 16) {
                         StatCard(
                             title: "Task Complete",
@@ -107,7 +110,7 @@ struct ProfileView: View {
                         )
                     }
                     .padding(.horizontal)
-
+                    
                     // Best Focus Time
                     HStack {
                         Text("Best Focus Time")
@@ -124,7 +127,7 @@ struct ProfileView: View {
                             .fill(Color(uiColor: .systemBackground))
                     )
                     .padding(.horizontal)
-
+                    
                     // Edit productive hours
                     NavigationLink(
                         destination: EditProductiveHoursView(
@@ -149,7 +152,18 @@ struct ProfileView: View {
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-
+                    
+                    //                    NITIP FOCUS MODE START
+                    Button {
+                        navigateToFocus = true
+                    } label: {
+                        Label(
+                            "Focus Mode",
+                            systemImage: "lock.desktopcomputer"
+                        )
+                    }
+                    .padding()
+                    //NITIP FOCUS MODE END//
                 }
                 .onAppear {
                     viewModel.setModelContext(modelContext)
@@ -169,29 +183,34 @@ struct ProfileView: View {
                     dismissButton: .default(Text("OK"))
                 )
             }
+            //NITIP FOCUS MODE START
+            .navigationDestination(isPresented: $navigateToFocus) {
+                TestCloud()
+            }
+            //NITIP FOCUS MODE END
         }
     }
-
+    
     private func handleSaveUsername() {
         viewModel.saveUsername()
         if viewModel.errorMessage != "" {
             showAlert = true
         }
     }
-
+    
     private func formatTime(_ seconds: TimeInterval) -> String {
         let hrs = Int(seconds) / 3600
         let mins = (Int(seconds) % 3600) / 60
         let secs = Int(seconds) % 60
         return String(format: "%02d:%02d:%02d", hrs, mins, secs)
     }
-
+    
 }
 
 struct StatCard: View {
     let title: String
     let value: String
-
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(value)

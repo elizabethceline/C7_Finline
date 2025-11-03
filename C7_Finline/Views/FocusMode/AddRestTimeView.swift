@@ -23,7 +23,7 @@ struct AddRestTimeView: View {
                     EmptyView()
                 }
                 .labelsHidden()
-                .tint(.white)
+                //.tint(.white)
                 //.frame(maxWidth: 200)
             }
             
@@ -60,6 +60,8 @@ struct AddRestTimeView: View {
             .padding(.horizontal, 40)
             .presentationDetents([.height(400)])
         }
+        //.background(Color.blue.opacity(0.3))
+        
     }
 }
 
