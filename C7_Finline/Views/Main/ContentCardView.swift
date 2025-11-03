@@ -12,6 +12,9 @@ struct ContentCardView: View {
     @Binding var selectedDate: Date
 
     @GestureState private var dragOffset: CGFloat = 0
+    @State private var contentOffset: CGFloat = 0
+    @State private var isAnimating: Bool = false
+
     private let calendar = Calendar.current
 
     var tasks: [GoalTask] {
@@ -22,14 +25,36 @@ struct ContentCardView: View {
         viewModel.filterGoalsByDate(for: selectedDate)
     }
 
-    private func changeDay(delta: Int) {
+    private func changeDay(delta: Int, width: CGFloat) {
         if let newDate = calendar.date(
             byAdding: .day,
             value: delta,
             to: selectedDate
         ) {
-            withAnimation(.easeInOut) {
+            isAnimating = true
+
+            // Animate content sliding out
+            withAnimation(.easeInOut(duration: 0.3)) {
+                contentOffset =
+                    delta > 0
+                    ? -width : width
+            }
+
+            // Change date and reset position after slide out
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
                 selectedDate = calendar.startOfDay(for: newDate)
+                contentOffset =
+                    delta > 0
+                    ? width : -width
+
+                // Slide in from opposite side
+                withAnimation(.easeOut(duration: 0.25)) {
+                    contentOffset = 0
+                }
+
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                    isAnimating = false
+                }
             }
         }
     }
@@ -38,13 +63,17 @@ struct ContentCardView: View {
         GeometryReader { geo in
             let drag = DragGesture()
                 .updating($dragOffset) { value, state, _ in
-                    state = value.translation.width
+                    if !isAnimating {
+                        state = value.translation.width
+                    }
                 }
                 .onEnded { value in
-                    if value.translation.width < -50 {
-                        changeDay(delta: 1)
-                    } else if value.translation.width > 50 {
-                        changeDay(delta: -1)
+                    if !isAnimating {
+                        if value.translation.width < -50 {
+                            changeDay(delta: 1, width: geo.size.width)
+                        } else if value.translation.width > 50 {
+                            changeDay(delta: -1, width: geo.size.width)
+                        }
                     }
                 }
 
@@ -66,8 +95,13 @@ struct ContentCardView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .offset(x: dragOffset)
-            .animation(.spring(), value: selectedDate)
+            .padding(.horizontal)
+            .offset(x: contentOffset + dragOffset)
+            .opacity(
+                isAnimating
+                    ? (contentOffset == 0 ? 1 : 0.5)
+                    : 1 - abs(dragOffset) / geo.size.width * 0.5
+            )
             .contentShape(Rectangle())
             .gesture(drag)
         }
@@ -81,6 +115,6 @@ struct ContentCardView: View {
 #Preview {
     ContentCardView(
         viewModel: MainViewModel(),
-        selectedDate: .constant(Date()),
+        selectedDate: .constant(Date())
     )
 }
