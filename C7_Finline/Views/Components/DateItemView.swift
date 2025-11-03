@@ -14,7 +14,8 @@ struct DateItemView: View {
 
     private func shortWeekday(from date: Date) -> String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "E"
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "EEEEE"
         return formatter.string(from: date)
     }
 
@@ -26,17 +27,18 @@ struct DateItemView: View {
                     .foregroundColor(Color(uiColor: .secondaryLabel))
 
                 Text("\(Calendar.current.component(.day, from: date))")
-                    .font(.title3)
+                    .font(.body)
                     .fontWeight(.semibold)
                     .foregroundColor(Color(uiColor: .label))
             }
-            .frame(width: 60, height: 55)
+            .frame(width: 44, height: 60)
+            .contentShape(Rectangle())
             .background(
-                RoundedRectangle(cornerRadius: 14)
+                RoundedRectangle(cornerRadius: 12)
                     .fill(Color(uiColor: .systemBackground))
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 14)
+                RoundedRectangle(cornerRadius: 12)
                     .stroke(
                         isSelected ? Color.primary : Color.clear,
                         lineWidth: 2

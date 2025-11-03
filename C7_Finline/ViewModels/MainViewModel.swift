@@ -21,6 +21,8 @@ class MainViewModel: ObservableObject {
     private let networkMonitor: NetworkMonitor
     private let goalManager: GoalManager
     private let taskManager: TaskManager
+    
+    @Published var selectedDate: Date = Date()
 
     var isSignedInToiCloud: Bool {
         CloudKitManager.shared.isSignedInToiCloud
@@ -223,6 +225,12 @@ class MainViewModel: ObservableObject {
         tasks.filter { task in
             task.workingTime < Calendar.current.startOfDay(for: Date())
             && !task.isCompleted
+        }
+    }
+    
+    func updateSelectedDate(_ date: Date) {
+        DispatchQueue.main.async {
+            self.selectedDate = date
         }
     }
 }

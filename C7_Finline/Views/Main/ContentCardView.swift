@@ -18,7 +18,7 @@ struct ContentCardView: View {
     var goals: [Goal] {
         viewModel.filterGoalsByDate(for: selectedDate)
     }
-    
+
     var body: some View {
         VStack(spacing: 16) {
             HStack(spacing: 0) {
@@ -31,10 +31,10 @@ struct ContentCardView: View {
             .fontWeight(.bold)
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            DateSelectorView(selectedDate: $selectedDate)
+            DateWeekPagerView(selectedDate: $selectedDate)
 
             Divider()
-            
+
             if tasks.isEmpty {
                 ScrollView(showsIndicators: false) {
 
