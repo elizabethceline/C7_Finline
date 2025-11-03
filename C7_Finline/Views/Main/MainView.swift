@@ -52,13 +52,12 @@ struct MainView: View {
                 }) {
                     Image(systemName: "plus")
                         .font(.title2)
-                        .foregroundColor(.black)
-                        .padding(.all, 8)
+                        .foregroundColor(.white)
+                        .padding(.all, 12)
+                        .blendMode(.overlay)
                 }
-                .buttonStyle(.glass)
-                .background(Circle().fill(Color.primary))
+                .glassEffect(.regular.tint(.accentColor).interactive())
                 .padding(.trailing, 28)
-                .padding(.bottom, 16)
             }
 
             .background(Color(uiColor: .systemGray6).ignoresSafeArea())
