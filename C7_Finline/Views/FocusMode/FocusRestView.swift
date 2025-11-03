@@ -97,11 +97,10 @@ struct FocusRestView: View {
                     }
                     Button("No", role: .cancel) { }
                 } message: {
-                    Text("Work timer will continue")
+                    Text("Your focus timer will resume, and this rest period will still be counted as used.")
                 }
     }
     
-    // MARK: - Timer helpers
     private func startTimer() {
         timer?.invalidate()
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in

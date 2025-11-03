@@ -364,6 +364,7 @@ final class FocusSessionViewModel: ObservableObject {
         guard !isResting, seconds > 0, seconds <= remainingRestSeconds else { return }
         isResting = true
         currentRestStart = Date()
+        totalRestSeconds += seconds
         pauseSession()
     }
     
@@ -385,13 +386,14 @@ final class FocusSessionViewModel: ObservableObject {
     }
     
     func endRest() {
-        guard isResting else { return } // not !isResting
+        guard isResting else { return }
         if let restStart = currentRestStart {
             let restDuration = Date().timeIntervalSince(restStart)
-            totalRestSeconds += restDuration
-            currentRestStart = nil
-            print("User rest for \(Int(restDuration)) seconds (total rest: \(Int(totalRestSeconds))s")
+//            totalRestSeconds += restDuration
+//            currentRestStart = nil
+            print("User rested for \(Int(restDuration))s (but full rest deducted). Total rest used: \(Int(totalRestSeconds))s")
         }
+        currentRestStart = nil
         isResting = false
         resumeSession()
     }

@@ -108,16 +108,7 @@ struct FocusModeView: View {
                             .padding(.bottom)
                         //.padding(.horizontal, 40)
                         
-                        // Task description
-                        //                    if let taskDescription = viewModel.taskDescription, !taskDescription.isEmpty {
-                        //                        Text(taskDescription)
-                        //                            .font(.body)
-                        //                            .foregroundColor(.white.opacity(0.9))
-                        //                            .multilineTextAlignment(.center)
-                        //                            .shadow(radius: 4)
-                        //                            .padding(.horizontal, 40)
-                        //                    }
-                        
+                     
                         Spacer()
                         
                         // Timer display
@@ -128,7 +119,6 @@ struct FocusModeView: View {
                                 .monospacedDigit()
                             
                             HStack() {
- /*                               if viewModel.sessionDuration >= (30 * 60) && remainingRestAllowance > 0*/
                                 if viewModel.canRest && viewModel.isFocusing {
                                         Button {
                                             isShowingRestModal = true
@@ -361,41 +351,6 @@ struct FocusModeView: View {
         
         self.resultVM = newResultVM
     }
-    
-//    private func startRest(for minutes: Int) {
-//        print("startRest called with \(minutes) minutes")
-//        let restDuration = TimeInterval(minutes * 60)
-//        guard restDuration > 0 else {
-//            print("restDuration is 0 or less")
-//            return
-//        }
-//        guard restDuration <= remainingRestAllowance else {
-//            print("restDuration exceeds remaining allowance")
-//            return
-//        }
-//        
-//        remainingRestAllowance -= restDuration
-//        isResting = true
-//        print("Setting isInRestView to true")
-//        isInRestView = true
-//        viewModel.pauseSession()
-//        
-//        // Start the rest countdown asynchronously
-//        Task {
-//            try? await Task.sleep(nanoseconds: UInt64(restDuration * 1_000_000_000))
-//            print("Rest timer completed")
-//            endRest()
-//        }
-//    }
-//    
-//    private func endRest() {
-//        print("endRest called, setting isInRestView to false")
-//        isResting = false
-//        isInRestView = false
-//        viewModel.resumeSession()
-//    }
-
-    
     
     private func formatTime(_ seconds: TimeInterval) -> String {
         let hours = Int(seconds) / 3600
