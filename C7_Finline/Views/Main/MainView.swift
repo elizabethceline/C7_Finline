@@ -11,111 +11,111 @@ import SwiftUI
 struct MainView: View {
     @StateObject private var viewModel = MainViewModel()
     @Environment(\.modelContext) private var modelContext
-    @State private var selectedDate: Date = Date()
-    @State private var navigateToProfile: Bool = false
+
     @State private var showCreateGoalModal = false
+    @State private var showDatePicker = false
 
-    //NITIP FOCUS MODE START//
-    @State private var navigateToFocus: Bool = false
-    //NITIP DOCUS MODE END//
+    @State var selectedDate: Date = Calendar.current.startOfDay(
+        for: Date()
+    )
+    @State var currentWeekIndex: Int = 0
+    @State var isWeekChange: Bool = false
 
-    private var unfinishedTasks: [GoalTask] {
-        viewModel.tasks.filter { task in
-            task.workingTime < Calendar.current.startOfDay(for: Date())
-                && !task.isCompleted
-        }
-    }
+    var calendar: Calendar { .current }
+
+    private var unfinishedTasks: [GoalTask] { viewModel.unfinishedTasks }
 
     var body: some View {
         NavigationStack {
-            ZStack(alignment: .bottomTrailing) {
-                VStack {
-                    HeaderView(
-                        viewModel: viewModel,
-                        unfinishedTasks: unfinishedTasks
-                    )
+            VStack(spacing: 8) {
+                HeaderView(
+                    viewModel: viewModel,
+                    unfinishedTasks: unfinishedTasks,
+                    selectedDate: $selectedDate
+                )
 
-                    ContentCardView(
-                        viewModel: viewModel,
-                        selectedDate: $selectedDate
-                    )
+                // Date Header
+                DateHeaderView(
+                    selectedDate: $selectedDate,
+                    currentWeekIndex: $currentWeekIndex,
+                    showDatePicker: $showDatePicker,
+                    isWeekChange: $isWeekChange,
+                    jumpToDate: jumpToDate(_:),
+                    unfinishedTasks: unfinishedTasks
+                )
+
+                ContentCardView(
+                    viewModel: viewModel,
+                    selectedDate: $selectedDate
+                )
+            }
+            .background(Color(uiColor: .systemGray6).ignoresSafeArea())
+            .onAppear {
+                viewModel.setModelContext(modelContext)
+                jumpToToday()
+            }
+            .onChange(of: currentWeekIndex) { oldValue, newValue in
+                updateSelectedDateFromWeekChange(
+                    oldValue: oldValue,
+                    newValue: newValue
+                )
+            }
+            .toolbar {
+                ToolbarItemGroup(placement: .bottomBar) {
+                    Button("Today") {
+                        jumpToToday()
+                        if showDatePicker {
+                            withAnimation(.spring(response: 0.3)) {
+                                showDatePicker = false
+                            }
+                        }
+                    }
+                    .font(.callout)
+                    .fontWeight(.medium)
 
                     Spacer()
-                }
-                .onAppear {
-                    viewModel.setModelContext(modelContext)
-                    selectedDate = Calendar.current.startOfDay(for: Date())
-                }
 
-                Button(action: {
-                    showCreateGoalModal.toggle()
-                }) {
-                    Image(systemName: "plus")
-                        .font(.title2)
-                        .foregroundColor(.black)
-                        .padding(.all, 8)
-                }
-                .buttonStyle(.glass)
-                .background(Circle().fill(Color.primary))
-                .padding(.trailing, 28)
-                .padding(.bottom, 16)
-                .sheet(isPresented: $showCreateGoalModal) {
-                    CreateGoalView(mainVM: viewModel)
-                        .presentationDetents([.large])
+                    Button {
+                        showCreateGoalModal.toggle()
+                    } label: {
+                        Image(systemName: "plus")
+                            .font(.callout)
+                    }
                 }
             }
+            .sheet(isPresented: $showCreateGoalModal) {
+                CreateGoalView(mainVM: viewModel)
+                    .presentationDetents([.large])
+            }
 
-            .background(Color(uiColor: .systemGray6).ignoresSafeArea())
+            .sheet(isPresented: $showDatePicker) {
+                VStack {
+                    DatePicker(
+                        "",
+                        selection: Binding(
+                            get: { selectedDate },
+                            set: { newDate in
+                                jumpToDate(newDate)
+                            }
+                        ),
+                        displayedComponents: [.date]
+                    )
+                    .datePickerStyle(.graphical)
+                    .tint(Color.primary)
+                    .labelsHidden()
+                    .padding()
+
+                    Button("Done") {
+                        showDatePicker = false
+                    }
+                    .foregroundColor(Color.primary)
+                    .font(.headline)
+                    .padding()
+                }
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
+            }
         }
-        //        .toolbar {
-        //            ToolbarItem(placement: .topBarTrailing) {
-        //                Menu {
-        //                    Button {
-        //                        navigateToProfile = true
-        //                    } label: {
-        //                        Label(
-        //                            "Profile",
-        //                            systemImage: "person"
-        //                        )
-        //                    }
-        //
-        //                    Button {
-        //                        // to shop
-        //                    } label: {
-        //                        Label(
-        //                            "Shop",
-        //                            systemImage: "cart"
-        //                        )
-        //                    }
-        //
-        //                    //NITIP FOCUS MODE START
-        //                    Button {
-        //                        navigateToFocus = true
-        //                    } label: {
-        //                        Label(
-        //                            "Focus Mode",
-        //                            systemImage: "lock.desktopcomputer"
-        //                        )
-        //                    }
-        //                    //NITIP FOCUS MODE END//
-        //
-        //                } label: {
-        //                    Image(systemName: "ellipsis")
-        //                        .imageScale(.large)
-        //                        .foregroundColor(.primary)
-        //                }
-        //            }
-        //        }
-        //        .navigationBarTitleDisplayMode(.inline)
-        //        .navigationDestination(isPresented: $navigateToProfile) {
-        //            ProfileView(viewModel: ProfileViewModel())
-        //        }
-        //
-        //        //NITIP FOCUS MODE START
-        //        .navigationDestination(isPresented: $navigateToFocus) {
-        //            TestCloud()
-        //        }
-        //        //NITIP FOCUS MODE END
     }
 }
 

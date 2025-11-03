@@ -21,6 +21,8 @@ class MainViewModel: ObservableObject {
     private let networkMonitor: NetworkMonitor
     private let goalManager: GoalManager
     private let taskManager: TaskManager
+    
+    @Published var selectedDate: Date = Date()
 
     var isSignedInToiCloud: Bool {
         CloudKitManager.shared.isSignedInToiCloud
@@ -135,42 +137,6 @@ class MainViewModel: ObservableObject {
         isLoading = false
     }
 
-    @MainActor
-    func createGoal(name: String, due: Date, description: String?) {
-        guard let modelContext = modelContext else { return }
-
-        let newGoal = goalManager.createGoal(
-            name: name,
-            due: due,
-            description: description,
-            modelContext: modelContext
-        )
-
-        self.goals.append(newGoal)
-        self.goals.sort { $0.due < $1.due }
-    }
-
-    @MainActor
-    func updateGoal(goal: Goal, name: String, due: Date, description: String?) {
-        goalManager.updateGoal(
-            goal: goal,
-            name: name,
-            due: due,
-            description: description
-        )
-
-        self.goals.sort { $0.due < $1.due }
-    }
-
-    @MainActor
-    func deleteGoal(goal: Goal) {
-        guard let modelContext = modelContext else { return }
-
-        self.goals.removeAll { $0.id == goal.id }
-        modelContext.delete(goal)
-        goalManager.deleteGoal(goal: goal, modelContext: modelContext)
-    }
-
     // crud tasks
     @MainActor
     func fetchAllTasks() async {
@@ -190,43 +156,6 @@ class MainViewModel: ObservableObject {
         } catch {
             self.error = "Failed to fetch tasks: \(error.localizedDescription)"
         }
-    }
-
-    @MainActor
-    func createTask(
-        goal: Goal,
-        name: String,
-        workingTime: Date,
-        focusDuration: Int
-    ) {
-        guard let modelContext = modelContext else { return }
-
-        let newTask = taskManager.createTask(
-            goal: goal,
-            name: name,
-            workingTime: workingTime,
-            focusDuration: focusDuration,
-            modelContext: modelContext
-        )
-
-        self.tasks.append(newTask)
-    }
-
-    @MainActor
-    func updateTask(
-        task: GoalTask,
-        name: String,
-        workingTime: Date,
-        focusDuration: Int,
-        isCompleted: Bool
-    ) {
-        taskManager.updateTask(
-            task: task,
-            name: name,
-            workingTime: workingTime,
-            focusDuration: focusDuration,
-            isCompleted: isCompleted
-        )
     }
 
     @MainActor
@@ -274,5 +203,34 @@ class MainViewModel: ObservableObject {
     func appendNewTasks(_ tasks: [GoalTask]) {
         self.tasks.append(contentsOf: tasks)
         print("Added \(tasks.count) new tasks to MainViewModel")
+    }
+    
+    func filterTasksByDate(for date: Date) -> [GoalTask] {
+        tasks.filter { task in
+            Calendar.current.isDate(task.workingTime, inSameDayAs: date)
+            && !task.isCompleted
+        }
+    }
+
+    func filterGoalsByDate(for date: Date) -> [Goal] {
+        goals.filter { goal in
+            goal.tasks.contains { task in
+                Calendar.current.isDate(task.workingTime, inSameDayAs: date)
+                && !task.isCompleted
+            }
+        }
+    }
+
+    var unfinishedTasks: [GoalTask] {
+        tasks.filter { task in
+            task.workingTime < Calendar.current.startOfDay(for: Date())
+            && !task.isCompleted
+        }
+    }
+    
+    func updateSelectedDate(_ date: Date) {
+        DispatchQueue.main.async {
+            self.selectedDate = date
+        }
     }
 }
