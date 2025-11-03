@@ -13,6 +13,7 @@ struct MainView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var selectedDate: Date = Date()
     @State private var navigateToProfile: Bool = false
+    @State private var showCreateGoalModal = false
 
     //NITIP FOCUS MODE START//
     @State private var navigateToFocus: Bool = false
@@ -46,9 +47,8 @@ struct MainView: View {
                     selectedDate = Calendar.current.startOfDay(for: Date())
                 }
 
-                // add task button
                 Button(action: {
-                    // Add task action
+                    showCreateGoalModal.toggle()
                 }) {
                     Image(systemName: "plus")
                         .font(.title2)
@@ -59,6 +59,10 @@ struct MainView: View {
                 .background(Circle().fill(Color.primary))
                 .padding(.trailing, 28)
                 .padding(.bottom, 16)
+                .sheet(isPresented: $showCreateGoalModal) {
+                    CreateGoalView()
+                        .presentationDetents([.large])
+                }
             }
 
             .background(Color(uiColor: .systemGray6).ignoresSafeArea())

@@ -22,8 +22,8 @@ struct GoalCardView: View {
             VStack(alignment: .leading, spacing: 10) {
                 HStack {
                     Text(goal.name)
-                        .font(.title)
-                        .fontWeight(.bold)
+                        .font(.title2)
+                        .fontWeight(.semibold)
                     Button {
                         isShowingEditModal = true
                     } label: {
@@ -42,16 +42,27 @@ struct GoalCardView: View {
                         
                         Text("\(DateFormatter.readableDate.string(from: goal.due)) | \(DateFormatter.readableTime.string(from: goal.due))")
                             .font(.subheadline)
-                            .bold()
+                            .fontWeight(.semibold)
+
                     }
+                    
                 }
             }
             Spacer()
         }
         .padding()
         .background(
-            Color(red: 203/255, green: 233/255, blue: 244/255)
+            LinearGradient(
+                colors: [
+                    .white,
+                    Color.secondary
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
         )
+        .clipShape(RoundedRectangle(cornerRadius: 28))
+
         .sheet(isPresented: $isShowingEditModal) {
             EditGoalView(goalVM: goalVM, goal: goal)
                 .presentationDetents([.medium])
