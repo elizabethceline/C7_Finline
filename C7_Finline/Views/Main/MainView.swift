@@ -11,106 +11,138 @@ import SwiftUI
 struct MainView: View {
     @StateObject private var viewModel = MainViewModel()
     @Environment(\.modelContext) private var modelContext
-    @State private var selectedDate: Date = Date()
-    @State private var navigateToProfile: Bool = false
+
+    @State private var selectedDate: Date = Calendar.current.startOfDay(
+        for: Date()
+    )
+    @State private var currentWeekIndex: Int = 0
     @State private var showCreateGoalModal = false
 
-    //NITIP FOCUS MODE START//
-    @State private var navigateToFocus: Bool = false
-    //NITIP DOCUS MODE END//
+    @State private var isWeekChange: Bool = false
 
+    private var calendar: Calendar { .current }
     private var unfinishedTasks: [GoalTask] { viewModel.unfinishedTasks }
+
+    private func jumpToToday() {
+        let today = calendar.startOfDay(for: Date())
+
+        isWeekChange = true
+        withAnimation {
+            let currentWeek = calendar.dateComponents(
+                [.weekOfYear, .yearForWeekOfYear],
+                from: calendar.startOfDay(for: Date())
+            )
+            let targetWeek = calendar.dateComponents(
+                [.weekOfYear, .yearForWeekOfYear],
+                from: today
+            )
+
+            if let diff = calendar.dateComponents(
+                [.weekOfYear],
+                from: currentWeek,
+                to: targetWeek
+            ).weekOfYear {
+                currentWeekIndex = diff
+            } else {
+                currentWeekIndex = 0
+            }
+
+            selectedDate = today
+        }
+
+        DispatchQueue.main.async {
+            isWeekChange = false
+        }
+    }
+
+    private func updateSelectedDateFromWeekChange(oldValue: Int, newValue: Int)
+    {
+        guard !isWeekChange else { return }
+
+        let delta = newValue - oldValue
+        guard delta != 0 else { return }
+
+        if let newDate = calendar.date(
+            byAdding: .day,
+            value: delta * 7,
+            to: selectedDate
+        ) {
+            selectedDate = newDate
+        }
+    }
 
     var body: some View {
         NavigationStack {
-            ZStack(alignment: .bottomTrailing) {
-                VStack {
-                    HeaderView(
-                        viewModel: viewModel,
-                        unfinishedTasks: unfinishedTasks
+            VStack(spacing: 12) {
+                HeaderView(
+                    viewModel: viewModel,
+                    unfinishedTasks: unfinishedTasks
+                )
+
+                // Date Header
+                VStack(spacing: 16) {
+                    HStack(spacing: 0) {
+                        Text(
+                            selectedDate.formatted(.dateTime.month(.wide)) + " "
+                        )
+                        .foregroundColor(.primary)
+
+                        Text(selectedDate.formatted(.dateTime.year()))
+                    }
+                    .font(.title)
+                    .fontWeight(.bold)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                    DateWeekPagerView(
+                        selectedDate: $selectedDate,
+                        weekIndex: $currentWeekIndex
                     )
 
-                    ContentCardView(
-                        viewModel: viewModel,
-                        selectedDate: $selectedDate
-                    )
+                    Divider()
+                }
+                .padding(.horizontal)
+
+                ContentCardView(
+                    viewModel: viewModel,
+                    selectedDate: $selectedDate
+                )
+            }
+            .padding(.top, 8)
+            .background(Color(uiColor: .systemGray6).ignoresSafeArea())
+            .onAppear {
+                viewModel.setModelContext(modelContext)
+                jumpToToday()
+            }
+            .onChange(of: currentWeekIndex) { oldValue, newValue in
+                updateSelectedDateFromWeekChange(
+                    oldValue: oldValue,
+                    newValue: newValue
+                )
+            }
+            .toolbar {
+                ToolbarItemGroup(placement: .bottomBar) {
+                    Button("Today") {
+                        jumpToToday()
+                    }
+                    .font(.callout)
+                    .fontWeight(.medium)
 
                     Spacer()
-                }
-                .onAppear {
-                    viewModel.setModelContext(modelContext)
-                    selectedDate = Calendar.current.startOfDay(for: Date())
-                }
 
-                Button(action: {
-                    showCreateGoalModal.toggle()
-                }) {
-                    Image(systemName: "plus")
-                        .font(.title2)
-                        .foregroundColor(.white)
-                        .padding(.all, 12)
-                        .blendMode(.overlay)
-                }
-                .glassEffect(.regular.tint(.accentColor).interactive())
-                .padding(.trailing, 28)
-                .padding(.bottom, 16)
-                .sheet(isPresented: $showCreateGoalModal) {
-                    CreateGoalView(mainVM: viewModel)
-                        .presentationDetents([.large])
+                    Button {
+                        showCreateGoalModal.toggle()
+                    } label: {
+                        Image(systemName: "plus")
+                            .font(.title2)
+                            .padding(.all, 12)
+                    }
                 }
             }
-
-            .background(Color(uiColor: .systemGray6).ignoresSafeArea())
+            .sheet(isPresented: $showCreateGoalModal) {
+                CreateGoalView(mainVM: viewModel)
+                    .presentationDetents([.large])
+            }
         }
-        //        .toolbar {
-        //            ToolbarItem(placement: .topBarTrailing) {
-        //                Menu {
-        //                    Button {
-        //                        navigateToProfile = true
-        //                    } label: {
-        //                        Label(
-        //                            "Profile",
-        //                            systemImage: "person"
-        //                        )
-        //                    }
-        //
-        //                    Button {
-        //                        // to shop
-        //                    } label: {
-        //                        Label(
-        //                            "Shop",
-        //                            systemImage: "cart"
-        //                        )
-        //                    }
-        //
-        //                    //NITIP FOCUS MODE START
-        //                    Button {
-        //                        navigateToFocus = true
-        //                    } label: {
-        //                        Label(
-        //                            "Focus Mode",
-        //                            systemImage: "lock.desktopcomputer"
-        //                        )
-        //                    }
-        //                    //NITIP FOCUS MODE END//
-        //
-        //                } label: {
-        //                    Image(systemName: "ellipsis")
-        //                        .imageScale(.large)
-        //                        .foregroundColor(.primary)
-        //                }
-        //            }
-        //        }
-        //        .navigationBarTitleDisplayMode(.inline)
-        //        .navigationDestination(isPresented: $navigateToProfile) {
-        //            ProfileView(viewModel: ProfileViewModel())
-        //        }
-        //
-        //        //NITIP FOCUS MODE START
-        //        .navigationDestination(isPresented: $navigateToFocus) {
-        //            TestCloud()
-        //        }
-        //        //NITIP FOCUS MODE END
     }
 }
 

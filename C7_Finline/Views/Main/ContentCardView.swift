@@ -20,43 +20,25 @@ struct ContentCardView: View {
     }
 
     var body: some View {
-        VStack(spacing: 16) {
-            HStack(spacing: 0) {
-                Text(selectedDate.formatted(.dateTime.month(.wide)) + " ")
-                    .foregroundColor(.primary)
-
-                Text(selectedDate.formatted(.dateTime.year()))
+        if tasks.isEmpty {
+            ScrollView(showsIndicators: false) {
+                EmptyStateView()
+                    .padding(.top, 24)
             }
-            .font(.title)
-            .fontWeight(.bold)
-            .frame(maxWidth: .infinity, alignment: .leading)
-
-            DateWeekPagerView(selectedDate: $selectedDate)
-
-            Divider()
-
-            if tasks.isEmpty {
-                ScrollView(showsIndicators: false) {
-
-                    EmptyStateView()
-                        .padding(.top, 24)
-                }
-                .refreshable {
-                    await viewModel.fetchGoals()
-                }
-            } else {
-                TaskListView(
-                    viewModel: viewModel,
-                    tasks: tasks,
-                    goals: goals,
-                    selectedDate: selectedDate
-                )
-                .refreshable {
-                    await viewModel.fetchGoals()
-                }
+            .refreshable {
+                await viewModel.fetchGoals()
+            }
+        } else {
+            TaskListView(
+                viewModel: viewModel,
+                tasks: tasks,
+                goals: goals,
+                selectedDate: selectedDate
+            )
+            .refreshable {
+                await viewModel.fetchGoals()
             }
         }
-        .padding(.horizontal)
     }
 }
 

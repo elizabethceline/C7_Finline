@@ -9,26 +9,49 @@ import SwiftUI
 
 struct DateWeekPagerView: View {
     @Binding var selectedDate: Date
-    @State private var weekIndex: Int = 0
+    @Binding var weekIndex: Int
 
     private let calendar = Calendar.current
 
+    // get dates for the week at given index
     private func weekDates(for index: Int) -> [Date] {
         let today = calendar.startOfDay(for: Date())
-        let baseWeekStart = calendar.date(
+        let baseDate = calendar.date(
             byAdding: .day,
-            value: 7 * index,
+            value: index * 7,
             to: today
         )!
         let startOfWeek = calendar.date(
             from: calendar.dateComponents(
                 [.yearForWeekOfYear, .weekOfYear],
-                from: baseWeekStart
+                from: baseDate
             )
         )!
 
         return (0..<7).compactMap {
             calendar.date(byAdding: .day, value: $0, to: startOfWeek)
+        }
+    }
+
+    // synchronize pager to selected date
+    private func syncPagerToSelectedDate() {
+        let currentWeek = calendar.dateComponents(
+            [.weekOfYear, .yearForWeekOfYear],
+            from: calendar.startOfDay(for: Date())
+        )
+        let targetWeek = calendar.dateComponents(
+            [.weekOfYear, .yearForWeekOfYear],
+            from: selectedDate
+        )
+
+        if let diff = calendar.dateComponents(
+            [.weekOfYear],
+            from: currentWeek,
+            to: targetWeek
+        ).weekOfYear {
+            withAnimation {
+                weekIndex = diff
+            }
         }
     }
 
@@ -38,7 +61,7 @@ struct DateWeekPagerView: View {
             let itemHeight: CGFloat = 70
 
             TabView(selection: $weekIndex) {
-                ForEach(-10..<10, id: \.self) { index in
+                ForEach(-50..<50, id: \.self) { index in
                     let dates = weekDates(for: index)
 
                     HStack(spacing: 0) {
@@ -55,19 +78,20 @@ struct DateWeekPagerView: View {
                             .frame(width: itemWidth, height: itemHeight)
                         }
                     }
-                    .frame(width: geo.size.width, height: itemHeight)
                     .tag(index)
                 }
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
         }
         .frame(height: 70)
-
+        .onChange(of: selectedDate) { _, _ in
+            syncPagerToSelectedDate()
+        }
     }
 }
 
 #Preview {
-    DateWeekPagerView(selectedDate: .constant(Date()))
+    DateWeekPagerView(selectedDate: .constant(Date()), weekIndex: .constant(0))
         .padding()
         .background(Color.gray.opacity(0.2))
 }
