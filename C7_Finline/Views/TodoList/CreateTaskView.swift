@@ -15,6 +15,9 @@ struct CreateTaskView: View {
     @State private var isShowingModalCreateWithAI: Bool = false
     @State private var isShowingModalCreateManually: Bool = false
     @State private var editingTask: AIGoalTask? = nil
+    @State private var removingTaskIds: Set<String> = []
+    @State private var showDeleteAlert = false
+    @State private var taskToDelete: AIGoalTask?
     
     @StateObject private var taskVM = TaskViewModel()
     @StateObject private var goalVM = GoalViewModel()
@@ -71,17 +74,19 @@ struct CreateTaskView: View {
                                     .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
                                     .listRowSeparator(.hidden)
                                     .listRowBackground(Color.clear)
+                                    // ANIMATION EFFECTS
+                                    .opacity(removingTaskIds.contains(aiTask.id) ? 0 : 1)
+                                    .offset(y: removingTaskIds.contains(aiTask.id) ? -10 : 0)
                                     .onTapGesture {
                                         editingTask = aiTask
                                         isShowingModalCreateManually = true
                                     }
                                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                                        Button(role: .destructive) {
-                                            withAnimation(.easeInOut) {
-                                                taskVM.deleteTask(aiTask)
-                                            }
+                                        Button {
+                                            taskToDelete = aiTask
+                                            showDeleteAlert = true
                                         } label: {
-                                            Image(systemName: "trash")
+                                            Label("Delete", systemImage: "trash")
                                         }
                                         .tint(.red)
                                     }
@@ -91,33 +96,29 @@ struct CreateTaskView: View {
                 }
             }
             .scrollContentBackground(.hidden)
+            .animation(.easeInOut(duration: 0.3), value: taskVM.tasks)
+            .animation(.easeInOut(duration: 0.3), value: removingTaskIds)
             
             VStack(spacing: 16) {
                 Button(action: { isShowingModalCreateWithAI = true }) {
-                    HStack {
-                        Image(systemName: "sparkles")
-                            .font(.title3)
-                        
-                        Text("Create with AI")
-                            .font(.headline)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(
-                        LinearGradient(
-                            colors: [
-                                Color(red: 0.09, green: 0.40, blue: 1.0),
-                                Color(red: 0.00, green: 0.85, blue: 0.95),
-                                Color(red: 0.65, green: 0.35, blue: 1.0)
-                            ],
-                            startPoint: .leading,
-                            endPoint: .trailing
+                    Text("Create with AI")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(
+                            LinearGradient(
+                                gradient: Gradient(colors: [
+                                    Color(red: 0.15, green: 0.45, blue: 1.0),
+                                    Color(red: 0.30, green: 0.95, blue: 1.0),
+                                    Color(red: 0.80, green: 0.50, blue: 1.0)
+                                ]),
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
                         )
-                    )
-                    .foregroundColor(.white)
-                    .cornerRadius(10)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
                 }
-
                 
                 
                 Button(action: { isShowingModalCreateManually = true }) {
@@ -154,6 +155,21 @@ struct CreateTaskView: View {
         }
         .background(Color.gray.opacity(0.2).ignoresSafeArea())
         
+        .alert("Delete Task", isPresented: $showDeleteAlert) {
+            Button("Cancel", role: .cancel) {
+                taskToDelete = nil
+            }
+            Button("Delete", role: .destructive) {
+                if let task = taskToDelete {
+                    deleteTaskWithAnimation(task)
+                }
+            }
+        } message: {
+            if let task = taskToDelete {
+                Text("Are you sure you want to delete '\(task.name)'? This action cannot be undone.")
+            }
+        }
+        
         .sheet(isPresented: $isShowingModalCreateWithAI) {
             NavigationStack {
                 GenerateTaskWithAIView(
@@ -181,6 +197,17 @@ struct CreateTaskView: View {
                 CreateTaskManuallyView(taskVM: taskVM, taskDeadline: goalDeadline)
                     .presentationDetents([.medium])
             }
+        }
+    }
+    
+    private func deleteTaskWithAnimation(_ task: AIGoalTask) {
+        withAnimation(.easeInOut(duration: 0.3)) {
+            removingTaskIds.insert(task.id)
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            taskVM.deleteTask(task)
+            removingTaskIds.remove(task.id)
+            taskToDelete = nil
         }
     }
 }

@@ -140,7 +140,7 @@ final class TaskViewModel: ObservableObject {
             self.isLoading = false
         }
     }
-
+    
     
     
     //temporary CRUD before saved to Swift Data
@@ -387,6 +387,15 @@ final class TaskViewModel: ObservableObject {
 }
 
 extension TaskViewModel {
+    var groupedPendingGoalTasks: [(date: Date, tasks: [GoalTask])] {
+        let pendingTasks = goalTasks.filter { !$0.isCompleted }
+        let grouped = Dictionary(grouping: pendingTasks) { task in
+            Calendar.current.startOfDay(for: task.workingTime)
+        }
+        return grouped
+            .sorted { $0.key < $1.key }
+            .map { (date: $0.key, tasks: $0.value) }
+    }
     
     var groupedGoalTasks: [(date: Date, tasks: [GoalTask])] {
         let grouped = Dictionary(grouping: goalTasks) { task in
