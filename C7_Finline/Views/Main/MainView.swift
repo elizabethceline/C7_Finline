@@ -27,7 +27,7 @@ struct MainView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 12) {
+            VStack(spacing: 8) {
                 HeaderView(
                     viewModel: viewModel,
                     unfinishedTasks: unfinishedTasks
@@ -47,7 +47,6 @@ struct MainView: View {
                     selectedDate: $selectedDate
                 )
             }
-            .padding(.top, 8)
             .background(Color(uiColor: .systemGray6).ignoresSafeArea())
             .onAppear {
                 viewModel.setModelContext(modelContext)

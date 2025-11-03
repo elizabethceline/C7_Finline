@@ -16,7 +16,7 @@ struct DateHeaderView: View {
     let jumpToDate: (Date) -> Void
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 8) {
             Button {
                 showDatePicker = true
             } label: {

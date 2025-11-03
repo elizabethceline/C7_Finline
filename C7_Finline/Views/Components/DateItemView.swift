@@ -31,7 +31,7 @@ struct DateItemView: View {
                     .fontWeight(.semibold)
                     .foregroundColor(Color(uiColor: .label))
             }
-            .frame(width: 44, height: 60)
+            .frame(width: 44, height: 52)
             .contentShape(Rectangle())
             .background(
                 RoundedRectangle(cornerRadius: 12)

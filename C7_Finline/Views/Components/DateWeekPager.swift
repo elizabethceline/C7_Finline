@@ -63,7 +63,7 @@ struct DateWeekPagerView: View {
     var body: some View {
         GeometryReader { geo in
             let itemWidth = geo.size.width / 7
-            let itemHeight: CGFloat = 70
+            let itemHeight: CGFloat = 64
 
             TabView(selection: $weekIndex) {
                 ForEach(-50..<50, id: \.self) { index in
@@ -88,7 +88,7 @@ struct DateWeekPagerView: View {
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
         }
-        .frame(height: 70)
+        .frame(height: 64)
         .onChange(of: selectedDate) { _, _ in
             syncPagerToSelectedDate()
         }
