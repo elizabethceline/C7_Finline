@@ -30,7 +30,8 @@ struct MainView: View {
             VStack(spacing: 8) {
                 HeaderView(
                     viewModel: viewModel,
-                    unfinishedTasks: unfinishedTasks
+                    unfinishedTasks: unfinishedTasks,
+                    selectedDate: $selectedDate
                 )
 
                 // Date Header
@@ -77,8 +78,7 @@ struct MainView: View {
                         showCreateGoalModal.toggle()
                     } label: {
                         Image(systemName: "plus")
-                            .font(.title2)
-                            .padding(.all, 12)
+                            .font(.callout)
                     }
                 }
             }
@@ -86,7 +86,7 @@ struct MainView: View {
                 CreateGoalView(mainVM: viewModel)
                     .presentationDetents([.large])
             }
-            
+
             .sheet(isPresented: $showDatePicker) {
                 VStack {
                     DatePicker(

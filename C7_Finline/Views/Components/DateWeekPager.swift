@@ -98,7 +98,9 @@ struct DateWeekPagerView: View {
         }
         .frame(height: 64)
         .onChange(of: selectedDate) { _, _ in
-            syncPagerToSelectedDate()
+            DispatchQueue.main.async {
+                syncPagerToSelectedDate()
+            }
         }
     }
 }
