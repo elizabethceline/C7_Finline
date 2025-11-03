@@ -67,7 +67,8 @@ struct DetailGoalView: View {
             Section(header:
                         Text(date, format: .dateTime.day().month(.wide).year())
                 .font(.title3)
-                .foregroundColor(.primary)
+                .foregroundColor(.black)
+                .fontWeight(.semibold)
             ) {
                 ForEach(tasks) { task in
                     Button {

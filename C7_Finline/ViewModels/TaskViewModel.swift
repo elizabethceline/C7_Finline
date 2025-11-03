@@ -394,7 +394,7 @@ extension TaskViewModel {
         }
         return grouped
             .sorted { $0.key < $1.key }
-            .map { (key: $0.key, value: $0.value) }
+            .map { (date: $0.key, tasks: $0.value) }
     }
     
     func groupedGoalTaskAI() -> [(date: Date, tasks: [AIGoalTask])] {
@@ -411,7 +411,7 @@ extension TaskViewModel {
         
         return grouped
             .sorted { $0.key < $1.key }
-            .map { (key: $0.key, value: $0.value.sorted {
+            .map { (date: $0.key, tasks: $0.value.sorted {
                 guard
                     let d1 = dateFormatter.date(from: $0.workingTime),
                     let d2 = dateFormatter.date(from: $1.workingTime)

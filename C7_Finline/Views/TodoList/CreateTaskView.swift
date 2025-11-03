@@ -59,7 +59,7 @@ struct CreateTaskView: View {
                         Section(header:
                             Text(group.date, format: .dateTime.day().month(.wide).year())
                             .font(.title3)
-                                .foregroundColor(.primary)
+                                .foregroundColor(.black)
                         ) {
                             ForEach(group.tasks) { aiTask in
                                 let workingDate: Date? = ISO8601DateFormatter.parse(aiTask.workingTime)
