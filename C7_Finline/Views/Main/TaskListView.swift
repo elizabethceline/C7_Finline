@@ -12,19 +12,21 @@ struct TaskListView: View {
     let tasks: [GoalTask]
     let goals: [Goal]
     let selectedDate: Date
-    
+
     @State private var removingTaskIds: Set<String> = []
     @State private var showCompleteAlert = false
     @State private var showDeleteAlert = false
     @State private var selectedTask: GoalTask?
     @State private var navigateToDetail = false
-    
+
     @State private var selectedGoal: Goal?
     @State private var goToGoalDetail = false
-    
+
     private let taskManager = TaskManager(networkMonitor: NetworkMonitor())
-    @StateObject private var taskVM = TaskViewModel(networkMonitor: NetworkMonitor())
-    
+    @StateObject private var taskVM = TaskViewModel(
+        networkMonitor: NetworkMonitor()
+    )
+
     var body: some View {
         List {
             ForEach(goals) { goal in
@@ -32,7 +34,7 @@ struct TaskListView: View {
                     goal.tasks.contains(where: { $0.id == task.id })
                 }
                 .sorted { $0.workingTime < $1.workingTime }
-                
+
                 if !goalTasks.isEmpty {
                     Section {
                         Button {
@@ -41,11 +43,12 @@ struct TaskListView: View {
                         } label: {
                             GoalHeaderView(goalName: goal.name)
                         }
-                        .listRowInsets(.init(top: 8, leading: 0, bottom: 8, trailing: 0))
+                        .listRowInsets(
+                            .init(top: 8, leading: 0, bottom: 8, trailing: 0)
+                        )
                         .listRowSeparator(.hidden)
                         .listRowBackground(Color.clear)
-                        
-                        
+
                         ForEach(goalTasks) { task in
                             Button {
                                 selectedTask = task
@@ -53,13 +56,25 @@ struct TaskListView: View {
                             } label: {
                                 TaskCardView(task: task)
                             }
-                            .listRowInsets(.init(top: 8, leading: 0, bottom: 8, trailing: 0))
+                            .listRowInsets(
+                                .init(
+                                    top: 8,
+                                    leading: 0,
+                                    bottom: 8,
+                                    trailing: 0
+                                )
+                            )
                             .listRowSeparator(.hidden)
                             .listRowBackground(Color.clear)
                             .opacity(removingTaskIds.contains(task.id) ? 0 : 1)
-                            .offset(y: removingTaskIds.contains(task.id) ? -10 : 0)
-                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                                
+                            .offset(
+                                y: removingTaskIds.contains(task.id) ? -10 : 0
+                            )
+                            .swipeActions(
+                                edge: .trailing,
+                                allowsFullSwipe: false
+                            ) {
+
                                 Button {
                                     selectedTask = task
                                     showCompleteAlert = true
@@ -67,7 +82,7 @@ struct TaskListView: View {
                                     Label("Complete", systemImage: "checkmark")
                                 }
                                 .tint(.green)
-                                
+
                                 Button {
                                     selectedTask = task
                                     showDeleteAlert = true
@@ -80,6 +95,13 @@ struct TaskListView: View {
                     }
                     .listSectionSeparator(.hidden)
                 }
+            }
+
+            if !tasks.isEmpty {
+                Color.clear
+                    .frame(height: 48)
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
             }
         }
         .navigationDestination(isPresented: $navigateToDetail) {
@@ -111,7 +133,9 @@ struct TaskListView: View {
             }
         } message: {
             if let task = selectedTask {
-                Text("Are you sure you want to mark '\(task.name)' as completed?")
+                Text(
+                    "Are you sure you want to mark '\(task.name)' as completed?"
+                )
             }
         }
         .alert("Delete Task", isPresented: $showDeleteAlert) {
@@ -121,22 +145,28 @@ struct TaskListView: View {
             }
         } message: {
             if let task = selectedTask {
-                Text("Are you sure you want to delete '\(task.name)'? This action cannot be undone.")
+                Text(
+                    "Are you sure you want to delete '\(task.name)'? This action cannot be undone."
+                )
             }
         }
     }
-    
+
     private func completeTask(_ task: GoalTask) {
-        withAnimation(.easeInOut(duration: 0.3)) { removingTaskIds.insert(task.id) }
+        withAnimation(.easeInOut(duration: 0.3)) {
+            removingTaskIds.insert(task.id)
+        }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             viewModel.toggleTaskCompletion(task: task)
             removingTaskIds.remove(task.id)
             selectedTask = nil
         }
     }
-    
+
     private func deleteTask(_ task: GoalTask) {
-        withAnimation(.easeInOut(duration: 0.3)) { removingTaskIds.insert(task.id) }
+        withAnimation(.easeInOut(duration: 0.3)) {
+            removingTaskIds.insert(task.id)
+        }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             viewModel.deleteTask(task: task)
             removingTaskIds.remove(task.id)
@@ -144,7 +174,6 @@ struct TaskListView: View {
         }
     }
 }
-
 
 #Preview {
     let goal = Goal(

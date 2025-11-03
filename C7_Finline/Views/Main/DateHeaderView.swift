@@ -14,6 +14,7 @@ struct DateHeaderView: View {
     @Binding var isWeekChange: Bool
 
     let jumpToDate: (Date) -> Void
+    let unfinishedTasks: [GoalTask]
 
     var body: some View {
         VStack(spacing: 8) {
@@ -40,7 +41,8 @@ struct DateHeaderView: View {
             DateWeekPagerView(
                 selectedDate: $selectedDate,
                 weekIndex: $currentWeekIndex,
-                isWeekChange: $isWeekChange
+                isWeekChange: $isWeekChange,
+                unfinishedTasks: unfinishedTasks
             )
 
             Divider()
@@ -55,6 +57,7 @@ struct DateHeaderView: View {
         currentWeekIndex: .constant(0),
         showDatePicker: .constant(false),
         isWeekChange: .constant(false),
-        jumpToDate: { _ in }
+        jumpToDate: { _ in },
+        unfinishedTasks: []
     )
 }

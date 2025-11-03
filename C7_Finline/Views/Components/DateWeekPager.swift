@@ -11,9 +11,17 @@ struct DateWeekPagerView: View {
     @Binding var selectedDate: Date
     @Binding var weekIndex: Int
     @Binding var isWeekChange: Bool
+    let unfinishedTasks: [GoalTask]
 
     @State private var weekRange: ClosedRange<Int> = -50...50
     private let calendar = Calendar.current
+
+    private func hasUnfinishedTask(on date: Date) -> Bool {
+        unfinishedTasks.contains {
+            calendar.isDate($0.workingTime, inSameDayAs: date)
+                && $0.workingTime < Date()
+        }
+    }
 
     // get dates for the week at given index
     private func weekDates(for index: Int) -> [Date] {
@@ -84,7 +92,8 @@ struct DateWeekPagerView: View {
                                 isSelected: calendar.isDate(
                                     selectedDate,
                                     inSameDayAs: date
-                                )
+                                ),
+                                hasUnfinishedTask: hasUnfinishedTask(on: date)
                             ) {
                                 selectedDate = date
                             }
@@ -109,7 +118,8 @@ struct DateWeekPagerView: View {
     DateWeekPagerView(
         selectedDate: .constant(Date()),
         weekIndex: .constant(0),
-        isWeekChange: .constant(false)
+        isWeekChange: .constant(false),
+        unfinishedTasks: []
     )
     .padding()
     .background(Color.gray.opacity(0.2))

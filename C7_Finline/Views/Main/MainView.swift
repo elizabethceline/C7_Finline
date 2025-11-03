@@ -40,7 +40,8 @@ struct MainView: View {
                     currentWeekIndex: $currentWeekIndex,
                     showDatePicker: $showDatePicker,
                     isWeekChange: $isWeekChange,
-                    jumpToDate: jumpToDate(_:)
+                    jumpToDate: jumpToDate(_:),
+                    unfinishedTasks: unfinishedTasks
                 )
 
                 ContentCardView(
