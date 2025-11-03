@@ -17,11 +17,11 @@ struct ToggleCardView: View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(spacing: 8) {
                 Image(systemName: icon)
-                    .foregroundStyle(.black)
+                    .foregroundColor(.primary)
                 
                 Text(title)
                     .font(.headline)
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(.secondary)
             }
             Spacer()
                 .frame(height: 16)

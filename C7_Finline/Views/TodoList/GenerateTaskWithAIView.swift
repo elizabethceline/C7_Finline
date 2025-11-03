@@ -74,6 +74,7 @@ struct GenerateTaskWithAIView: View {
                         Image(systemName: "sparkles")
                     }
                 }
+                
             }
         }
     }

@@ -40,6 +40,7 @@ struct CreateGoalView: View {
                                     .font(.body)
                             } icon: {
                                 Image(systemName: "calendar")
+                                    .foregroundColor(.primary)
                             }
                             Spacer()
                             Image(systemName: "chevron.right")
@@ -57,6 +58,7 @@ struct CreateGoalView: View {
                                     .font(.body)
                             } icon: {
                                 Image(systemName: "clock")
+                                    .foregroundColor(.primary)
                             }
                             Spacer()
                             Image(systemName: "chevron.right")
@@ -105,8 +107,7 @@ struct CreateGoalView: View {
                     title: "Select Time",
                     selection: $goalDeadline,
                     displayedComponents: [.hourAndMinute]
-                )
-            }
+                )            }
         }
     }
 }

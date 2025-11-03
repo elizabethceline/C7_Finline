@@ -94,31 +94,39 @@ struct CreateTaskView: View {
             
             VStack(spacing: 16) {
                 Button(action: { isShowingModalCreateWithAI = true }) {
-                    Text("Create with AI")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
+                    HStack {
+                        Image(systemName: "sparkles")
+                            .font(.title3)
+                        
+                        Text("Create with AI")
+                            .font(.headline)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(
+                        LinearGradient(
+                            colors: [
+                                Color(red: 0.09, green: 0.40, blue: 1.0),
+                                Color(red: 0.00, green: 0.85, blue: 0.95),
+                                Color(red: 0.65, green: 0.35, blue: 1.0)
+                            ],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
                 }
+
+                
                 
                 Button(action: { isShowingModalCreateManually = true }) {
                     Text("Create Task Manually")
                         .font(.headline)
                         .frame(maxWidth: .infinity)
                         .padding()
+                        .background(Color.primary)
                         .background(Color.gray.opacity(0.3))
-                        .foregroundColor(.primary)
-                        .cornerRadius(10)
-                }
-                
-                NavigationLink(destination: DebugDataView()) {
-                    Text("Open Debug Data")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.orange.opacity(0.8))
                         .foregroundColor(.white)
                         .cornerRadius(10)
                 }
