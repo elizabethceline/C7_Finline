@@ -73,7 +73,18 @@ struct FocusRestView: View {
             }
             .padding(.horizontal)
             .padding(.vertical)
-            .background(Color.white.opacity(0.8))
+//            .background(.ultraThinMaterial)
+//            .background(Color.blue.opacity(0.3))
+            .background {
+                // Use glassEffect here if supported
+                if #available(iOS 26.0, *) {
+                    Color.blue.opacity(0.3)
+                        .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 24))
+                } else {
+                    RoundedRectangle(cornerRadius: 24)
+                        .fill(.ultraThinMaterial)
+                }
+            }
             .clipShape(RoundedRectangle(cornerRadius: 24))
             .padding(.vertical)
             .padding(.bottom, 40)

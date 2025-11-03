@@ -164,7 +164,16 @@ struct FocusModeView: View {
                         }
                         .padding(.horizontal)
                         .padding(.vertical)
-                        .background(Color.white.opacity(0.8))
+                        .background {
+                            // Use glassEffect here if supported
+                            if #available(iOS 26.0, *) {
+                                Color.clear
+                                    .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 24))
+                            } else {
+                                RoundedRectangle(cornerRadius: 24)
+                                    .fill(.ultraThinMaterial)
+                            }
+                        }
                         .clipShape(RoundedRectangle(cornerRadius: 24))
                         //.padding(.horizontal)
                         //.padding()
@@ -317,6 +326,8 @@ struct FocusModeView: View {
                 }
             )
             .presentationDetents([.height(300)])
+            .presentationBackground(Color.blue.opacity(0.3))
+
         }
 
 
