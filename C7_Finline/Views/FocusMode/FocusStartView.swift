@@ -5,7 +5,7 @@ import SwiftUI
 struct FocusStartView: View {
     @EnvironmentObject var viewModel: FocusSessionViewModel
     @State private var duration: Double = 5 // minutes
-    @State private var deepFocusEnabled: Bool = true
+//    @State private var deepFocusEnabled: Bool = true
     @State private var nudgeMeEnabled: Bool = true
     @State private var showFocusView = false
 
@@ -22,7 +22,7 @@ struct FocusStartView: View {
                         .frame(width: 200)
                 }
 
-                Toggle(isOn: $deepFocusEnabled) {
+                Toggle(isOn: $viewModel.authManager.isEnabled) {
                     Text("Activate Deep Focus?")
                         .font(.title3)
                         .bold()
@@ -48,10 +48,11 @@ struct FocusStartView: View {
 
                 Button {
                     viewModel.sessionDuration = duration * 60
-                    viewModel.deepFocusEnabled = deepFocusEnabled
                     viewModel.nudgeMeEnabled = nudgeMeEnabled
                     viewModel.startSession()
-                    showFocusView = true
+                    if viewModel.isFocusing {
+                        showFocusView = true
+                    }
                 } label: {
                     Text("Start Focus")
                         .frame(maxWidth: .infinity)

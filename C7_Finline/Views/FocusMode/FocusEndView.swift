@@ -1,7 +1,9 @@
 import SwiftUI
+import SwiftData
 
 struct FocusEndView: View {
-    @ObservedObject var viewModel: FishResultViewModel
+//    @ObservedObject var viewModel: FishResultViewModel
+    @ObservedObject var viewModel: FocusResultViewModel
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
@@ -89,6 +91,16 @@ struct FocusEndView: View {
                 .padding(.horizontal, 24)
                 .padding(.vertical, 20)
                 .background(Color.white.opacity(0.8))
+//                .background {
+//                    // Use glassEffect here if supported
+//                    if #available(iOS 26.0, *) {
+//                        Color.clear
+//                            .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 24))
+//                    } else {
+//                        RoundedRectangle(cornerRadius: 24)
+//                            .fill(.ultraThinMaterial)
+//                    }
+//                }
                 .clipShape(RoundedRectangle(cornerRadius: 20))
                 //.padding(.horizontal)
                 
@@ -112,7 +124,15 @@ struct FocusEndView: View {
                 }
                 .padding(.horizontal)
                 .padding(.vertical)
-                .background(Color.white.opacity(0.8))
+                .background {
+                    if #available(iOS 26.0, *) {
+                        Color.clear
+                            .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 24))
+                    } else {
+                        RoundedRectangle(cornerRadius: 24)
+                            .fill(.ultraThinMaterial)
+                    }
+                }
                 .clipShape(RoundedRectangle(cornerRadius: 24))
                 //.padding(.horizontal)
                 //.padding()
@@ -123,19 +143,24 @@ struct FocusEndView: View {
     }
 }
 
+
 #Preview {
-    let mockVM = MockFishResultViewModel()
+    let container = try! ModelContainer(for: Goal.self, GoalTask.self)
+        let mockVM = MockFocusResultViewModel(context: container.mainContext)
+    
     ZStack {
         Color.gray
             .ignoresSafeArea()
         FocusEndView(viewModel: mockVM)
     }
+    .modelContainer(container)
 }
 
-final class MockFishResultViewModel: FishResultViewModel {
-    init() {
-        super.init(context: nil)
-        self.currentResult = FishingResult(caughtFish: fishCaught)
+final class MockFocusResultViewModel: FocusResultViewModel {
+    
+    init(context: ModelContext) {
+        super.init(context: context, networkMonitor: NetworkMonitor())
+        
         self.bonusPoints = 20
     }
     
@@ -156,7 +181,7 @@ final class MockFishResultViewModel: FishResultViewModel {
         ]
     }
     
-    override var totalPoints: Int {
+    var totalPoints: Int {
         fishCaught.reduce(0) { $0 + $1.points }
     }
     

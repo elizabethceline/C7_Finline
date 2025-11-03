@@ -2,25 +2,15 @@ import SwiftUI
 import SwiftData
 
 struct FocusRestView: View {
+    @EnvironmentObject var viewModel: FocusSessionViewModel
+    
     let goalName: String?
     let restDuration: TimeInterval
-    let onFinishRest: () -> Void
-    
-    @State private var remainingTime: TimeInterval
-    @State private var timer: Timer?
+
     @State private var showEarlyFinishAlert = false
     
-    init(goalName: String?, restDuration: TimeInterval, onFinishRest: @escaping () -> Void) {
-        self.goalName = goalName
-        self.restDuration = restDuration
-        self.onFinishRest = onFinishRest
-        _remainingTime = State(initialValue: restDuration)
-    }
-    
     var body: some View {
-        // No ZStack - background handled by FocusModeView
         VStack(alignment: .leading) {
-            // Goal name pill - MATCHING STYLE
             Text(goalName ?? "No Goal")
                 .font(.headline)
                 //.foregroundColor(.primary)
@@ -31,7 +21,6 @@ struct FocusRestView: View {
                 .shadow(radius: 2)
                 .padding()
             
-            // Rest message - MATCHING STYLE
             Text("You may now\nREST for a while.")
                 .font(.system(size: 36, weight: .bold))
                 .foregroundColor(.white)
@@ -42,10 +31,9 @@ struct FocusRestView: View {
             
             Spacer()
             
-            // Timer display - MATCHING STYLE
             VStack(spacing: 16) {
-                if remainingTime > 0 {
-                    Text(formatTime(remainingTime))
+                if viewModel.restRemainingTime > 0 {
+                    Text(TimeFormatter.format(seconds: viewModel.restRemainingTime))
                         .font(.system(size: 60, weight: .bold, design: .rounded))
                         .monospacedDigit()
                 } else {
@@ -54,15 +42,13 @@ struct FocusRestView: View {
                 }
                 
                 Button(action: {
-                    if remainingTime > 0 {
-                        // Still have time left - show confirmation
+                    if viewModel.restRemainingTime > 0 {
                         showEarlyFinishAlert = true
                     } else {
-                        // Time's up - go back immediately
-                        stopRest()
+                        viewModel.endRest()
                     }
                 }) {
-                    Text(remainingTime > 0 ? "I'm done resting" : "Back to Work")
+                    Text(viewModel.restRemainingTime > 0 ? "I'm done resting" : "Back to Work")
                         .font(.headline)
                         .frame(maxWidth: .infinity)
                         .padding()
@@ -89,55 +75,24 @@ struct FocusRestView: View {
             .padding(.vertical)
             .padding(.bottom, 40)
         }
-        .onAppear(perform: startTimer)
-        .onDisappear(perform: stopTimer)
+        .onAppear{ viewModel.startRest(for: restDuration)}
+        .onDisappear{ viewModel.endRest()}
         .alert("Done Resting?", isPresented: $showEarlyFinishAlert) {
             Button("Yes", role: .destructive) {
-                        stopRest()
+                viewModel.endRest()
                     }
                     Button("No", role: .cancel) { }
                 } message: {
                     Text("Your focus timer will resume, and this rest period will still be counted as used.")
                 }
     }
-    
-    private func startTimer() {
-        timer?.invalidate()
-        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
-            if remainingTime > 0 {
-                remainingTime -= 1
-            } else {
-                stopRest()
-            }
-        }
-    }
-    
-    private func stopTimer() {
-        timer?.invalidate()
-        timer = nil
-    }
-    
-    private func stopRest() {
-        stopTimer()
-        onFinishRest()
-    }
-    
-    private func formatTime(_ seconds: TimeInterval) -> String {
-        let h = Int(seconds) / 3600
-        let m = (Int(seconds) % 3600) / 60
-        let s = Int(seconds) % 60
-        return String(format: "%02d:%02d:%02d", h, m, s)
-    }
 }
 
 
 #Preview {
-    let mockSessionVM = FocusSessionViewModel(networkMonitor: NetworkMonitor())
-    mockSessionVM.taskTitle = "Initiate a Desk Research"
-    mockSessionVM.goalName = "Write my Thesis"
-    mockSessionVM.remainingTime = 1
+    let mockSessionVM = FocusSessionViewModel()
     
-    return ZStack {
+    ZStack {
         Image("backgroundRest")
             .resizable()
             .frame(height: 910)
@@ -154,9 +109,6 @@ struct FocusRestView: View {
             FocusRestView(
                 goalName: mockSessionVM.goalName,
                 restDuration: 300,
-                onFinishRest: {
-                    print("Preview rest finished.")
-                }
             )
         }
         .padding()
