@@ -54,29 +54,11 @@ struct CharacterIntroView: View {
                         VStack(spacing: 12) {
                             HStack {
                                 VStack(alignment: .leading) {
-                                    TextField(
-                                        "Your name",
-                                        text: $username
-                                    )
-                                    .textInputAutocapitalization(.words)
-                                    .disableAutocorrection(true)
-                                    .font(.headline)
-                                    .focused($isTextFieldFocused)
-                                    .onSubmit {
-                                        if !username.trimmingCharacters(
-                                            in: .whitespaces
-                                        ).isEmpty {
-                                            isTextFieldFocused = false
-                                            withAnimation(
-                                                .spring(
-                                                    response: 0.4,
-                                                    dampingFraction: 0.7
-                                                )
-                                            ) {
-                                                showFinalMessage = true
-                                            }
-                                        }
-                                    }
+                                    TextField("Your name", text: $username)
+                                        .textInputAutocapitalization(.words)
+                                        .disableAutocorrection(true)
+                                        .font(.headline)
+                                        .focused($isTextFieldFocused)
                                 }
 
                                 Spacer()
@@ -94,7 +76,7 @@ struct CharacterIntroView: View {
                             .frame(height: 120)
                             .padding(.horizontal, 28)
 
-                            Text("Press return/enter to continue")
+                            Text("Tap anywhere to continue")
                                 .font(.subheadline)
                                 .foregroundColor(
                                     Color(uiColor: .secondaryLabel)
@@ -118,7 +100,26 @@ struct CharacterIntroView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .contentShape(Rectangle())
                 .onTapGesture {
-                    guard !showNameInput && !showFinalMessage else { return }
+                    if showFinalMessage {
+                        return
+                    }
+
+                    if showNameInput {
+                        if !username.trimmingCharacters(in: .whitespaces)
+                            .isEmpty
+                        {
+                            isTextFieldFocused = false
+                            withAnimation(
+                                .spring(response: 0.4, dampingFraction: 0.7)
+                            ) {
+                                showFinalMessage = true
+                            }
+                        } else {
+                            isTextFieldFocused = true
+                        }
+                        return
+                    }
+
                     if currentMessageIndex < messages.count - 1 {
                         currentMessageIndex += 1
                     } else {
