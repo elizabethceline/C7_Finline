@@ -14,6 +14,7 @@ class MainViewModel: ObservableObject {
     @Published var tasks: [GoalTask] = []
     @Published var isLoading = false
     @Published var error: String = ""
+    @Published var selectedDate: Date = Date()
 
     private var modelContext: ModelContext?
     private var cancellables = Set<AnyCancellable>()
@@ -21,9 +22,8 @@ class MainViewModel: ObservableObject {
     private let networkMonitor: NetworkMonitor
     private let goalManager: GoalManager
     private let taskManager: TaskManager
-    
-    @Published var selectedDate: Date = Date()
 
+    @MainActor
     var isSignedInToiCloud: Bool {
         CloudKitManager.shared.isSignedInToiCloud
     }
@@ -42,10 +42,24 @@ class MainViewModel: ObservableObject {
         self.modelContext = context
 
         loadDataFromSwiftData()
-        print("Local data loaded")
+        print("Local data loaded: \(goals.count) goals, \(tasks.count) tasks")
 
-        if networkMonitor.isConnected, isSignedInToiCloud {
-            Task {
+        Task {
+            if networkMonitor.isConnected,
+                isSignedInToiCloud
+            {
+                isLoading = true
+                let cloudGoals = try? await goalManager.fetchGoals(
+                    modelContext: context
+                )
+                if let cloudGoals = cloudGoals {
+                    updatePublishedGoals(cloudGoals)
+                    try? context.save()
+                    await fetchAllTasks()
+                    print("Fetched \(cloudGoals.count) goals from CloudKit")
+                }
+                isLoading = false
+                
                 print("Sync pending local changes...")
                 await syncPendingItems()
 
@@ -61,11 +75,13 @@ class MainViewModel: ObservableObject {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] isConnected in
                 guard let self = self else { return }
-                if isConnected {
-                    if self.isSignedInToiCloud, self.modelContext != nil {
-                        Task { @MainActor in
-                            await self.syncPendingItems()
-                        }
+                if isConnected,
+                    self.isSignedInToiCloud,
+                    self.modelContext != nil
+                {
+                    Task {
+                        await self.syncPendingItems()
+                        await self.fetchGoals()
                     }
                 }
             }
@@ -82,13 +98,13 @@ class MainViewModel: ObservableObject {
             let goalDescriptor = FetchDescriptor<Goal>(
                 sortBy: [SortDescriptor(\.due, order: .forward)]
             )
-            let goals = try modelContext.fetch(goalDescriptor)
-            updatePublishedGoals(goals)
-
-            // Load tasks
             let taskDescriptor = FetchDescriptor<GoalTask>()
-            let tasks = try modelContext.fetch(taskDescriptor)
-            updatePublishedTasks(tasks)
+
+            let localGoals = try modelContext.fetch(goalDescriptor)
+            let localTasks = try modelContext.fetch(taskDescriptor)
+
+            updatePublishedGoals(localGoals)
+            updatePublishedTasks(localTasks)
         } catch {
             self.error =
                 "Failed to load local data: \(error.localizedDescription)"
@@ -103,13 +119,7 @@ class MainViewModel: ObservableObject {
     @MainActor
     private func updatePublishedTasks(_ tasks: [GoalTask]) {
         self.tasks = tasks
-
-        print("LOCAL TASK COUNT: \(tasks.count)")
-        for task in tasks {
-            print(
-                "— \(task.name) | completed: \(task.isCompleted) | goal: \(task.goal?.name ?? "no goal") | id: \(task.id)"
-            )
-        }
+        print("Updated tasks: \(tasks.count)")
     }
 
     // CRUD Goal
@@ -129,6 +139,7 @@ class MainViewModel: ObservableObject {
                 modelContext: modelContext
             )
             updatePublishedGoals(fetchedGoals)
+            try? modelContext.save()
             await fetchAllTasks()
         } catch {
             self.error = "Failed to fetch goals: \(error.localizedDescription)"
@@ -153,6 +164,7 @@ class MainViewModel: ObservableObject {
                 modelContext: modelContext
             )
             updatePublishedTasks(fetchedTasks)
+            try? modelContext.save()
         } catch {
             self.error = "Failed to fetch tasks: \(error.localizedDescription)"
         }
@@ -171,12 +183,6 @@ class MainViewModel: ObservableObject {
         taskManager.toggleTaskCompletion(task: task)
     }
 
-    func getTasksForGoal(_ goalId: String) -> [GoalTask] {
-        return tasks.filter { $0.goal?.id == goalId }
-    }
-
-    // sync
-    @MainActor
     func syncPendingItems() async {
         guard let modelContext = modelContext, networkMonitor.isConnected else {
             return

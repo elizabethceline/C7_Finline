@@ -10,6 +10,7 @@ import SwiftUI
 struct CarouselView: View {
     let onComplete: () -> Void
     @State private var currentIndex = 0
+    @State private var dragOffset: CGFloat = 0
 
     let cards: [OnboardingCard] = [
         OnboardingCard(
@@ -35,7 +36,6 @@ struct CarouselView: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack(alignment: .bottomTrailing) {
-                // Background
                 OnboardingBackground()
 
                 VStack(spacing: geometry.size.height * 0.04) {
@@ -52,7 +52,8 @@ struct CarouselView: View {
                                 .scaleEffect(index == currentIndex ? 1.0 : 0.85)
                                 .offset(
                                     x: CGFloat(index - currentIndex)
-                                        * geometry.size.width * 0.7
+                                        * geometry.size.width * 0.7 + dragOffset
+                                        * 0.3
                                 )
                                 .offset(
                                     y: getCardOffset(
@@ -64,7 +65,7 @@ struct CarouselView: View {
                                 .animation(
                                     .spring(
                                         response: 0.5,
-                                        dampingFraction: 0.8
+                                        dampingFraction: 0.85
                                     ),
                                     value: currentIndex
                                 )
@@ -85,7 +86,7 @@ struct CarouselView: View {
                             .id(currentIndex)
                             .transition(.opacity)
                             .animation(
-                                .easeInOut(duration: 0.6),
+                                .easeInOut(duration: 0.5),
                                 value: currentIndex
                             )
 
@@ -97,7 +98,7 @@ struct CarouselView: View {
                             .id(currentIndex)
                             .transition(.opacity)
                             .animation(
-                                .easeInOut(duration: 0.6),
+                                .easeInOut(duration: 0.5),
                                 value: currentIndex
                             )
                             .padding(.top, 8)
@@ -108,10 +109,38 @@ struct CarouselView: View {
                 }
                 .padding(.top, geometry.size.height * 0.05)
                 .frame(width: geometry.size.width, height: geometry.size.height)
+                .gesture(
+                    currentIndex < cards.count - 1
+                        ? DragGesture()
+                            .onChanged { value in
+                                if value.translation.width < 0 {
+                                    dragOffset = value.translation.width
+                                }
+                            }
+                            .onEnded { value in
+                                let threshold = geometry.size.width * 0.25
+                                if value.translation.width < -threshold {
+                                    if currentIndex < cards.count - 1 {
+                                        withAnimation(
+                                            .spring(
+                                                response: 0.45,
+                                                dampingFraction: 0.82
+                                            )
+                                        ) {
+                                            currentIndex += 1
+                                        }
+                                    }
+                                }
+                                dragOffset = 0
+                            }
+                        : nil
+                )
 
                 // Next button
                 Button {
-                    withAnimation {
+                    withAnimation(
+                        .spring(response: 0.45, dampingFraction: 0.82)
+                    ) {
                         if currentIndex < cards.count - 1 {
                             currentIndex += 1
                         } else {
