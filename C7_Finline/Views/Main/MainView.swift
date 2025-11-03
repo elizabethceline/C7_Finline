@@ -60,7 +60,7 @@ struct MainView: View {
                 .padding(.trailing, 28)
                 .padding(.bottom, 16)
                 .sheet(isPresented: $showCreateGoalModal) {
-                    CreateGoalView()
+                    CreateGoalView(mainVM: viewModel)
                         .presentationDetents([.large])
                 }
             }
