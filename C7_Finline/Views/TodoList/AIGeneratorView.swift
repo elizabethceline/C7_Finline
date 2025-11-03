@@ -9,6 +9,7 @@ import SwiftUI
 
 struct AIGeneratorView: View {
     @StateObject private var vm = TaskViewModel(networkMonitor: NetworkMonitor())
+    @ObservedObject var mainVM: MainViewModel
 
     @State private var title: String = ""
     @State private var desc: String = ""
@@ -80,7 +81,7 @@ struct AIGeneratorView: View {
                 }
                 .padding(.bottom, 20)
                 .sheet(isPresented: $showCreateGoalModal) {
-                    CreateGoalView()
+                    CreateGoalView(mainVM: mainVM)
                         .presentationDetents([.large])
                 }
             }

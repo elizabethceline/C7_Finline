@@ -10,22 +10,15 @@ import Foundation
 import SwiftData
 
 class MainViewModel: ObservableObject {
-    @Published var username: String = ""
-    @Published var points: Int = 0
-    @Published var productiveHours: [ProductiveHours] = DayOfWeek.allCases.map {
-        ProductiveHours(day: $0)
-    }
     @Published var goals: [Goal] = []
     @Published var tasks: [GoalTask] = []
     @Published var isLoading = false
     @Published var error: String = ""
 
-    private var userProfile: UserProfile?
     private var modelContext: ModelContext?
     private var cancellables = Set<AnyCancellable>()
 
     private let networkMonitor: NetworkMonitor
-    private let userProfileManager: UserProfileManager
     private let goalManager: GoalManager
     private let taskManager: TaskManager
 
@@ -35,9 +28,6 @@ class MainViewModel: ObservableObject {
 
     init(networkMonitor: NetworkMonitor = NetworkMonitor()) {
         self.networkMonitor = networkMonitor
-        self.userProfileManager = UserProfileManager(
-            networkMonitor: networkMonitor
-        )
         self.goalManager = GoalManager(networkMonitor: networkMonitor)
         self.taskManager = TaskManager(networkMonitor: networkMonitor)
 
@@ -48,15 +38,19 @@ class MainViewModel: ObservableObject {
     func setModelContext(_ context: ModelContext) {
         guard self.modelContext == nil else { return }
         self.modelContext = context
-        loadDataFromSwiftData()
 
-        if networkMonitor.isConnected {
+        loadDataFromSwiftData()
+        print("Local data loaded")
+
+        if networkMonitor.isConnected, isSignedInToiCloud {
             Task {
+                print("Sync pending local changes...")
                 await syncPendingItems()
+
+                print("Refresh cloud tasks & goals")
+                await fetchGoals()
             }
         }
-
-        fetchUserProfile()
     }
 
     // check if online
@@ -82,12 +76,6 @@ class MainViewModel: ObservableObject {
         guard let modelContext = modelContext else { return }
 
         do {
-            // Load profile
-            let profileDescriptor = FetchDescriptor<UserProfile>()
-            if let profile = try modelContext.fetch(profileDescriptor).first {
-                updatePublishedProfile(profile)
-            }
-
             // Load goals
             let goalDescriptor = FetchDescriptor<Goal>(
                 sortBy: [SortDescriptor(\.due, order: .forward)]
@@ -106,18 +94,6 @@ class MainViewModel: ObservableObject {
     }
 
     @MainActor
-    private func updatePublishedProfile(_ profile: UserProfile?) {
-        self.userProfile = profile
-        self.username = profile?.username ?? ""
-        self.points = profile?.points ?? 0
-        self.productiveHours =
-            profile?.productiveHours
-            ?? DayOfWeek.allCases.map {
-                ProductiveHours(day: $0)
-            }
-    }
-
-    @MainActor
     private func updatePublishedGoals(_ goals: [Goal]) {
         self.goals = goals
     }
@@ -125,67 +101,12 @@ class MainViewModel: ObservableObject {
     @MainActor
     private func updatePublishedTasks(_ tasks: [GoalTask]) {
         self.tasks = tasks
-    }
 
-    // fetch + create/update user profile
-    @MainActor
-    func fetchUserProfile() {
-        guard let modelContext = modelContext, isSignedInToiCloud else {
-            return
-        }
-
-        Task {
-            do {
-                let userRecordID = try await CloudKitManager.shared
-                    .fetchUserRecordID()
-                let profile = try await userProfileManager.fetchProfile(
-                    userRecordID: userRecordID,
-                    modelContext: modelContext
-                )
-
-                updatePublishedProfile(profile)
-                await fetchGoals()
-
-            } catch {
-                self.error =
-                    "Failed to fetch user profile: \(error.localizedDescription)"
-            }
-        }
-    }
-
-    @MainActor
-    func saveUserProfile(
-        username: String,
-        productiveHours: [ProductiveHours],
-        points: Int
-    ) {
-        guard let modelContext = modelContext else { return }
-
-        do {
-            let descriptor = FetchDescriptor<UserProfile>()
-            let currentProfile =
-                try modelContext.fetch(descriptor).first ?? self.userProfile
-
-            guard let userProfile = currentProfile else { return }
-
-            userProfile.username = username
-            userProfile.productiveHours = productiveHours
-            userProfile.points = points
-            userProfile.needsSync = true
-
-            updatePublishedProfile(userProfile)
-
-            Task {
-                do {
-                    try await userProfileManager.saveProfile(userProfile)
-                } catch {
-                    self.error =
-                        "Failed to save profile: \(error.localizedDescription)"
-                }
-            }
-        } catch {
-            self.error =
-                "Failed to fetch latest profile: \(error.localizedDescription)"
+        print("LOCAL TASK COUNT: \(tasks.count)")
+        for task in tasks {
+            print(
+                "— \(task.name) | completed: \(task.isCompleted) | goal: \(task.goal?.name ?? "no goal") | id: \(task.id)"
+            )
         }
     }
 
@@ -336,13 +257,22 @@ class MainViewModel: ObservableObject {
         await goalManager.syncPendingDeletions()
         await taskManager.syncPendingDeletions()
 
-        // Sync profile
-        await userProfileManager.syncPendingProfiles(modelContext: modelContext)
-
         // Sync goals
         await goalManager.syncPendingGoals(modelContext: modelContext)
 
         // Sync tasks
         await taskManager.syncPendingTasks(modelContext: modelContext)
+    }
+
+    @MainActor
+    func appendNewGoal(_ goal: Goal) {
+        self.goals.append(goal)
+        self.goals.sort { $0.due < $1.due }
+    }
+
+    @MainActor
+    func appendNewTasks(_ tasks: [GoalTask]) {
+        self.tasks.append(contentsOf: tasks)
+        print("Added \(tasks.count) new tasks to MainViewModel")
     }
 }

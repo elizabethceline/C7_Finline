@@ -53,7 +53,7 @@ struct ContentCardView: View {
                         .padding(.top, 24)
                 }
                 .refreshable {
-                    viewModel.fetchUserProfile()
+                    await viewModel.fetchGoals()
                 }
             } else {
                 TaskListView(
@@ -63,7 +63,7 @@ struct ContentCardView: View {
                     selectedDate: selectedDate
                 )
                 .refreshable {
-                    viewModel.fetchUserProfile()
+                    await viewModel.fetchGoals()
                 }
             }
         }

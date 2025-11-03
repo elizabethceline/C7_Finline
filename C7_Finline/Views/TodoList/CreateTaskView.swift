@@ -12,6 +12,8 @@ struct CreateTaskView: View {
     let goalName: String
     let goalDeadline: Date
     
+    @ObservedObject var mainVM: MainViewModel
+    
     @State private var isShowingModalCreateWithAI: Bool = false
     @State private var isShowingModalCreateManually: Bool = false
     @State private var editingTask: AIGoalTask? = nil
@@ -146,6 +148,11 @@ struct CreateTaskView: View {
                             modelContext: modelContext
                         )
                         await taskVM.createAllGoalTasks(for: goal, modelContext: modelContext)
+                        
+                        await MainActor.run {
+                            mainVM.appendNewGoal(goal)
+                            mainVM.appendNewTasks(goal.tasks)
+                        }
                     }
                 } label: {
                     Image(systemName: "checkmark")
@@ -216,7 +223,8 @@ extension CreateTaskView {
     static var previewWithDummyTasks: some View {
         let view = CreateTaskView(
             goalName: "Finish SwiftUI Project",
-            goalDeadline: Calendar.current.date(byAdding: .day, value: 3, to: Date()) ?? Date()
+            goalDeadline: Calendar.current.date(byAdding: .day, value: 3, to: Date()) ?? Date(),
+            mainVM: MainViewModel()
         )
         
         view.taskVM.tasks = [

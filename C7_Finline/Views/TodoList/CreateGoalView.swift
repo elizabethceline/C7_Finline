@@ -9,6 +9,8 @@ import SwiftUI
 
 struct CreateGoalView: View {
     @Environment(\.dismiss) private var dismiss
+    
+    @ObservedObject var mainVM: MainViewModel
 
     @State private var goalName: String = ""
     @State private var goalDeadline: Date = Date()
@@ -88,7 +90,7 @@ struct CreateGoalView: View {
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    NavigationLink(destination: CreateTaskView(goalName: goalName, goalDeadline: goalDeadline)) {
+                    NavigationLink(destination: CreateTaskView(goalName: goalName, goalDeadline: goalDeadline, mainVM: mainVM)) {
                         Image(systemName: "checkmark")
                             .fontWeight(.semibold)
                     }
@@ -113,6 +115,6 @@ struct CreateGoalView: View {
 }
 
 #Preview {
-    CreateGoalView()
+    CreateGoalView(mainVM: MainViewModel())
         .preferredColorScheme(.dark)
 }
