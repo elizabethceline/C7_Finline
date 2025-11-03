@@ -16,12 +16,12 @@ struct HeaderView: View {
     var body: some View {
         HStack(alignment: .bottom) {
 
-            ZStack(alignment: .bottomTrailing) {
+            ZStack(alignment: .topTrailing) {
                 Text(
                     unfinishedTasks.count > 1
-                        ? "You have \(unfinishedTasks.count) unfinished tasks! Plan your day wisely."
+                        ? "You have \(unfinishedTasks.count) unfinished tasks!\nPlan your day wisely."
                         : unfinishedTasks.count == 1
-                            ? "You have 1 unfinished task! Plan your day wisely."
+                            ? "You have 1 unfinished task!\nPlan your day wisely."
                             : "Do your tasks today and earn points!"
                 )
                 .foregroundColor(.black)
@@ -29,13 +29,13 @@ struct HeaderView: View {
                 .padding(14)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(Color.secondary)
-                .clipShape(RoundedRectangle(cornerRadius: 22))
+                .clipShape(UnevenRoundedRectangle(topLeadingRadius: 18, bottomLeadingRadius: 18, bottomTrailingRadius: 18, topTrailingRadius: 0))
 
                 TriangleTail()
                     .fill(Color.secondary)
                     .frame(width: 25, height: 20)
-                    .rotationEffect(.degrees(20))
-                    .offset(x: 0, y: 5)
+                    .rotationEffect(.degrees(58))
+                    .offset(x: 14, y: -4.5)
 
             }
 
@@ -47,7 +47,7 @@ struct HeaderView: View {
                 Image("finley")
                     .resizable()
                     .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
-                    .frame(width: 55, height: 55)
+                    .frame(width: 75, height: 75)
                     .clipShape(Circle())
             }
         }
