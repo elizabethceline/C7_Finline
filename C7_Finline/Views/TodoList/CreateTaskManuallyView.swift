@@ -59,6 +59,7 @@ struct CreateTaskManuallyView: View {
                                     .font(.body)
                             } icon: {
                                 Image(systemName: "calendar")
+                                    .foregroundColor(.primary)
                             }
                             Spacer()
                             Image(systemName: "chevron.right")
@@ -76,6 +77,7 @@ struct CreateTaskManuallyView: View {
                                     .font(.body)
                             } icon: {
                                 Image(systemName: "clock")
+                                    .foregroundColor(.primary)
                             }
                             Spacer()
                             Image(systemName: "chevron.right")

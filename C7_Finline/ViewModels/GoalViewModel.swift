@@ -37,6 +37,5 @@ final class GoalViewModel: ObservableObject {
             description: description
         )
     }
-
     
 }

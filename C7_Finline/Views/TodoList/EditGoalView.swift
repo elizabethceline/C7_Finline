@@ -52,6 +52,7 @@ struct EditGoalView: View {
                                     .font(.body)
                             } icon: {
                                 Image(systemName: "calendar")
+                                    .foregroundStyle(Color.primary)
                             }
                             Spacer()
                             Image(systemName: "chevron.right")
@@ -69,6 +70,7 @@ struct EditGoalView: View {
                                     .font(.body)
                             } icon: {
                                 Image(systemName: "clock")
+                                    .foregroundStyle(Color.primary)
                             }
                             Spacer()
                             Image(systemName: "chevron.right")

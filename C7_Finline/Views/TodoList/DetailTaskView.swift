@@ -59,6 +59,7 @@ struct DetailTaskView: View {
                                     .font(.body)
                             } icon: {
                                 Image(systemName: "calendar")
+                                    .foregroundColor(.primary)
                             }
                             Spacer()
                             Image(systemName: "chevron.right")
@@ -76,6 +77,7 @@ struct DetailTaskView: View {
                                     .font(.body)
                             } icon: {
                                 Image(systemName: "clock")
+                                    .foregroundColor(.primary)
                             }
                             Spacer()
                             Image(systemName: "chevron.right")
@@ -99,9 +101,10 @@ struct DetailTaskView: View {
                         ToggleCardView(icon: "moon.fill", title: "Deep Focus", isOn: $isDeepFocusOn)
                         ToggleCardView(icon: "bell.fill", title: "Nudge Me", isOn: $isNudgeMeOn)
                     }
+                    .padding(.vertical, 8)
                 }
+                .listRowInsets(EdgeInsets(top: 0, leading: 2, bottom: 0, trailing: 2))
                 .listRowBackground(Color.clear)
-                .listRowInsets(EdgeInsets())
                 
             }
             .navigationTitle("Task Details")
@@ -109,7 +112,17 @@ struct DetailTaskView: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button {
-                        saveChanges()
+                        Task{
+                            await taskVM.updateGoalTask(
+                                task,
+                                name: taskName,
+                                workingTime: taskDate,
+                                focusDuration: focusDuration,
+                                isCompleted: isCompleted,
+                                modelContext: modelContext
+                            )
+                            dismiss()
+                        }
                     } label: {
                         Image(systemName: "checkmark")
                             .fontWeight(.semibold)
@@ -131,7 +144,7 @@ struct DetailTaskView: View {
                         .font(.headline)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.blue)
+                        .background(Color.primary)
                         .foregroundColor(.white)
                         .cornerRadius(50)
                         .padding([.horizontal, .bottom])
@@ -157,21 +170,6 @@ struct DetailTaskView: View {
                 FocusModeView()
                     .environmentObject(focusVM)
             }
-        }
-    }
-    
-    private func saveChanges() {
-        Task {
-            await taskVM.updateGoalTask(
-                task,
-                name: taskName,
-                workingTime: taskDate,
-                focusDuration: focusDuration,
-                isCompleted: isCompleted,
-                modelContext: modelContext
-            )
-            
-            dismiss()
         }
     }
 }

@@ -27,6 +27,7 @@ struct DateTimePickerView: View {
                     .datePickerStyle(.graphical)
                     .labelsHidden()
                     .padding(.horizontal)
+                    .tint(.primary)
                 } else {
                     DatePicker(
                         "",
@@ -36,6 +37,7 @@ struct DateTimePickerView: View {
                     .datePickerStyle(.wheel)
                     .labelsHidden()
                     .frame(maxHeight: 300)
+                    .tint(.primary)
                 }
 
                 Spacer()
@@ -61,7 +63,7 @@ struct DateTimePickerView: View {
     DateTimePickerView(
         title: "Select Date",
         selection: .constant(Date()),
-        displayedComponents: [.date]
+        displayedComponents: [.hourAndMinute]
     )
     .preferredColorScheme(.dark)
 }
