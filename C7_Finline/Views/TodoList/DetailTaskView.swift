@@ -109,7 +109,17 @@ struct DetailTaskView: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button {
-                        saveChanges()
+                        Task{
+                            await taskVM.updateGoalTask(
+                                task,
+                                name: taskName,
+                                workingTime: taskDate,
+                                focusDuration: focusDuration,
+                                isCompleted: isCompleted,
+                                modelContext: modelContext
+                            )
+                            dismiss()
+                        }
                     } label: {
                         Image(systemName: "checkmark")
                             .fontWeight(.semibold)
@@ -157,21 +167,6 @@ struct DetailTaskView: View {
                 FocusModeView()
                     .environmentObject(focusVM)
             }
-        }
-    }
-    
-    private func saveChanges() {
-        Task {
-            await taskVM.updateGoalTask(
-                task,
-                name: taskName,
-                workingTime: taskDate,
-                focusDuration: focusDuration,
-                isCompleted: isCompleted,
-                modelContext: modelContext
-            )
-            
-            dismiss()
         }
     }
 }

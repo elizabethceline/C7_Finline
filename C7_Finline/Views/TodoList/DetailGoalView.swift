@@ -15,6 +15,9 @@ struct DetailGoalView: View {
     @StateObject private var taskVM = TaskViewModel()
     @Environment(\.modelContext) private var modelContext
     
+    @State private var selectedTask: GoalTask?
+    @State private var goToTaskDetail = false
+    
     var body: some View {
         List {
             Section {
@@ -44,6 +47,15 @@ struct DetailGoalView: View {
         }
         .listStyle(.insetGrouped)
         .navigationTitle("Goal Detail")
+        .navigationDestination(isPresented: $goToTaskDetail) {
+            if let task = selectedTask {
+                DetailTaskView(
+                    task: task,
+                    taskManager: TaskManager(networkMonitor: NetworkMonitor()),
+                    viewModel: taskVM
+                )
+            }
+        }
         .task {
             await taskVM.getGoalTaskByGoalId(for: goal, modelContext: modelContext)
         }
@@ -58,16 +70,12 @@ struct DetailGoalView: View {
                 .foregroundColor(.primary)
             ) {
                 ForEach(tasks) { task in
-                    NavigationLink {
-                        DetailTaskView(
-                            task: task,
-                            taskManager: TaskManager(networkMonitor: NetworkMonitor()),
-                            viewModel: taskVM
-                        )
+                    Button {
+                        selectedTask = task
+                        goToTaskDetail = true
                     } label: {
                         TaskCardView(task: task)
                     }
-                    .buttonStyle(.plain)
                     .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
                     .listRowSeparator(.hidden)
                     .listRowBackground(Color.clear)
@@ -93,7 +101,6 @@ struct DetailGoalView: View {
         }
     }
 }
-
 
 #Preview {
     let sampleGoal = Goal(
