@@ -12,6 +12,7 @@ struct DateWeekPagerView: View {
     @Binding var weekIndex: Int
     @Binding var isWeekChange: Bool
 
+    @State private var weekRange: ClosedRange<Int> = -50...50
     private let calendar = Calendar.current
 
     // get dates for the week at given index
@@ -50,6 +51,13 @@ struct DateWeekPagerView: View {
             from: currentWeek,
             to: targetWeek
         ).weekOfYear {
+            // expand range
+            if diff < weekRange.lowerBound {
+                weekRange = (diff - 20)...weekRange.upperBound
+            } else if diff > weekRange.upperBound {
+                weekRange = weekRange.lowerBound...(diff + 20)
+            }
+
             isWeekChange = true
             withAnimation {
                 weekIndex = diff
@@ -66,7 +74,7 @@ struct DateWeekPagerView: View {
             let itemHeight: CGFloat = 64
 
             TabView(selection: $weekIndex) {
-                ForEach(-50..<50, id: \.self) { index in
+                ForEach(weekRange, id: \.self) { index in
                     let dates = weekDates(for: index)
 
                     HStack(spacing: 0) {
