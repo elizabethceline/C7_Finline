@@ -5,34 +5,39 @@
 //  Created by Richie Reuben Hermanto on 01/11/25.
 //
 
-import SwiftUI
-import SwiftData
 import FoundationModels
+import SwiftData
+import SwiftUI
 
 struct DetailGoalView: View {
     let goal: Goal
     @ObservedObject var goalVM: GoalViewModel
     @StateObject private var taskVM = TaskViewModel()
     @Environment(\.modelContext) private var modelContext
-    
+
     @State private var selectedTask: GoalTask?
     @State private var goToTaskDetail = false
-    
+
     @State private var removingTaskIds: Set<String> = []
     @State private var showDeleteAlert = false
     @State private var showCompleteAlert = false
     @State private var taskToDelete: GoalTask?
     @State private var taskToComplete: GoalTask?
-    
+
+    @State private var isSelecting = false
+    @State private var selectedTaskIds: Set<String> = []
+
     var body: some View {
         List {
             Section {
                 GoalCardView(goalVM: goalVM, goal: goal)
-                    .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                    .listRowInsets(
+                        EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0)
+                    )
                     .listRowSeparator(.hidden)
                     .listRowBackground(Color.clear)
             }
-            
+
             if taskVM.isLoading {
                 Section {
                     ProgressView("Loading tasks...")
@@ -43,7 +48,14 @@ struct DetailGoalView: View {
                     Text("No tasks found for this goal.")
                         .foregroundColor(.gray)
                         .frame(maxWidth: .infinity, alignment: .center)
-                        .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                        .listRowInsets(
+                            EdgeInsets(
+                                top: 0,
+                                leading: 0,
+                                bottom: 0,
+                                trailing: 0
+                            )
+                        )
                         .listRowSeparator(.hidden)
                         .listRowBackground(Color.clear)
                 }
@@ -63,10 +75,13 @@ struct DetailGoalView: View {
             }
         }
         .task {
-            await taskVM.getGoalTaskByGoalId(for: goal, modelContext: modelContext)
+            await taskVM.getGoalTaskByGoalId(
+                for: goal,
+                modelContext: modelContext
+            )
         }
         .background(Color.gray.opacity(0.2).ignoresSafeArea())
-        
+
         .alert("Delete Task", isPresented: $showDeleteAlert) {
             Button("Cancel", role: .cancel) {
                 taskToDelete = nil
@@ -78,10 +93,12 @@ struct DetailGoalView: View {
             }
         } message: {
             if let task = taskToDelete {
-                Text("Are you sure you want to delete '\(task.name)'? This action cannot be undone.")
+                Text(
+                    "Are you sure you want to delete '\(task.name)'? This action cannot be undone."
+                )
             }
         }
-        
+
         .alert("Complete Task", isPresented: $showCompleteAlert) {
             Button("Not yet", role: .cancel) {
                 taskToComplete = nil
@@ -93,34 +110,116 @@ struct DetailGoalView: View {
             }
         } message: {
             if let task = taskToComplete {
-                Text("Are you sure you want to mark '\(task.name)' as completed?")
+                Text(
+                    "Are you sure you want to mark '\(task.name)' as completed?"
+                )
+            }
+        }
+
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                if isSelecting {
+                    Button {
+                        withAnimation {
+                            isSelecting = false
+                            selectedTaskIds.removeAll()
+                        }
+                    } label: {
+                        Image(systemName: "checkmark")
+                    }
+                    .accessibilityLabel("Done selecting")
+                } else {
+                    Menu {
+                        Button("Select Tasks") {
+                            withAnimation {
+                                isSelecting = true
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis")
+                    }
+                }
+            }
+        }
+
+        .toolbar {
+            ToolbarItemGroup(placement: .bottomBar) {
+                if isSelecting {
+
+                    Text("\(selectedTaskIds.count) selected")
+                        .foregroundColor(.gray)
+                        .font(.subheadline)
+                        .padding(8)
+                        .fixedSize()
+
+                    Spacer()
+
+                    Button(role: .destructive) {
+                        withAnimation {
+                            deleteSelectedTasks()
+                        }
+                    } label: {
+                        Label("Delete", systemImage: "trash")
+                    }
+                    .tint(.red)
+                    .disabled(selectedTaskIds.isEmpty)
+
+                }
             }
         }
     }
-    
+
     private var taskSection: some View {
         ForEach(taskVM.groupedPendingGoalTasks, id: \.date) { date, tasks in
-            Section(header:
-                        Text(date, format: .dateTime.day().month(.wide).year())
-                .font(.title3)
-                .foregroundColor(.black)
-                .fontWeight(.semibold)
+            Section(
+                header:
+                    Text(date, format: .dateTime.day().month(.wide).year())
+                    .font(.title3)
+                    .foregroundColor(.black)
+                    .fontWeight(.semibold)
             ) {
                 ForEach(tasks) { task in
-                    Button {
-                        selectedTask = task
-                        goToTaskDetail = true
-                    } label: {
-                        TaskCardView(task: task)
+                    HStack {
+                        if isSelecting {
+                            Image(
+                                systemName: selectedTaskIds.contains(task.id)
+                                    ? "checkmark.circle.fill" : "circle"
+                            )
+                            .font(.title3)
+                            .foregroundColor(
+                                selectedTaskIds.contains(task.id)
+                                    ? .blue : .gray
+                            )
+                            .padding(.trailing, 4)
+                            .onTapGesture {
+                                toggleSelection(for: task)
+                            }
+                        }
+
+                        Button {
+                            if isSelecting {
+                                toggleSelection(for: task)
+                            } else {
+                                selectedTask = task
+                                goToTaskDetail = true
+                            }
+                        } label: {
+                            TaskCardView(task: task)
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
+                    .listRowInsets(
+                        EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0)
+                    )
                     .listRowSeparator(.hidden)
                     .listRowBackground(Color.clear)
-                    // ANIMATION EFFECTS
                     .opacity(removingTaskIds.contains(task.id) ? 0 : 1)
                     .scaleEffect(removingTaskIds.contains(task.id) ? 0.8 : 1.0)
                     .offset(x: removingTaskIds.contains(task.id) ? -20 : 0)
-                    .animation(.easeInOut(duration: 0.3), value: removingTaskIds)
+                    .animation(
+                        .easeInOut(duration: 0.3),
+                        value: removingTaskIds
+                    )
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                         Button {
                             taskToDelete = task
@@ -129,7 +228,7 @@ struct DetailGoalView: View {
                             Label("Delete", systemImage: "trash")
                         }
                         .tint(.red)
-                        
+
                         Button {
                             taskToComplete = task
                             showCompleteAlert = true
@@ -142,12 +241,41 @@ struct DetailGoalView: View {
             }
         }
     }
-    
+
+    private func toggleSelection(for task: GoalTask) {
+        withAnimation {
+            if selectedTaskIds.contains(task.id) {
+                selectedTaskIds.remove(task.id)
+            } else {
+                selectedTaskIds.insert(task.id)
+            }
+        }
+    }
+
+    private func deleteSelectedTasks() {
+        Task {
+            for id in selectedTaskIds {
+                if let task = taskVM.goalTasks.first(where: { $0.id == id }) {
+                    await taskVM.deleteGoalTask(
+                        task,
+                        modelContext: modelContext
+                    )
+                }
+            }
+            selectedTaskIds.removeAll()
+            isSelecting = false
+            await taskVM.getGoalTaskByGoalId(
+                for: goal,
+                modelContext: modelContext
+            )
+        }
+    }
+
     private func deleteTaskWithAnimation(_ task: GoalTask) {
         withAnimation(.easeInOut(duration: 0.3)) {
             removingTaskIds.insert(task.id)
         }
-        
+
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             Task {
                 await taskVM.deleteGoalTask(task, modelContext: modelContext)
@@ -156,12 +284,12 @@ struct DetailGoalView: View {
             }
         }
     }
-    
+
     private func completeTaskWithAnimation(_ task: GoalTask) {
         withAnimation(.easeInOut(duration: 0.3)) {
             removingTaskIds.insert(task.id)
         }
-        
+
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             Task {
                 await taskVM.updateGoalTask(
@@ -184,13 +312,20 @@ struct DetailGoalView: View {
         id: UUID().uuidString,
         name: "Write my Thesis",
         due: Calendar.current.date(
-            from: DateComponents(year: 2025, month: 10, day: 14, hour: 9, minute: 41)
+            from: DateComponents(
+                year: 2025,
+                month: 10,
+                day: 14,
+                hour: 9,
+                minute: 41
+            )
         )!,
-        goalDescription: "Complete my thesis writing with research and citations."
+        goalDescription:
+            "Complete my thesis writing with research and citations."
     )
-    
+
     let goalVM = GoalViewModel()
-    
+
     return NavigationStack {
         DetailGoalView(goal: sampleGoal, goalVM: goalVM)
     }
