@@ -11,94 +11,155 @@ import SwiftUI
 struct MainView: View {
     @StateObject private var viewModel = MainViewModel()
     @Environment(\.modelContext) private var modelContext
-    @State private var selectedDate: Date = Date()
-    @State private var navigateToProfile: Bool = false
 
-    private var filteredTasks: [GoalTask] {
-        viewModel.tasks.filter { task in
-            Calendar.current.isDate(task.workingTime, inSameDayAs: selectedDate)
-        }
-    }
+    @State private var showCreateGoalModal = false
+    @State private var showDatePicker = false
+
+    @State var selectedDate: Date = Calendar.current.startOfDay(
+        for: Date()
+    )
+    @State var currentWeekIndex: Int = 0
+    @State var isWeekChange: Bool = false
+    @State private var hasAppeared = false
+
+    var calendar: Calendar { .current }
+
+    private var unfinishedTasks: [GoalTask] { viewModel.unfinishedTasks }
 
     var body: some View {
         NavigationStack {
-            GeometryReader { geo in
-                let headerHeight = geo.size.height * 0.5
+            VStack(spacing: 20) {
+                HeaderView(
+                    viewModel: viewModel,
+                    unfinishedTasks: unfinishedTasks,
+                    selectedDate: $selectedDate
+                )
 
-                ZStack(alignment: .top) {
-                    HeaderImageView(height: headerHeight, width: geo.size.width)
+                // Date Header
+                DateHeaderView(
+                    selectedDate: $selectedDate,
+                    currentWeekIndex: $currentWeekIndex,
+                    showDatePicker: $showDatePicker,
+                    isWeekChange: $isWeekChange,
+                    taskFilter: $viewModel.taskFilter,
+                    jumpToDate: jumpToDate(_:),
+                    unfinishedTasks: unfinishedTasks
+                )
 
-                    VStack(spacing: 0) {
-                        Spacer(minLength: headerHeight / 2)
-
-                        ContentCardView(
-                            selectedDate: $selectedDate,
-                            filteredTasks: filteredTasks,
-                            goals: viewModel.goals
-                        )
-                        .refreshable {
-                            viewModel.fetchUserProfile()
-                        }
-                    }
+                ContentCardView(
+                    viewModel: viewModel,
+                    selectedDate: $selectedDate
+                )
+            }
+            .background(Color(uiColor: .systemGray6).ignoresSafeArea())
+            .onAppear {
+                viewModel.setModelContext(modelContext)
+                if !hasAppeared {
+                    jumpToToday()
+                    hasAppeared = true
                 }
-
-                // add task button
-                VStack {
-                    Spacer()
-                    HStack {
-                        Spacer()
-                        HStack {
-                            Spacer()
-                            Button(action: {
-                                // Add task action
-                            }) {
-                                Image(systemName: "plus")
-                                    .font(.title)
-                                    .foregroundColor(.black)
-                                    .padding()
-                            }
-                            .background(Circle().fill(Color.blue.opacity(0.6)))
-                            .buttonStyle(.glass)
-                            .padding(.trailing, 28)
-                            .padding(.bottom, 16)
-                        }
-                    }
-                }
-                .onAppear {
-                    viewModel.setModelContext(modelContext)
-                    selectedDate = Calendar.current.startOfDay(for: Date())
-                }
+            }
+            .onChange(of: currentWeekIndex) { oldValue, newValue in
+                updateSelectedDateFromWeekChange(
+                    oldValue: oldValue,
+                    newValue: newValue
+                )
             }
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Menu {
-                        Button {
-                            navigateToProfile = true
-                        } label: {
-                            Label(
-                                "Profile",
-                                systemImage: "person"
-                            )
+                ToolbarItemGroup(placement: .bottomBar) {
+                    HStack(spacing: 12) {
+                        Button("Today") {
+                            jumpToToday()
+                            if showDatePicker {
+                                withAnimation(.spring(response: 0.3)) {
+                                    showDatePicker = false
+                                }
+                            }
                         }
+                        .font(.callout)
+                        .fontWeight(.medium)
 
-                        Button {
-                            // to shop
-                        } label: {
-                            Label(
-                                "Shop",
-                                systemImage: "cart"
-                            )
+                        if !unfinishedTasks.isEmpty {
+                            Text("|")
+                                .foregroundColor(.black)
+                                .padding(.leading, 4)
+
+                            Button {
+                                if let oldestTask =
+                                    unfinishedTasks
+                                    .filter({ $0.workingTime < Date() })
+                                    .sorted(by: {
+                                        $0.workingTime < $1.workingTime
+                                    })
+                                    .first
+                                {
+                                    withAnimation(.spring()) {
+                                        selectedDate = Calendar.current
+                                            .startOfDay(
+                                                for: oldestTask.workingTime
+                                            )
+                                    }
+                                }
+                            } label: {
+                                Text("Overdue")
+                                    .font(.callout)
+                                    .fontWeight(.medium)
+                                Text("\(unfinishedTasks.count)")
+                                    .font(.caption)
+                                    .fontWeight(.medium)
+                                    .foregroundColor(.secondary)
+                                    .padding(7)
+                                    .background(Color.red)
+                                    .clipShape(Circle())
+                            }
                         }
+                    }
+                    .fixedSize()
+                    .padding(.horizontal, unfinishedTasks.isEmpty ? 0 : 8)
+
+                    Spacer()
+
+                    Button {
+                        showCreateGoalModal.toggle()
                     } label: {
-                        Image(systemName: "ellipsis")
-                            .imageScale(.large)
-                            .foregroundColor(.primary)
+                        Image(systemName: "plus")
+                            .font(.callout)
+                            .fontWeight(.medium)
                     }
                 }
             }
-            .navigationBarTitleDisplayMode(.inline)
-            .navigationDestination(isPresented: $navigateToProfile) {
-                // ProfileView(viewModel: ProfileViewModel())
+
+            .sheet(isPresented: $showCreateGoalModal) {
+                CreateGoalView(mainVM: viewModel)
+                    .presentationDetents([.large])
+            }
+
+            .sheet(isPresented: $showDatePicker) {
+                VStack {
+                    DatePicker(
+                        "",
+                        selection: Binding(
+                            get: { selectedDate },
+                            set: { newDate in
+                                jumpToDate(newDate)
+                            }
+                        ),
+                        displayedComponents: [.date]
+                    )
+                    .datePickerStyle(.graphical)
+                    .tint(Color.primary)
+                    .labelsHidden()
+                    .padding()
+
+                    Button("Done") {
+                        showDatePicker = false
+                    }
+                    .foregroundColor(Color.primary)
+                    .font(.headline)
+                    .padding()
+                }
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
             }
         }
     }
