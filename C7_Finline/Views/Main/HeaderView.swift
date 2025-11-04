@@ -27,14 +27,9 @@ struct HeaderView: View {
                             .foregroundColor(.black)
                             .font(.body)
                             .onTapGesture {
-                                if let nearestTask = unfinishedTasks.min(by: {
-                                    abs($0.workingTime.timeIntervalSinceNow)
-                                        < abs(
-                                            $1.workingTime.timeIntervalSinceNow
-                                        )
-                                }) {
+                                if let firstTask = unfinishedTasks.first {
                                     selectedDate = Calendar.current.startOfDay(
-                                        for: nearestTask.workingTime
+                                        for: firstTask.workingTime
                                     )
                                 }
                             }
