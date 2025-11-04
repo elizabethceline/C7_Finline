@@ -27,7 +27,7 @@ struct MainView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 8) {
+            VStack(spacing: 20) {
                 HeaderView(
                     viewModel: viewModel,
                     unfinishedTasks: unfinishedTasks,
@@ -62,16 +62,45 @@ struct MainView: View {
             }
             .toolbar {
                 ToolbarItemGroup(placement: .bottomBar) {
-                    Button("Today") {
-                        jumpToToday()
-                        if showDatePicker {
-                            withAnimation(.spring(response: 0.3)) {
-                                showDatePicker = false
+                    HStack(spacing: 12) {
+                        Button("Today") {
+                            jumpToToday()
+                            if showDatePicker {
+                                withAnimation(.spring(response: 0.3)) {
+                                    showDatePicker = false
+                                }
+                            }
+                        }
+                        .font(.callout)
+                        .fontWeight(.medium)
+
+                        if !unfinishedTasks.isEmpty {
+                            Text("|")
+                                .foregroundColor(.black)
+                                .padding(.leading, 4)
+
+                            Button {
+                                if let firstTask = unfinishedTasks.first {
+                                    selectedDate = Calendar.current.startOfDay(
+                                        for: firstTask.workingTime
+                                    )
+                                }
+                            } label: {
+                                Text("Overdue")
+                                    .font(.callout)
+                                    .fontWeight(.medium)
+                                Text("\(unfinishedTasks.count)")
+                                    .font(.caption)
+                                    .fontWeight(.medium)
+                                    .foregroundColor(.secondary)
+                                    .padding(7)
+                                    .background(Color.red)
+                                    .clipShape(Circle())
                             }
                         }
                     }
-                    .font(.callout)
-                    .fontWeight(.medium)
+                    .fixedSize()
+                    .padding(.horizontal, unfinishedTasks.isEmpty ? 0 : 8)
 
                     Spacer()
 
@@ -80,6 +109,8 @@ struct MainView: View {
                     } label: {
                         Image(systemName: "plus")
                             .font(.callout)
+
+                            .fontWeight(.medium)
                     }
                 }
             }
