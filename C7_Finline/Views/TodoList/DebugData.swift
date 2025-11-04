@@ -13,6 +13,16 @@ struct DebugDataView: View {
     @StateObject private var taskViewModel = TaskViewModel()
     @StateObject private var goalVM = GoalViewModel()
     
+    @State private var coverMode: FocusCoverMode?
+        @EnvironmentObject var focusVM: FocusSessionViewModel
+    
+    private var isCoverPresented: Binding<Bool> {
+            Binding(
+                get: { coverMode != nil },
+                set: { if !$0 { coverMode = nil } }
+            )
+        }
+    
     @State private var goals: [Goal] = []
     @State private var tasks: [GoalTask] = []
     @State private var isLoading = false
@@ -22,7 +32,7 @@ struct DebugDataView: View {
     private let taskManager: TaskManager
     
     @State private var selectedTask: GoalTask? = nil
-    @State private var showDetailModal = false
+    //@State private var showDetailModal = false
     
     @State private var selectedGoal: Goal? = nil
     @State private var showGoalDetailModal = false
@@ -76,8 +86,9 @@ struct DebugDataView: View {
                     Section("Stored Tasks (\(tasks.count))") {
                         ForEach(tasks) { task in
                             Button {
-                                selectedTask = task
-                                showDetailModal = true
+//                                selectedTask = task
+//                                showDetailModal = true
+                                coverMode = .detail(task)
                             } label: {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text(task.name)
@@ -98,11 +109,27 @@ struct DebugDataView: View {
                             .buttonStyle(.plain)
                         }
                     }
-                    .sheet(isPresented: $showDetailModal) {
-                        if let selectedTask {
-                            DetailTaskView(task: selectedTask, taskManager: taskManager, viewModel: taskViewModel)
-                        }
-                    }
+                    .fullScreenCover(isPresented: isCoverPresented) {
+                                        Group {
+                                            if let mode = coverMode {
+                                                switch mode {
+                                                case .detail(let task):
+                                                    DetailTaskView(
+                                                        task: task,
+                                                        taskManager: taskManager,
+                                                        viewModel: taskViewModel,
+                                                        onStartFocus: {
+                                                            coverMode = .focus
+                                                        }
+                                                    )
+                                                case .focus:
+                                                    FocusModeView()
+                                                }
+                                            }
+                                        }
+                                        .environmentObject(focusVM)
+                                        .environment(\.modelContext, modelContext)
+                                    }
                 }
             }
             .navigationTitle("SwiftData Debug")

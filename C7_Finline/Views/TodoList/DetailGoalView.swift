@@ -15,6 +15,15 @@ struct DetailGoalView: View {
     @StateObject private var taskVM = TaskViewModel()
     @Environment(\.modelContext) private var modelContext
 
+    @State private var coverMode: FocusCoverMode?
+        @EnvironmentObject var focusVM: FocusSessionViewModel
+    private var isCoverPresented: Binding<Bool> {
+            Binding(
+                get: { coverMode != nil },
+                set: { if !$0 { coverMode = nil } }
+            )
+        }
+
     @State private var selectedTask: GoalTask?
     @State private var goToTaskDetail = false
 
@@ -68,15 +77,40 @@ struct DetailGoalView: View {
         }
         .listStyle(.insetGrouped)
         .navigationTitle("Goal Detail")
-        .navigationDestination(isPresented: $goToTaskDetail) {
-            if let task = selectedTask {
-                DetailTaskView(
-                    task: task,
-                    taskManager: TaskManager(networkMonitor: NetworkMonitor()),
-                    viewModel: taskVM
-                )
-            }
-        }
+//        .navigationDestination(isPresented: $goToTaskDetail) {
+//            if let task = selectedTask {
+//                DetailTaskView(
+//                    task: task,
+//                    taskManager: TaskManager(networkMonitor: NetworkMonitor()),
+//                    viewModel: taskVM,
+//                    onStartFocus: {
+//                        coverMode = .focus
+//                    }
+//                )
+//
+//            }
+//        }
+        .fullScreenCover(isPresented: isCoverPresented) {
+                    Group {
+                        if let mode = coverMode {
+                            switch mode {
+                            case .detail(let task):
+                                DetailTaskView(
+                                    task: task,
+                                    taskManager: TaskManager(networkMonitor: NetworkMonitor()),
+                                    viewModel: taskVM,
+                                    onStartFocus: {
+                                        coverMode = .focus
+                                    }
+                                )
+                            case .focus:
+                                FocusModeView()
+                            }
+                        }
+                    }
+                    .environmentObject(focusVM)
+                    .environment(\.modelContext, modelContext)
+                }
         .task {
             await taskVM.getGoalTaskByGoalId(
                 for: goal,
@@ -233,8 +267,9 @@ struct DetailGoalView: View {
                             if isSelecting {
                                 toggleSelection(for: task)
                             } else {
-                                selectedTask = task
-                                goToTaskDetail = true
+//                                selectedTask = task
+//                                goToTaskDetail = true
+                                coverMode = .detail(task)
                             }
                         } label: {
                             TaskCardView(task: task)
@@ -395,6 +430,7 @@ struct DetailGoalView: View {
     let goalVM = GoalViewModel()
 
     return NavigationStack {
-        DetailGoalView(goal: sampleGoal, goalVM: goalVM)
-    }
+            DetailGoalView(goal: sampleGoal, goalVM: goalVM)
+        }
+        .environmentObject(FocusSessionViewModel()) // <-- ADD THIS
 }

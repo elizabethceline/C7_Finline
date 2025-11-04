@@ -12,6 +12,10 @@ struct CreateTaskView: View {
     let goalName: String
     let goalDeadline: Date
     
+    @Environment(\.dismiss) private var dismiss
+    var dismissParent: DismissAction? = nil
+
+    
     @ObservedObject var mainVM: MainViewModel
     
     @State private var isShowingModalCreateWithAI: Bool = false
@@ -152,6 +156,7 @@ struct CreateTaskView: View {
                         await MainActor.run {
                             mainVM.appendNewGoal(goal)
                             mainVM.appendNewTasks(goal.tasks)
+                            dismissParent?()
                         }
                     }
                 } label: {

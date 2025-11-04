@@ -11,6 +11,7 @@ import SwiftUI
 struct MainView: View {
     @StateObject private var viewModel = MainViewModel()
     @Environment(\.modelContext) private var modelContext
+    @EnvironmentObject var networkMonitor: NetworkMonitor
 
     @State private var showCreateGoalModal = false
     @State private var showDatePicker = false
@@ -48,7 +49,8 @@ struct MainView: View {
 
                 ContentCardView(
                     viewModel: viewModel,
-                    selectedDate: $selectedDate
+                    selectedDate: $selectedDate,
+                    networkMonitor: networkMonitor
                 )
             }
             .background(Color(uiColor: .systemGray6).ignoresSafeArea())
@@ -168,4 +170,5 @@ struct MainView: View {
 #Preview {
     MainView()
         .modelContainer(for: [Goal.self, GoalTask.self, UserProfile.self])
+        .environmentObject(NetworkMonitor())
 }
