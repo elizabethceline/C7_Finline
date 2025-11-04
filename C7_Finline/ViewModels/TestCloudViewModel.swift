@@ -273,22 +273,23 @@ class TestCloudViewModel: ObservableObject {
 
     @MainActor
     func createTask(
-        goal: Goal,
+        goalId: String,
         name: String,
         workingTime: Date,
         focusDuration: Int
     ) {
         guard let modelContext = modelContext else { return }
 
-        let newTask = taskManager.createTask(
-            goal: goal,
+        if let newTask = taskManager.createTask(
+            goalId: goalId,
             name: name,
             workingTime: workingTime,
             focusDuration: focusDuration,
+            goals: goals,
             modelContext: modelContext
-        )
-
-        self.tasks.append(newTask)
+        ) {
+            self.tasks.append(newTask)
+        }
     }
 
     @MainActor

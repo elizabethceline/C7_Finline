@@ -14,17 +14,16 @@ struct GoalHeaderView: View {
         HStack {
             Text(goalName)
                 .font(.headline)
-                .foregroundColor(.black)
             Spacer()
             Image(systemName: "arrow.up.right")
                 .font(.title3)
                 .padding(8)
-                .foregroundColor(.black)
+                .background(Color.white)
                 .cornerRadius(50)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
-        .background(Color.secondary)
+        .background(Color.blue.opacity(0.15))
         .cornerRadius(50)
     }
 }

@@ -18,16 +18,13 @@ struct TaskCardView: View {
 
     var body: some View {
         HStack {
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading) {
                 Text(formattedTime(task.workingTime))
                     .font(.caption)
-                    .foregroundColor(Color(uiColor: .secondaryLabel))
+                    .foregroundColor(.gray)
                 Text(task.name)
                     .font(.body)
                     .fontWeight(.medium)
-                    .foregroundColor(Color(uiColor: .label))
-                    .strikethrough(task.isCompleted, color: Color(.label))
-                    .opacity(task.isCompleted ? 0.6 : 1.0)
             }
 
             Spacer()
@@ -35,23 +32,13 @@ struct TaskCardView: View {
             Text("\(task.focusDuration)m")
                 .font(.caption)
                 .fontWeight(.bold)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(
-                    task.isCompleted
-                        ? Color.gray.opacity(0.2) : Color.secondary
-                )
-                .foregroundColor(
-                    task.isCompleted ? Color(uiColor: .label) : .black
-                )
+                .padding(6)
+                .background(Color.blue.opacity(0.4))
                 .cornerRadius(12)
         }
         .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 30)
-                .fill(Color(uiColor: .systemBackground))
-        )
-        .opacity(task.isCompleted ? 0.6 : 1)
+        .background(Color.white)
+        .cornerRadius(30)
     }
 }
 
@@ -62,7 +49,7 @@ struct TaskCardView: View {
             name: "Study Math",
             workingTime: Date(),
             focusDuration: 25,
-            isCompleted: true,
+            isCompleted: false,
             goal: Goal(
                 id: "goal_001",
                 name: "Learn Algebra",

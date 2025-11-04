@@ -20,7 +20,7 @@ final class GoalViewModel: ObservableObject {
         self.goalManager = GoalManager(networkMonitor: networkMonitor)
     }
     
-    func createGoal(name: String, deadline: Date, description: String?, modelContext: ModelContext) async -> Goal {
+    func createGoal(name: String, deadline: Date, description: String?, modelContext: ModelContext) -> Goal {
         return goalManager.createGoal(
             name: name,
             due: deadline,
@@ -29,13 +29,5 @@ final class GoalViewModel: ObservableObject {
         )
     }
     
-    func updateGoal(goal: Goal, name: String, deadline: Date, description: String?) {
-        goalManager.updateGoal(
-            goal: goal,
-            name: name,
-            due: deadline,
-            description: description
-        )
-    }
     
 }

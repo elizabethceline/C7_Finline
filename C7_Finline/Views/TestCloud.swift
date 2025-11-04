@@ -15,13 +15,9 @@ struct TestCloud: View {
     @Environment(\.modelContext) private var modelContext
     @State private var showingAddGoal = false
     @State private var showingEditProfile = false
-    //TEST FOCUS MODE IGNORE THIS
-    @State private var navigateToFocus = false
-    //
-
 
     var body: some View {
-        NavigationStack {
+        NavigationView {
             ZStack {
                 if viewModel.isLoading && viewModel.goals.isEmpty {
                     ProgressView("Loading...")
@@ -70,7 +66,7 @@ struct TestCloud: View {
                             } else {
                                 ForEach(viewModel.goals) { goal in
                                     NavigationLink(
-                                        destination: GoalDetailView1(
+                                        destination: GoalDetailView(
                                             viewModel: viewModel,
                                             goal: goal
                                         )
@@ -85,36 +81,10 @@ struct TestCloud: View {
                                 }
                                 .onDelete(perform: deleteGoals)
                             }
-                            
                         }
-                        
-                        //TEST FOCUS MODE IGNORE THIS
-                        Section("Focus Mode") {
-                            Button {
-                                navigateToFocus = true
-                            } label: {
-                                HStack {
-                                    Image(systemName: "timer")
-                                        .foregroundColor(.blue)
-                                    Text("Start Focus Mode")
-                                        .fontWeight(.semibold)
-                                    Spacer()
-                                    Image(systemName: "chevron.right")
-                                        .foregroundColor(.secondary)
-                                }
-                                .padding(.vertical, 8)
-                            }
-                        }
-                        
                     }
-                    //TEST FOCUS MODE
-                    .navigationDestination(isPresented: $navigateToFocus) {
-                            FocusStartView()
-                                .environmentObject(FocusSessionViewModel())
-                        }
                     .refreshable {
                         viewModel.fetchUserProfile()
-                    
                     }
                 }
 
@@ -272,7 +242,7 @@ struct AddGoalView: View {
 }
 
 // goal detail
-struct GoalDetailView1: View {
+struct GoalDetailView: View {
     @ObservedObject var viewModel: TestCloudViewModel
     let goal: Goal
     @State private var showingAddTask = false
@@ -362,10 +332,10 @@ struct GoalDetailView1: View {
             }
         }
         .sheet(isPresented: $showingAddTask) {
-            AddTaskView(viewModel: viewModel, goal: goal)
+            AddTaskView(viewModel: viewModel, goalId: goal.id)
         }
         .sheet(isPresented: $showingEditGoal) {
-            EditGoalView1(viewModel: viewModel, goal: goal)
+            EditGoalView(viewModel: viewModel, goal: goal)
         }
     }
 
@@ -374,7 +344,7 @@ struct GoalDetailView1: View {
     }
 }
 
-struct EditGoalView1: View {
+struct EditGoalView: View {
     @ObservedObject var viewModel: TestCloudViewModel
     let goal: Goal
     @Environment(\.dismiss) var dismiss
@@ -505,7 +475,7 @@ struct TaskRowView: View {
 
 struct AddTaskView: View {
     @ObservedObject var viewModel: TestCloudViewModel
-    let goal: Goal
+    let goalId: String
     @Environment(\.dismiss) var dismiss
     @State private var name = ""
     @State private var workingTime = Date()
@@ -556,7 +526,7 @@ struct AddTaskView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         viewModel.createTask(
-                            goal: goal,
+                            goalId: goalId,
                             name: name,
                             workingTime: workingTime,
                             focusDuration: focusDuration

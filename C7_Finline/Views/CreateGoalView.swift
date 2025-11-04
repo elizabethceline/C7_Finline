@@ -9,8 +9,6 @@ import SwiftUI
 
 struct CreateGoalView: View {
     @Environment(\.dismiss) private var dismiss
-    
-    @ObservedObject var mainVM: MainViewModel
 
     @State private var goalName: String = ""
     @State private var goalDeadline: Date = Date()
@@ -42,7 +40,6 @@ struct CreateGoalView: View {
                                     .font(.body)
                             } icon: {
                                 Image(systemName: "calendar")
-                                    .foregroundColor(.primary)
                             }
                             Spacer()
                             Image(systemName: "chevron.right")
@@ -60,7 +57,6 @@ struct CreateGoalView: View {
                                     .font(.body)
                             } icon: {
                                 Image(systemName: "clock")
-                                    .foregroundColor(.primary)
                             }
                             Spacer()
                             Image(systemName: "chevron.right")
@@ -90,7 +86,7 @@ struct CreateGoalView: View {
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    NavigationLink(destination: CreateTaskView(goalName: goalName, goalDeadline: goalDeadline, mainVM: mainVM)) {
+                    NavigationLink(destination: CreateTaskView(goalName: goalName, goalDeadline: goalDeadline)) {
                         Image(systemName: "checkmark")
                             .fontWeight(.semibold)
                     }
@@ -109,12 +105,13 @@ struct CreateGoalView: View {
                     title: "Select Time",
                     selection: $goalDeadline,
                     displayedComponents: [.hourAndMinute]
-                )            }
+                )
+            }
         }
     }
 }
 
 #Preview {
-    CreateGoalView(mainVM: MainViewModel())
+    CreateGoalView()
         .preferredColorScheme(.dark)
 }

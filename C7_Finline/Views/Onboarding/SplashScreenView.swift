@@ -16,18 +16,18 @@ struct SplashScreenView: View {
             ZStack {
                 VStack(spacing: geometry.size.height * 0.03) {
                     // logo
-                    Image("finley")
+                    Image("finline")
                         .resizable()
                         .scaledToFit()
                         .frame(
-                            width: geometry.size.width * 0.5,
-                            height: geometry.size.width * 0.5
+                            width: geometry.size.width * 0.6,
+                            height: geometry.size.width * 0.6
                         )
                         .scaleEffect(scale)
                         .opacity(opacity)
                     
                     // app name
-                    Text("Finline")
+                    Text("FinLine")
                         .font(.largeTitle)
                         .fontWeight(.bold)
                         .opacity(opacity)

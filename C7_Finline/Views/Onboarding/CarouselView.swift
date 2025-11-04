@@ -10,33 +10,38 @@ import SwiftUI
 struct CarouselView: View {
     let onComplete: () -> Void
     @State private var currentIndex = 0
-    @State private var dragOffset: CGFloat = 0
 
     let cards: [OnboardingCard] = [
         OnboardingCard(
             title: "Big Task?",
             description:
                 "Add a task and our AI breaks it into simple steps so you can start, stay on track, and finish with ease.",
-            imageName: "carousel_1"
+            imageName: "square.stack.3d.up"
         ),
         OnboardingCard(
             title: "Focus Now",
             description:
                 "Activate Focus Mode to silence distractions, keep your mind clear, and stay in flow.",
-            imageName: "carousel_2"
+            imageName: "brain.head.profile"
         ),
         OnboardingCard(
             title: "Be Rewarded",
             description:
                 "Stay focused, earn points, and unlock rewards that make every task feel rewarding.",
-            imageName: "carousel_3"
+            imageName: "star.fill"
         ),
     ]
 
     var body: some View {
         GeometryReader { geometry in
             ZStack(alignment: .bottomTrailing) {
-                OnboardingBackground()
+                // Background
+                LinearGradient(
+                    colors: [Color.white, Color.blue.opacity(0.15)],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .ignoresSafeArea()
 
                 VStack(spacing: geometry.size.height * 0.04) {
                     // Card carousel
@@ -44,7 +49,7 @@ struct CarouselView: View {
                         ForEach(Array(cards.enumerated()), id: \.element.id) {
                             index,
                             card in
-                            Image(card.imageName)
+                            OnboardingCardView(card: card)
                                 .frame(
                                     width: geometry.size.width * 0.7,
                                     height: geometry.size.height * 0.45
@@ -52,8 +57,7 @@ struct CarouselView: View {
                                 .scaleEffect(index == currentIndex ? 1.0 : 0.85)
                                 .offset(
                                     x: CGFloat(index - currentIndex)
-                                        * geometry.size.width * 0.7 + dragOffset
-                                        * 0.3
+                                        * geometry.size.width * 0.7
                                 )
                                 .offset(
                                     y: getCardOffset(
@@ -65,7 +69,7 @@ struct CarouselView: View {
                                 .animation(
                                     .spring(
                                         response: 0.5,
-                                        dampingFraction: 0.85
+                                        dampingFraction: 0.8
                                     ),
                                     value: currentIndex
                                 )
@@ -86,7 +90,7 @@ struct CarouselView: View {
                             .id(currentIndex)
                             .transition(.opacity)
                             .animation(
-                                .easeInOut(duration: 0.5),
+                                .easeInOut(duration: 0.6),
                                 value: currentIndex
                             )
 
@@ -98,7 +102,7 @@ struct CarouselView: View {
                             .id(currentIndex)
                             .transition(.opacity)
                             .animation(
-                                .easeInOut(duration: 0.5),
+                                .easeInOut(duration: 0.6),
                                 value: currentIndex
                             )
                             .padding(.top, 8)
@@ -109,38 +113,10 @@ struct CarouselView: View {
                 }
                 .padding(.top, geometry.size.height * 0.05)
                 .frame(width: geometry.size.width, height: geometry.size.height)
-                .gesture(
-                    currentIndex < cards.count - 1
-                        ? DragGesture()
-                            .onChanged { value in
-                                if value.translation.width < 0 {
-                                    dragOffset = value.translation.width
-                                }
-                            }
-                            .onEnded { value in
-                                let threshold = geometry.size.width * 0.25
-                                if value.translation.width < -threshold {
-                                    if currentIndex < cards.count - 1 {
-                                        withAnimation(
-                                            .spring(
-                                                response: 0.45,
-                                                dampingFraction: 0.82
-                                            )
-                                        ) {
-                                            currentIndex += 1
-                                        }
-                                    }
-                                }
-                                dragOffset = 0
-                            }
-                        : nil
-                )
 
                 // Next button
                 Button {
-                    withAnimation(
-                        .spring(response: 0.45, dampingFraction: 0.82)
-                    ) {
+                    withAnimation {
                         if currentIndex < cards.count - 1 {
                             currentIndex += 1
                         } else {
@@ -151,12 +127,18 @@ struct CarouselView: View {
                     Image(
                         systemName: "arrow.right"
                     )
-                    .font(.title2)
-                    .foregroundColor(Color(uiColor: .label))
-                    .padding()
+                    .font(
+                        .system(size: geometry.size.width * 0.05, weight: .bold)
+                    )
+                    .foregroundColor(.white)
+                    .frame(
+                        width: geometry.size.width * 0.15,
+                        height: geometry.size.width * 0.15
+                    )
+                    .background(Color.blue)
+                    .clipShape(Circle())
                 }
                 .padding(.trailing, 28)
-                .buttonStyle(.glass)
             }
         }
     }
