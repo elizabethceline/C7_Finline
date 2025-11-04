@@ -14,6 +14,7 @@ struct ProfileView: View {
     @Environment(\.modelContext) private var modelContext
     @FocusState private var isNameFieldFocused: Bool
     @State private var showAlert = false
+    @State private var showShopModal = false  
     //NITIP FOCUS MODE START//
     @State private var navigateToFocus: Bool = false
     //NITIP DOCUS MODE END//
@@ -30,7 +31,7 @@ struct ProfileView: View {
                             .frame(width: 240, height: 240)
                         
                         Button {
-                            // ke shop
+                            showShopModal = true
                         } label: {
                             Image(systemName: "hanger")
                                 .font(.body)
@@ -41,6 +42,10 @@ struct ProfileView: View {
                                     Circle()
                                         .fill(Color.primary)
                                 )
+                        }
+                        .sheet(isPresented: $showShopModal) {
+                            ShopView()
+                                .presentationDetents([.height(600)])
                         }
                     }
                     .frame(maxWidth: .infinity)
@@ -153,7 +158,7 @@ struct ProfileView: View {
                     }
                     .buttonStyle(.plain)
                     
-                    //                    NITIP FOCUS MODE START
+                    // NITIP FOCUS MODE START
                     Button {
                         navigateToFocus = true
                     } label: {
@@ -163,7 +168,7 @@ struct ProfileView: View {
                         )
                     }
                     .padding()
-                    //NITIP FOCUS MODE END//
+                    // NITIP FOCUS MODE END
                 }
                 .onAppear {
                     viewModel.setModelContext(modelContext)
@@ -183,11 +188,11 @@ struct ProfileView: View {
                     dismissButton: .default(Text("OK"))
                 )
             }
-            //NITIP FOCUS MODE START
+            // NITIP FOCUS MODE START
             .navigationDestination(isPresented: $navigateToFocus) {
                 TestCloud()
             }
-            //NITIP FOCUS MODE END
+            // NITIP FOCUS MODE END
         }
     }
     
@@ -204,7 +209,6 @@ struct ProfileView: View {
         let secs = Int(seconds) % 60
         return String(format: "%02d:%02d:%02d", hrs, mins, secs)
     }
-    
 }
 
 struct StatCard: View {
