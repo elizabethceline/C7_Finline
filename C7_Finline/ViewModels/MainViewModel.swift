@@ -214,7 +214,6 @@ class MainViewModel: ObservableObject {
     func filterTasksByDate(for date: Date) -> [GoalTask] {
         tasks.filter { task in
             Calendar.current.isDate(task.workingTime, inSameDayAs: date)
-            && !task.isCompleted
         }
     }
 
@@ -222,7 +221,6 @@ class MainViewModel: ObservableObject {
         goals.filter { goal in
             goal.tasks.contains { task in
                 Calendar.current.isDate(task.workingTime, inSameDayAs: date)
-                && !task.isCompleted
             }
         }
     }
