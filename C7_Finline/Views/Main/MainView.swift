@@ -40,6 +40,7 @@ struct MainView: View {
                     currentWeekIndex: $currentWeekIndex,
                     showDatePicker: $showDatePicker,
                     isWeekChange: $isWeekChange,
+                    taskFilter: $viewModel.taskFilter,
                     jumpToDate: jumpToDate(_:),
                     unfinishedTasks: unfinishedTasks
                 )

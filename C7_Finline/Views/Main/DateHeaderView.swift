@@ -12,6 +12,7 @@ struct DateHeaderView: View {
     @Binding var currentWeekIndex: Int
     @Binding var showDatePicker: Bool
     @Binding var isWeekChange: Bool
+    @Binding var taskFilter: TaskFilter
 
     let jumpToDate: (Date) -> Void
     let unfinishedTasks: [GoalTask]
@@ -41,8 +42,14 @@ struct DateHeaderView: View {
 
                 Spacer()
 
-                Button {
-
+                Menu {
+                    Picker("Filter", selection: $taskFilter) {
+                        ForEach(TaskFilter.allCases, id: \.self) { filter in
+                            Text(filter.rawValue)
+                                .tag(filter)
+                        }
+                    }
+                    .pickerStyle(.inline)
                 } label: {
                     Image(systemName: "line.3.horizontal.decrease")
                         .font(.title)
@@ -70,6 +77,7 @@ struct DateHeaderView: View {
         currentWeekIndex: .constant(0),
         showDatePicker: .constant(false),
         isWeekChange: .constant(false),
+        taskFilter: .constant(.unfinished),
         jumpToDate: { _ in },
         unfinishedTasks: []
     )

@@ -15,6 +15,7 @@ class MainViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var error: String = ""
     @Published var selectedDate: Date = Date()
+    @Published var taskFilter: TaskFilter = .unfinished
 
     private var modelContext: ModelContext?
     private var cancellables = Set<AnyCancellable>()
@@ -59,7 +60,7 @@ class MainViewModel: ObservableObject {
                     print("Fetched \(cloudGoals.count) goals from CloudKit")
                 }
                 isLoading = false
-                
+
                 print("Sync pending local changes...")
                 await syncPendingItems()
 
@@ -212,8 +213,17 @@ class MainViewModel: ObservableObject {
     }
     
     func filterTasksByDate(for date: Date) -> [GoalTask] {
-        tasks.filter { task in
+        let dateTasks = tasks.filter { task in
             Calendar.current.isDate(task.workingTime, inSameDayAs: date)
+        }
+
+        switch taskFilter {
+        case .all:
+            return dateTasks
+        case .unfinished:
+            return dateTasks.filter { !$0.isCompleted }
+        case .finished:
+            return dateTasks.filter { $0.isCompleted }
         }
     }
 
