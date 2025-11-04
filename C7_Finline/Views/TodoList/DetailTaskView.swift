@@ -24,7 +24,10 @@ struct DetailTaskView: View {
     
     @ObservedObject var taskVM: TaskViewModel
     @EnvironmentObject var focusVM: FocusSessionViewModel
+    @State private var isShowingFocusSettings = false
     //@State private var showFocusView: Bool = false
+    @State private var isShowingUnsavedChangesAlert = false
+    @State private var isShowingDismissAlert = false
     
     let task: GoalTask
     let taskManager: TaskManager
@@ -41,6 +44,12 @@ struct DetailTaskView: View {
         _focusDuration = State(initialValue: task.focusDuration)
         _isCompleted = State(initialValue: task.isCompleted)
         
+    }
+    
+    private var hasUnsavedChanges: Bool {
+        taskName != task.name ||
+        focusDuration != task.focusDuration ||
+        taskDate != task.workingTime
     }
     
     var body: some View {
@@ -99,23 +108,36 @@ struct DetailTaskView: View {
                         }
                     }
                 }
-                Section {
-                    HStack(spacing: 16) {
-                        ToggleCardView(icon: "moon.fill", title: "Deep Focus", isOn: $focusVM.authManager.isEnabled)
-                        ToggleCardView(icon: "bell.fill", title: "Nudge Me", isOn: $isNudgeMeOn)
-                    }
-                    .padding(.vertical, 8)
-                }
-                .listRowInsets(EdgeInsets(top: 0, leading: 2, bottom: 0, trailing: 2))
-                .listRowBackground(Color.clear)
+                //                Section {
+                //                    HStack(spacing: 16) {
+                //                        ToggleCardView(icon: "moon.fill", title: "Deep Focus", isOn: $focusVM.authManager.isEnabled)
+                //                        ToggleCardView(icon: "bell.fill", title: "Nudge Me", isOn: $isNudgeMeOn)
+                //                    }
+                //                    .padding(.vertical, 8)
+                //                }
+                //                .listRowInsets(EdgeInsets(top: 0, leading: 2, bottom: 0, trailing: 2))
+                //                .listRowBackground(Color.clear)
                 
             }
             .navigationTitle("Task Details")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button {
+                        if hasUnsavedChanges {
+                            isShowingDismissAlert = true
+                        } else {
+                            dismiss()
+                        }
+                    } label: {
+                        Image(systemName: "xmark")
+                            .fontWeight(.semibold)
+                    }
+                }
+                
                 ToolbarItem(placement: .confirmationAction) {
                     Button {
-                        Task{
+                        Task {
                             await taskVM.updateGoalTask(
                                 task,
                                 name: taskName,
@@ -124,10 +146,9 @@ struct DetailTaskView: View {
                                 isCompleted: isCompleted,
                                 modelContext: modelContext
                             )
-                            dismiss()
                         }
                     } label: {
-                        Image(systemName: "checkmark")
+                        Text("Save")
                             .fontWeight(.semibold)
                     }
                     .disabled(taskName.isEmpty)
@@ -135,11 +156,16 @@ struct DetailTaskView: View {
             }
             .safeAreaInset(edge: .bottom) {
                 Button(action: {
-                    focusVM.setTask(task, goal: task.goal)
-                    focusVM.nudgeMeEnabled = isNudgeMeOn
-                    focusVM.startSession()
-                    // showFocusView = true
-                    onStartFocus()
+                    if hasUnsavedChanges {
+                        isShowingUnsavedChangesAlert = true
+                    } else {
+                        focusVM.setTask(task, goal: task.goal)
+                        //                    focusVM.nudgeMeEnabled = isNudgeMeOn
+                        //                    focusVM.startSession()
+                        //                    // showFocusView = true
+                        //                    onStartFocus()
+                        isShowingFocusSettings = true
+                    }
                 }) {
                     Text("Start Focus")
                         .font(.headline)
@@ -167,6 +193,62 @@ struct DetailTaskView: View {
                 )
             }
             .presentationDetents([.large])
+            .sheet(isPresented: $isShowingFocusSettings) {
+                FocusSettingsView(
+                    isNudgeMeOn: $isNudgeMeOn,
+                    onDone: {
+                        focusVM.nudgeMeEnabled = isNudgeMeOn
+                        isShowingFocusSettings = false
+                        focusVM.startSession()
+                        onStartFocus()
+                    }
+                )
+                .environmentObject(focusVM)
+                .presentationDetents([.height(300)])
+            }
+            .alert("Unsaved Changes", isPresented: $isShowingUnsavedChangesAlert) {
+                Button("Yes") {
+                    Task {
+                        await taskVM.updateGoalTask(
+                            task,
+                            name: taskName,
+                            workingTime: taskDate,
+                            focusDuration: focusDuration,
+                            isCompleted: isCompleted,
+                            modelContext: modelContext
+                        )
+                        focusVM.setTask(task, goal: task.goal)
+                        isShowingFocusSettings = true
+                    }
+                }
+                Button("No", role: .cancel) { }
+            } message: {
+                Text("There's unsaved changes, do you want to save and start focus?")
+            }
+            .alert("Unsaved Changes", isPresented: $isShowingDismissAlert) {
+                Button("Save") {
+                    Task {
+                        await taskVM.updateGoalTask(
+                            task,
+                            name: taskName,
+                            workingTime: taskDate,
+                            focusDuration: focusDuration,
+                            isCompleted: isCompleted,
+                            modelContext: modelContext
+                        )
+                        dismiss()
+                    }
+                }
+                Button {
+                    dismiss()
+                } label: {
+                    Text("Close Anyway")
+                        .foregroundColor(.red)
+                }
+            } message: {
+                Text("There's unsaved changes, do you want to save before closing?")
+            }
+            
         }
     }
 }

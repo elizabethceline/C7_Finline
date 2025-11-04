@@ -87,6 +87,8 @@ final class FocusSessionViewModel: ObservableObject {
             return
         }
         
+        print("Starting session... Nudge Me Enabled: \(nudgeMeEnabled)")
+        
         isFocusing = true
         remainingTime = sessionDuration
         lastTickDate = Date()
