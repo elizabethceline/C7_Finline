@@ -15,6 +15,7 @@ class MainViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var error: String = ""
     @Published var selectedDate: Date = Date()
+    @Published var taskFilter: TaskFilter = .unfinished
 
     private var modelContext: ModelContext?
     private var cancellables = Set<AnyCancellable>()
@@ -59,7 +60,7 @@ class MainViewModel: ObservableObject {
                     print("Fetched \(cloudGoals.count) goals from CloudKit")
                 }
                 isLoading = false
-                
+
                 print("Sync pending local changes...")
                 await syncPendingItems()
 
@@ -212,9 +213,17 @@ class MainViewModel: ObservableObject {
     }
     
     func filterTasksByDate(for date: Date) -> [GoalTask] {
-        tasks.filter { task in
+        let dateTasks = tasks.filter { task in
             Calendar.current.isDate(task.workingTime, inSameDayAs: date)
-            && !task.isCompleted
+        }
+
+        switch taskFilter {
+        case .all:
+            return dateTasks
+        case .unfinished:
+            return dateTasks.filter { !$0.isCompleted }
+        case .finished:
+            return dateTasks.filter { $0.isCompleted }
         }
     }
 
@@ -222,9 +231,72 @@ class MainViewModel: ObservableObject {
         goals.filter { goal in
             goal.tasks.contains { task in
                 Calendar.current.isDate(task.workingTime, inSameDayAs: date)
-                && !task.isCompleted
             }
         }
+    }
+    
+    // sorting goals based on earliest unfinished task for the date
+    func sortedGoals(for date: Date) -> [Goal] {
+        let filteredGoals = filterGoalsByDate(for: date)
+        let filteredTasks = filterTasksByDate(for: date)
+        
+        return filteredGoals.sorted { goal1, goal2 in
+            let goal1Tasks = filteredTasks.filter { task in
+                goal1.tasks.contains(where: { $0.id == task.id })
+            }
+            let goal2Tasks = filteredTasks.filter { task in
+                goal2.tasks.contains(where: { $0.id == task.id })
+            }
+            
+            // select earliest unfinished task for each goal
+            let goal1EarliestUnfinished = goal1Tasks
+                .filter { !$0.isCompleted }
+                .min(by: { $0.workingTime < $1.workingTime })
+            
+            let goal2EarliestUnfinished = goal2Tasks
+                .filter { !$0.isCompleted }
+                .min(by: { $0.workingTime < $1.workingTime })
+            
+            // both goals have unfinished tasks
+            if let task1 = goal1EarliestUnfinished, let task2 = goal2EarliestUnfinished {
+                return task1.workingTime < task2.workingTime
+            }
+            
+            // only goal1 has unfinished task
+            if goal1EarliestUnfinished != nil {
+                return true
+            }
+            
+            // only goal2 has unfinished task
+            if goal2EarliestUnfinished != nil {
+                return false
+            }
+            
+            // both goals have all tasks completed, compare by earliest task
+            let goal1Earliest = goal1Tasks.min(by: { $0.workingTime < $1.workingTime })
+            let goal2Earliest = goal2Tasks.min(by: { $0.workingTime < $1.workingTime })
+            
+            if let task1 = goal1Earliest, let task2 = goal2Earliest {
+                return task1.workingTime < task2.workingTime
+            }
+            
+            return goal1.name < goal2.name
+        }
+    }
+    
+    func sortedTasks(for goal: Goal, on date: Date) -> [GoalTask] {
+        let filteredTasks = filterTasksByDate(for: date)
+        
+        return filteredTasks
+            .filter { task in
+                goal.tasks.contains(where: { $0.id == task.id })
+            }
+            .sorted {
+                if $0.isCompleted == $1.isCompleted {
+                    return $0.workingTime < $1.workingTime
+                }
+                return !$0.isCompleted
+            }
     }
 
     var unfinishedTasks: [GoalTask] {

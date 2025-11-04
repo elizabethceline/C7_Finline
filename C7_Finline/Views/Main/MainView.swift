@@ -21,6 +21,7 @@ struct MainView: View {
     )
     @State var currentWeekIndex: Int = 0
     @State var isWeekChange: Bool = false
+    @State private var hasAppeared = false
 
     var calendar: Calendar { .current }
 
@@ -28,7 +29,7 @@ struct MainView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 8) {
+            VStack(spacing: 20) {
                 HeaderView(
                     viewModel: viewModel,
                     unfinishedTasks: unfinishedTasks,
@@ -41,6 +42,7 @@ struct MainView: View {
                     currentWeekIndex: $currentWeekIndex,
                     showDatePicker: $showDatePicker,
                     isWeekChange: $isWeekChange,
+                    taskFilter: $viewModel.taskFilter,
                     jumpToDate: jumpToDate(_:),
                     unfinishedTasks: unfinishedTasks
                 )
@@ -54,7 +56,10 @@ struct MainView: View {
             .background(Color(uiColor: .systemGray6).ignoresSafeArea())
             .onAppear {
                 viewModel.setModelContext(modelContext)
-                jumpToToday()
+                if !hasAppeared {
+                    jumpToToday()
+                    hasAppeared = true
+                }
             }
             .onChange(of: currentWeekIndex) { oldValue, newValue in
                 updateSelectedDateFromWeekChange(
@@ -64,16 +69,55 @@ struct MainView: View {
             }
             .toolbar {
                 ToolbarItemGroup(placement: .bottomBar) {
-                    Button("Today") {
-                        jumpToToday()
-                        if showDatePicker {
-                            withAnimation(.spring(response: 0.3)) {
-                                showDatePicker = false
+                    HStack(spacing: 12) {
+                        Button("Today") {
+                            jumpToToday()
+                            if showDatePicker {
+                                withAnimation(.spring(response: 0.3)) {
+                                    showDatePicker = false
+                                }
+                            }
+                        }
+                        .font(.callout)
+                        .fontWeight(.medium)
+
+                        if !unfinishedTasks.isEmpty {
+                            Text("|")
+                                .foregroundColor(.black)
+                                .padding(.leading, 4)
+
+                            Button {
+                                if let oldestTask =
+                                    unfinishedTasks
+                                    .filter({ $0.workingTime < Date() })
+                                    .sorted(by: {
+                                        $0.workingTime < $1.workingTime
+                                    })
+                                    .first
+                                {
+                                    withAnimation(.spring()) {
+                                        selectedDate = Calendar.current
+                                            .startOfDay(
+                                                for: oldestTask.workingTime
+                                            )
+                                    }
+                                }
+                            } label: {
+                                Text("Overdue")
+                                    .font(.callout)
+                                    .fontWeight(.medium)
+                                Text("\(unfinishedTasks.count)")
+                                    .font(.caption)
+                                    .fontWeight(.medium)
+                                    .foregroundColor(.secondary)
+                                    .padding(7)
+                                    .background(Color.red)
+                                    .clipShape(Circle())
                             }
                         }
                     }
-                    .font(.callout)
-                    .fontWeight(.medium)
+                    .fixedSize()
+                    .padding(.horizontal, unfinishedTasks.isEmpty ? 0 : 8)
 
                     Spacer()
 
@@ -82,9 +126,11 @@ struct MainView: View {
                     } label: {
                         Image(systemName: "plus")
                             .font(.callout)
+                            .fontWeight(.medium)
                     }
                 }
             }
+
             .sheet(isPresented: $showCreateGoalModal) {
                 CreateGoalView(mainVM: viewModel)
                     .presentationDetents([.large])

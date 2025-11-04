@@ -20,29 +20,17 @@ struct HeaderView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     if unfinishedTasks.isEmpty {
                         Text("Do your tasks today and earn points!")
-                            .foregroundColor(.black)
+                            .foregroundColor(Color(.black).opacity(0.7))
                             .font(.body)
                     } else {
                         Text(tasksMessage)
-                            .foregroundColor(.black)
+                            .foregroundColor(Color(.black).opacity(0.7))
                             .font(.body)
-                            .onTapGesture {
-                                if let nearestTask = unfinishedTasks.min(by: {
-                                    abs($0.workingTime.timeIntervalSinceNow)
-                                        < abs(
-                                            $1.workingTime.timeIntervalSinceNow
-                                        )
-                                }) {
-                                    selectedDate = Calendar.current.startOfDay(
-                                        for: nearestTask.workingTime
-                                    )
-                                }
-                            }
                     }
                 }
                 .padding(14)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.secondary)
+                .background(Color(.systemBackground))
                 .clipShape(
                     UnevenRoundedRectangle(
                         topLeadingRadius: 18,
@@ -53,7 +41,7 @@ struct HeaderView: View {
                 )
 
                 TriangleTail()
-                    .fill(Color.secondary)
+                    .fill(Color(.systemBackground))
                     .frame(width: 25, height: 20)
                     .rotationEffect(.degrees(58))
                     .offset(x: 14, y: -4.5)
@@ -72,7 +60,8 @@ struct HeaderView: View {
                     .clipShape(Circle())
             }
         }
-        .padding()
+        .padding(.horizontal)
+        .padding(.vertical, 4)
         .navigationDestination(isPresented: $navigateToProfile) {
             ProfileView(viewModel: ProfileViewModel())
         }
@@ -84,16 +73,16 @@ struct HeaderView: View {
     }
 
     private var tasksMessage: AttributedString {
-        var attributed = AttributedString(
-            "You have \(unfinishedTaskText)! Plan your day wisely."
+        let attributed = AttributedString(
+            "You have \(unfinishedTaskText)!\nPlan your day wisely."
         )
-        if let range = attributed.range(of: unfinishedTaskText) {
-            attributed[range].underlineStyle = .single
-            attributed[range].foregroundColor = .red
-            attributed[range].font = .system(.body, design: .default).weight(
-                .semibold
-            )
-        }
+        //        if let range = attributed.range(of: unfinishedTaskText) {
+        //            attributed[range].underlineStyle = .single
+        //            attributed[range].foregroundColor = .red
+        //            attributed[range].font = .system(.body, design: .default).weight(
+        //                .semibold
+        //            )
+        //        }
         return attributed
     }
 }

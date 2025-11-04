@@ -26,6 +26,7 @@ struct TaskListView: View {
     
     @State private var removingTaskIds: Set<String> = []
     @State private var showCompleteAlert = false
+    @State private var showIncompleteAlert = false
     @State private var showDeleteAlert = false
     @State private var selectedTask: GoalTask?
     //@State private var navigateToDetail = false
@@ -100,13 +101,29 @@ struct TaskListView: View {
                                 edge: .trailing,
                                 allowsFullSwipe: false
                             ) {
-                                Button {
-                                    selectedTask = task
-                                    showCompleteAlert = true
-                                } label: {
-                                    Label("Complete", systemImage: "checkmark")
+                                if !task.isCompleted {
+                                    Button {
+                                        selectedTask = task
+                                        showCompleteAlert = true
+                                    } label: {
+                                        Label(
+                                            "Complete",
+                                            systemImage: "checkmark"
+                                        )
+                                    }
+                                    .tint(.green)
+                                } else {
+                                    Button {
+                                        selectedTask = task
+                                        showIncompleteAlert = true
+                                    } label: {
+                                        Label(
+                                            "Incomplete",
+                                            systemImage: "arrow.uturn.left"
+                                        )
+                                    }
+                                    .tint(.gray)
                                 }
-                                .tint(.green)
 
                                 Button {
                                     selectedTask = task
@@ -176,6 +193,18 @@ struct TaskListView: View {
                 )
             }
         }
+        .alert("Why are you doing this?", isPresented: $showIncompleteAlert) {
+            Button("Keep it completed", role: .cancel) { selectedTask = nil }
+            Button("Mark as Incomplete") {
+                if let task = selectedTask { completeTask(task) }
+            }
+        } message: {
+            if let task = selectedTask {
+                Text(
+                    "Are you sure you want to mark '\(task.name)' as incomplete?"
+                )
+            }
+        }
         .alert("Delete Task", isPresented: $showDeleteAlert) {
             Button("Cancel", role: .cancel) { selectedTask = nil }
             Button("Delete", role: .destructive) {
@@ -241,14 +270,15 @@ struct TaskListView: View {
     )
     
     goal.tasks = [task1, task2]
+
     let dummyMonitor = NetworkMonitor()
+
+
+    let mockVM = MainViewModelMock(goals: [goal], tasks: [task1, task2])
     
     return TaskListView(
-        viewModel: MainViewModel(),
-        tasks: [
-            task1, task2, task1, task2, task2, task1, task2, task1, task2,
-            task1, task2, task2, task1, task2,
-        ],
+        viewModel: mockVM,
+        tasks: [task1, task2],
         goals: [goal],
         selectedDate: Date(),
         networkMonitor: dummyMonitor
@@ -256,4 +286,13 @@ struct TaskListView: View {
     .padding()
     .background(Color.gray.opacity(0.1))
     .environmentObject(FocusSessionViewModel())
+}
+
+@MainActor
+final class MainViewModelMock: MainViewModel {
+    init(goals: [Goal], tasks: [GoalTask]) {
+        super.init()
+        self.goals = goals
+        self.tasks = tasks
+    }
 }
