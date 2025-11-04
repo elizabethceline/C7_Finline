@@ -85,7 +85,7 @@ struct FocusModeView: View {
         }
 
         // Alerts & sheets kept on the root (unchanged)
-        .alert("Are you sure?", isPresented: $isShowingGiveUpAlert) {
+        .alert("Do you want to give up?", isPresented: $isShowingGiveUpAlert) {
             Button("Yes", role: .destructive) {
                 Task {
                     isGivingUp = true
@@ -95,9 +95,9 @@ struct FocusModeView: View {
             }
             Button("No", role: .cancel) { }
         } message: {
-            Text("You will not receive any rewards if you give up now.")
+            Text("You haven't finished \"\(viewModel.taskTitle)\" yet. Is it worth giving up? You won't receive any rewards if you stop now.")
         }
-        .alert("Are you sure you're done?", isPresented: $isShowingEarlyFinishAlert) {
+        .alert("Are you really done?", isPresented: $isShowingEarlyFinishAlert) {
             Button("Yes I'm done") {
                 Task {
                     await viewModel.endSession()
@@ -106,10 +106,12 @@ struct FocusModeView: View {
             }
             Button("Nevermind", role: .cancel) { }
         } message: {
-            Text("Will proceed to reward immediately.")
+            let formattedTime = TimeFormatter.format(seconds: viewModel.remainingTime)
+            
+            Text("You still have \(formattedTime) left for this task. Will proceed to reward immediately.")
         }
         .alert("Time's Up!", isPresented: $isShowingTimesUpAlert) {
-            Button("Yes, I finished") {
+            Button("Yes, I'm finished") {
                 Task {
                     await viewModel.endSession()
                     resultVM = viewModel.createResult(using: modelContext, didComplete: true)
@@ -120,14 +122,14 @@ struct FocusModeView: View {
                 isShowingAddTimeModal = true
             }
         } message: {
-            Text("Did you finish your task?")
+            Text("Let’s be real... Did you actually finish the task?")
         }
-        .alert("Just checking, are you still working?", isPresented: $viewModel.isShowingNudgeAlert) {
+        .alert("Hey, are you still working?", isPresented: $viewModel.isShowingNudgeAlert) {
             Button("Yes I'm still working") {
                 viewModel.userConfirmedNudge()
             }
         } message: {
-            Text("Answering this will get 20 points")
+            Text("You’re totally not doing something else right now, right? Answering this will get 20 points.")
         }
         .sheet(isPresented: $isShowingAddTimeModal) {
             AddTimeView { hours, minutes, seconds in
