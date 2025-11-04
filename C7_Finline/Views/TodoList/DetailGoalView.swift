@@ -22,8 +22,10 @@ struct DetailGoalView: View {
     @State private var showDeleteAlert = false
     @State private var showBulkDeleteAlert = false
     @State private var showCompleteAlert = false
+    @State private var showIncompleteAlert = false
     @State private var taskToDelete: GoalTask?
     @State private var taskToComplete: GoalTask?
+    @State private var taskToIncomplete: GoalTask?
 
     @State private var isSelecting = false
     @State private var selectedTaskIds: Set<String> = []
@@ -115,7 +117,24 @@ struct DetailGoalView: View {
             )
         }
 
-        .alert("Complete Task", isPresented: $showCompleteAlert) {
+        .alert("Why are you doing this?", isPresented: $showIncompleteAlert) {
+            Button("Keep it completed", role: .cancel) {
+                taskToIncomplete = nil
+            }
+            Button("Mark as Incomplete") {
+                if let task = taskToIncomplete {
+                    incompleteTaskWithAnimation(task)
+                }
+            }
+        } message: {
+            if let task = taskToIncomplete {
+                Text(
+                    "Are you sure you want to mark '\(task.name)' as incomplete?"
+                )
+            }
+        }
+
+        .alert("Did you finish it already?", isPresented: $showCompleteAlert) {
             Button("Not yet", role: .cancel) {
                 taskToComplete = nil
             }
@@ -235,6 +254,28 @@ struct DetailGoalView: View {
                         value: removingTaskIds
                     )
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+
+                        if !task.isCompleted {
+                            Button {
+                                taskToComplete = task
+                                showCompleteAlert = true
+                            } label: {
+                                Label("Complete", systemImage: "checkmark")
+                            }
+                            .tint(.green)
+                        } else {
+                            Button {
+                                taskToIncomplete = task
+                                showIncompleteAlert = true
+                            } label: {
+                                Label(
+                                    "Incomplete",
+                                    systemImage: "arrow.uturn.left"
+                                )
+                            }
+                            .tint(.gray)
+                        }
+
                         Button {
                             taskToDelete = task
                             showDeleteAlert = true
@@ -242,14 +283,6 @@ struct DetailGoalView: View {
                             Label("Delete", systemImage: "trash")
                         }
                         .tint(.red)
-
-                        Button {
-                            taskToComplete = task
-                            showCompleteAlert = true
-                        } label: {
-                            Label("Complete", systemImage: "checkmark")
-                        }
-                        .tint(.green)
                     }
                 }
             }
@@ -316,6 +349,27 @@ struct DetailGoalView: View {
                 )
                 removingTaskIds.remove(task.id)
                 taskToComplete = nil
+            }
+        }
+    }
+
+    private func incompleteTaskWithAnimation(_ task: GoalTask) {
+        withAnimation(.easeInOut(duration: 0.3)) {
+            removingTaskIds.insert(task.id)
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            Task {
+                await taskVM.updateGoalTask(
+                    task,
+                    name: task.name,
+                    workingTime: task.workingTime,
+                    focusDuration: task.focusDuration,
+                    isCompleted: false,
+                    modelContext: modelContext
+                )
+                removingTaskIds.remove(task.id)
+                taskToIncomplete = nil
             }
         }
     }
