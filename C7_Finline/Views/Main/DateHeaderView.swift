@@ -12,31 +12,51 @@ struct DateHeaderView: View {
     @Binding var currentWeekIndex: Int
     @Binding var showDatePicker: Bool
     @Binding var isWeekChange: Bool
+    @Binding var taskFilter: TaskFilter
 
     let jumpToDate: (Date) -> Void
     let unfinishedTasks: [GoalTask]
 
     var body: some View {
         VStack(spacing: 8) {
-            Button {
-                showDatePicker = true
-            } label: {
-                HStack(spacing: 4) {
-                    Image(systemName: "calendar")
-                        .font(.title)
-                        .foregroundColor(.primary)
+            HStack {
+                Button {
+                    showDatePicker = true
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "calendar")
+                            .font(.title)
+                            .foregroundColor(.primary)
 
-                    Text(
-                        selectedDate.formatted(.dateTime.month(.wide)) + " "
-                            + selectedDate.formatted(.dateTime.year())
-                    )
-                    .font(.title)
-                    .fontWeight(.bold)
-                    .foregroundColor(.primary)
+                        Text(
+                            selectedDate.formatted(.dateTime.month(.wide)) + " "
+                                + selectedDate.formatted(.dateTime.year())
+                        )
+                        .font(.title)
+                        .fontWeight(.bold)
+                        .foregroundColor(.primary)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .buttonStyle(.plain)
+
+                Spacer()
+
+                Menu {
+                    Picker("Filter", selection: $taskFilter) {
+                        ForEach(TaskFilter.allCases, id: \.self) { filter in
+                            Text(filter.rawValue)
+                                .tag(filter)
+                        }
+                    }
+                    .pickerStyle(.inline)
+                } label: {
+                    Image(systemName: "line.3.horizontal.decrease")
+                        .font(.title)
+                        .foregroundColor(Color(.systemGray))
+                }
             }
-            .buttonStyle(.plain)
+            .padding(.trailing, 4)
 
             DateWeekPagerView(
                 selectedDate: $selectedDate,
@@ -57,7 +77,10 @@ struct DateHeaderView: View {
         currentWeekIndex: .constant(0),
         showDatePicker: .constant(false),
         isWeekChange: .constant(false),
+        taskFilter: .constant(.unfinished),
         jumpToDate: { _ in },
         unfinishedTasks: []
     )
+    .padding()
+    .background(Color(.systemGray6))
 }

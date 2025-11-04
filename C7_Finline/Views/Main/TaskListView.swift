@@ -15,6 +15,7 @@ struct TaskListView: View {
 
     @State private var removingTaskIds: Set<String> = []
     @State private var showCompleteAlert = false
+    @State private var showIncompleteAlert = false
     @State private var showDeleteAlert = false
     @State private var selectedTask: GoalTask?
     @State private var navigateToDetail = false
@@ -29,11 +30,11 @@ struct TaskListView: View {
 
     var body: some View {
         List {
-            ForEach(goals) { goal in
-                let goalTasks = tasks.filter { task in
-                    goal.tasks.contains(where: { $0.id == task.id })
-                }
-                .sorted { $0.workingTime < $1.workingTime }
+            ForEach(viewModel.sortedGoals(for: selectedDate)) { goal in
+                let goalTasks = viewModel.sortedTasks(
+                    for: goal,
+                    on: selectedDate
+                )
 
                 if !goalTasks.isEmpty {
                     Section {
@@ -74,14 +75,29 @@ struct TaskListView: View {
                                 edge: .trailing,
                                 allowsFullSwipe: false
                             ) {
-
-                                Button {
-                                    selectedTask = task
-                                    showCompleteAlert = true
-                                } label: {
-                                    Label("Complete", systemImage: "checkmark")
+                                if !task.isCompleted {
+                                    Button {
+                                        selectedTask = task
+                                        showCompleteAlert = true
+                                    } label: {
+                                        Label(
+                                            "Complete",
+                                            systemImage: "checkmark"
+                                        )
+                                    }
+                                    .tint(.green)
+                                } else {
+                                    Button {
+                                        selectedTask = task
+                                        showIncompleteAlert = true
+                                    } label: {
+                                        Label(
+                                            "Incomplete",
+                                            systemImage: "arrow.uturn.left"
+                                        )
+                                    }
+                                    .tint(.gray)
                                 }
-                                .tint(.green)
 
                                 Button {
                                     selectedTask = task
@@ -135,6 +151,18 @@ struct TaskListView: View {
             if let task = selectedTask {
                 Text(
                     "Are you sure you want to mark '\(task.name)' as completed?"
+                )
+            }
+        }
+        .alert("Why are you doing this?", isPresented: $showIncompleteAlert) {
+            Button("Keep it completed", role: .cancel) { selectedTask = nil }
+            Button("Mark as Incomplete") {
+                if let task = selectedTask { completeTask(task) }
+            }
+        } message: {
+            if let task = selectedTask {
+                Text(
+                    "Are you sure you want to mark '\(task.name)' as incomplete?"
                 )
             }
         }
@@ -204,15 +232,23 @@ struct TaskListView: View {
 
     goal.tasks = [task1, task2]
 
+    let mockVM = MainViewModelMock(goals: [goal], tasks: [task1, task2])
+
     return TaskListView(
-        viewModel: MainViewModel(),
-        tasks: [
-            task1, task2, task1, task2, task2, task1, task2, task1, task2,
-            task1, task2, task2, task1, task2,
-        ],
+        viewModel: mockVM,
+        tasks: [task1, task2],
         goals: [goal],
         selectedDate: Date()
     )
     .padding()
     .background(Color.gray.opacity(0.1))
+}
+
+@MainActor
+final class MainViewModelMock: MainViewModel {
+    init(goals: [Goal], tasks: [GoalTask]) {
+        super.init()
+        self.goals = goals
+        self.tasks = tasks
+    }
 }

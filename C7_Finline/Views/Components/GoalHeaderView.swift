@@ -19,8 +19,7 @@ struct GoalHeaderView: View {
             Image(systemName: "arrow.up.right")
                 .font(.title3)
                 .padding(8)
-                .background(Color(uiColor: .systemBackground))
-                .foregroundColor(Color(uiColor: .label))
+                .foregroundColor(.black)
                 .cornerRadius(50)
         }
         .padding(.horizontal, 16)
