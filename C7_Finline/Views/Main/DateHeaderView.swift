@@ -18,25 +18,38 @@ struct DateHeaderView: View {
 
     var body: some View {
         VStack(spacing: 8) {
-            Button {
-                showDatePicker = true
-            } label: {
-                HStack(spacing: 4) {
-                    Image(systemName: "calendar")
-                        .font(.title)
-                        .foregroundColor(.primary)
+            HStack {
+                Button {
+                    showDatePicker = true
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "calendar")
+                            .font(.title)
+                            .foregroundColor(.primary)
 
-                    Text(
-                        selectedDate.formatted(.dateTime.month(.wide)) + " "
-                            + selectedDate.formatted(.dateTime.year())
-                    )
-                    .font(.title)
-                    .fontWeight(.bold)
-                    .foregroundColor(.primary)
+                        Text(
+                            selectedDate.formatted(.dateTime.month(.wide)) + " "
+                                + selectedDate.formatted(.dateTime.year())
+                        )
+                        .font(.title)
+                        .fontWeight(.bold)
+                        .foregroundColor(.primary)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .buttonStyle(.plain)
+
+                Spacer()
+
+                Button {
+
+                } label: {
+                    Image(systemName: "line.3.horizontal.decrease")
+                        .font(.title)
+                        .foregroundColor(Color(.systemGray))
+                }
             }
-            .buttonStyle(.plain)
+            .padding(.trailing, 4)
 
             DateWeekPagerView(
                 selectedDate: $selectedDate,
@@ -60,4 +73,6 @@ struct DateHeaderView: View {
         jumpToDate: { _ in },
         unfinishedTasks: []
     )
+    .padding()
+    .background(Color(.systemGray6))
 }
