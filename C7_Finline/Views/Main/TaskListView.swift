@@ -30,16 +30,11 @@ struct TaskListView: View {
 
     var body: some View {
         List {
-            ForEach(goals) { goal in
-                let goalTasks = tasks.filter { task in
-                    goal.tasks.contains(where: { $0.id == task.id })
-                }
-                .sorted {
-                    if $0.isCompleted == $1.isCompleted {
-                        return $0.workingTime < $1.workingTime
-                    }
-                    return !$0.isCompleted
-                }
+            ForEach(viewModel.sortedGoals(for: selectedDate)) { goal in
+                let goalTasks = viewModel.sortedTasks(
+                    for: goal,
+                    on: selectedDate
+                )
 
                 if !goalTasks.isEmpty {
                     Section {
@@ -237,12 +232,23 @@ struct TaskListView: View {
 
     goal.tasks = [task1, task2]
 
+    let mockVM = MainViewModelMock(goals: [goal], tasks: [task1, task2])
+
     return TaskListView(
-        viewModel: MainViewModel(),
+        viewModel: mockVM,
         tasks: [task1, task2],
         goals: [goal],
         selectedDate: Date()
     )
     .padding()
     .background(Color.gray.opacity(0.1))
+}
+
+@MainActor
+final class MainViewModelMock: MainViewModel {
+    init(goals: [Goal], tasks: [GoalTask]) {
+        super.init()
+        self.goals = goals
+        self.tasks = tasks
+    }
 }
