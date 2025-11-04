@@ -20,6 +20,7 @@ struct MainView: View {
     )
     @State var currentWeekIndex: Int = 0
     @State var isWeekChange: Bool = false
+    @State private var hasAppeared = false
 
     var calendar: Calendar { .current }
 
@@ -53,7 +54,10 @@ struct MainView: View {
             .background(Color(uiColor: .systemGray6).ignoresSafeArea())
             .onAppear {
                 viewModel.setModelContext(modelContext)
-                jumpToToday()
+                if !hasAppeared {
+                    jumpToToday()
+                    hasAppeared = true
+                }
             }
             .onChange(of: currentWeekIndex) { oldValue, newValue in
                 updateSelectedDateFromWeekChange(
@@ -110,11 +114,11 @@ struct MainView: View {
                     } label: {
                         Image(systemName: "plus")
                             .font(.callout)
-
                             .fontWeight(.medium)
                     }
                 }
             }
+
             .sheet(isPresented: $showCreateGoalModal) {
                 CreateGoalView(mainVM: viewModel)
                     .presentationDetents([.large])
