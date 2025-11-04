@@ -85,10 +85,20 @@ struct MainView: View {
                                 .padding(.leading, 4)
 
                             Button {
-                                if let firstTask = unfinishedTasks.first {
-                                    selectedDate = Calendar.current.startOfDay(
-                                        for: firstTask.workingTime
-                                    )
+                                if let oldestTask =
+                                    unfinishedTasks
+                                    .filter({ $0.workingTime < Date() })
+                                    .sorted(by: {
+                                        $0.workingTime < $1.workingTime
+                                    })
+                                    .first
+                                {
+                                    withAnimation(.spring()) {
+                                        selectedDate = Calendar.current
+                                            .startOfDay(
+                                                for: oldestTask.workingTime
+                                            )
+                                    }
                                 }
                             } label: {
                                 Text("Overdue")
