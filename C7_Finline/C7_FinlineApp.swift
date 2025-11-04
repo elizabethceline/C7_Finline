@@ -10,6 +10,7 @@ import SwiftUI
 
 @main
 struct C7_FinlineApp: App {
+    @StateObject private var focusVM = FocusSessionViewModel()
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             UserProfile.self,
@@ -36,6 +37,7 @@ struct C7_FinlineApp: App {
     var body: some Scene {
         WindowGroup {
             RootView()
+                .environmentObject(focusVM)
         }
         .modelContainer(sharedModelContainer)
     }

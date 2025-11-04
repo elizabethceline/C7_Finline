@@ -19,8 +19,8 @@ struct DetailTaskView: View {
     
     @State private var isShowingDatePicker: Bool = false
     @State private var isShowingTimePicker: Bool = false
-    @State private var isDeepFocusOn: Bool = false
-    @State private var isNudgeMeOn: Bool = false
+//    @State private var isDeepFocusOn: Bool = false
+    @State private var isNudgeMeOn: Bool = true
     
     @ObservedObject var taskVM: TaskViewModel
     @EnvironmentObject var focusVM: FocusSessionViewModel
@@ -98,7 +98,7 @@ struct DetailTaskView: View {
                 }
                 Section {
                     HStack(spacing: 16) {
-                        ToggleCardView(icon: "moon.fill", title: "Deep Focus", isOn: $isDeepFocusOn)
+                        ToggleCardView(icon: "moon.fill", title: "Deep Focus", isOn: $focusVM.authManager.isEnabled)
                         ToggleCardView(icon: "bell.fill", title: "Nudge Me", isOn: $isNudgeMeOn)
                     }
                     .padding(.vertical, 8)
@@ -135,7 +135,6 @@ struct DetailTaskView: View {
                     focusVM.taskTitle = self.taskName
                     focusVM.goalName = self.task.goal?.name
                     focusVM.sessionDuration = TimeInterval(focusDuration * 60)
-                    focusVM.deepFocusEnabled = isDeepFocusOn
                     focusVM.nudgeMeEnabled = isNudgeMeOn
                     focusVM.startSession()
                     showFocusView = true

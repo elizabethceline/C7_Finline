@@ -2,7 +2,7 @@ import Foundation
 import SwiftUI
 import Combine
 
-@MainActor
+//@MainActor
 final class FishingViewModel: ObservableObject {
     @Published var caughtFish: [Fish] = []
     @Published var isFishing: Bool = false
@@ -21,7 +21,7 @@ final class FishingViewModel: ObservableObject {
         self.userProfileManager = userProfileManager
     }
 
-    func startFishing(for duration: TimeInterval, deepFocusEnabled: Bool) async {
+    func startFishing(for duration: TimeInterval, deepFocusEnabled: Bool, resume: Bool = false) async {
         guard !isFishing else {
             print("Already fishing, skipping...")
             return
@@ -31,7 +31,9 @@ final class FishingViewModel: ObservableObject {
 
         isFishing = true
         totalDuration = duration
-        caughtFish.removeAll()
+        if !resume {
+            caughtFish.removeAll()
+        }
         elapsedTime = 0
 
         fishingTask = Task { [weak self] in
