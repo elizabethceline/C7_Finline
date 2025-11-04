@@ -20,6 +20,7 @@ struct DetailGoalView: View {
 
     @State private var removingTaskIds: Set<String> = []
     @State private var showDeleteAlert = false
+    @State private var showBulkDeleteAlert = false
     @State private var showCompleteAlert = false
     @State private var taskToDelete: GoalTask?
     @State private var taskToComplete: GoalTask?
@@ -99,6 +100,21 @@ struct DetailGoalView: View {
             }
         }
 
+        .alert("Delete Selected Tasks", isPresented: $showBulkDeleteAlert) {
+            Button("Cancel", role: .cancel) {
+                showBulkDeleteAlert = false
+            }
+            Button("Delete", role: .destructive) {
+                withAnimation {
+                    deleteSelectedTasks()
+                }
+            }
+        } message: {
+            Text(
+                "Are you sure you want to delete \(selectedTaskIds.count) selected task\(selectedTaskIds.count > 1 ? "s" : "")? This action cannot be undone."
+            )
+        }
+
         .alert("Complete Task", isPresented: $showCompleteAlert) {
             Button("Not yet", role: .cancel) {
                 taskToComplete = nil
@@ -155,9 +171,7 @@ struct DetailGoalView: View {
                     Spacer()
 
                     Button(role: .destructive) {
-                        withAnimation {
-                            deleteSelectedTasks()
-                        }
+                        showBulkDeleteAlert = true
                     } label: {
                         Label("Delete", systemImage: "trash")
                     }
