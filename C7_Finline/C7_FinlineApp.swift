@@ -11,11 +11,13 @@ import SwiftUI
 @main
 struct C7_FinlineApp: App {
     @StateObject private var focusVM = FocusSessionViewModel()
+    @StateObject private var networkMonitor = NetworkMonitor()
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             UserProfile.self,
             Goal.self,
             GoalTask.self,
+            FocusSessionResult.self
         ])
 
         let modelConfiguration = ModelConfiguration(
@@ -38,6 +40,7 @@ struct C7_FinlineApp: App {
         WindowGroup {
             RootView()
                 .environmentObject(focusVM)
+                .environmentObject(networkMonitor)
         }
         .modelContainer(sharedModelContainer)
     }

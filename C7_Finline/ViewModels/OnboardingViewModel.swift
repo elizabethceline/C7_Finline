@@ -153,7 +153,7 @@ class OnboardingViewModel: ObservableObject {
     func saveUserProfile(
         username: String,
         productiveHours: [ProductiveHours],
-        points: Int
+        points: Int,
     ) {
         guard let modelContext = modelContext else { return }
 

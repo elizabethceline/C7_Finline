@@ -101,7 +101,7 @@ struct FocusModeView: View {
             Button("Yes I'm done") {
                 Task {
                     await viewModel.endSession()
-                    resultVM = viewModel.createResult(using: modelContext)
+                    resultVM = viewModel.createResult(using: modelContext, didComplete: true)
                 }
             }
             Button("Nevermind", role: .cancel) { }
@@ -110,7 +110,10 @@ struct FocusModeView: View {
         }
         .alert("Time's Up!", isPresented: $isShowingTimesUpAlert) {
             Button("Yes, I finished") {
-                resultVM = viewModel.createResult(using: modelContext)
+                Task {
+                    await viewModel.endSession()
+                    resultVM = viewModel.createResult(using: modelContext, didComplete: true)
+                }
             }
             Button("I need more time") {
                 extraTimeInMinutes = 5

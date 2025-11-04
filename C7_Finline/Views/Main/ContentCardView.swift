@@ -10,6 +10,7 @@ import SwiftUI
 struct ContentCardView: View {
     @ObservedObject var viewModel: MainViewModel
     @Binding var selectedDate: Date
+    let networkMonitor: NetworkMonitor
 
     @GestureState private var dragOffset: CGFloat = 0
     @State private var contentOffset: CGFloat = 0
@@ -89,7 +90,8 @@ struct ContentCardView: View {
                         viewModel: viewModel,
                         tasks: tasks,
                         goals: goals,
-                        selectedDate: selectedDate
+                        selectedDate: selectedDate,
+                        networkMonitor: networkMonitor
                     )
                     .frame(maxHeight: .infinity, alignment: .top)
                 }
@@ -115,6 +117,7 @@ struct ContentCardView: View {
 #Preview {
     ContentCardView(
         viewModel: MainViewModel(),
-        selectedDate: .constant(Date())
+        selectedDate: .constant(Date()),
+        networkMonitor: NetworkMonitor()
     )
 }

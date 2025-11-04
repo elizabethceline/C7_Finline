@@ -32,10 +32,12 @@ class FocusResultViewModel: ObservableObject {
     
     private var context: ModelContext?
     private let userProfileManager: UserProfileManager
+    private let taskManager: TaskManager
     
     init(context: ModelContext? = nil, networkMonitor: NetworkMonitor) {
         self.context = context
         self.userProfileManager = UserProfileManager(networkMonitor: networkMonitor)
+        self.taskManager = TaskManager(networkMonitor: networkMonitor)
         
         if context != nil {
             loadUserProfile()
@@ -66,7 +68,8 @@ class FocusResultViewModel: ObservableObject {
         fish: [Fish],
         bonusPoints: Int,
         duration: TimeInterval,
-        task: GoalTask?
+        task: GoalTask?,
+        shouldMarkComplete: Bool = true
     ) {
         self.bonusPoints = bonusPoints
         
@@ -78,23 +81,46 @@ class FocusResultViewModel: ObservableObject {
         self.currentResult = result
         
         Task {
-            await saveResultAndUpdateProfile(result: result, bonusPoints: bonusPoints)
+            await saveResultAndUpdateProfile(
+                result: result,
+                bonusPoints: bonusPoints,
+                task: task,
+                shouldMarkComplete: shouldMarkComplete
+            )
         }
     }
-    
     private func saveResultAndUpdateProfile(
         result: FocusSessionResult,
-        bonusPoints: Int
+        bonusPoints: Int,
+        task: GoalTask?,
+        shouldMarkComplete: Bool
     ) async {
         guard let context else {
             print("No context — skipping save")
             return
         }
         
+        print("saveResultAndUpdateProfile called")
+        print("Task: \(task?.name ?? "nil")")
+        print("shouldMarkComplete: \(shouldMarkComplete)")
+        
         isSyncing = true
         syncError = nil
         
         do {
+            var contextTask: GoalTask? = nil
+            if let taskID = task?.id {
+                let taskPredicate = #Predicate<GoalTask> { $0.id == taskID }
+                contextTask = try? context.fetch(
+                    FetchDescriptor(predicate: taskPredicate)
+                ).first
+                print("Fetched task from context: \(contextTask?.name ?? "nil")")
+            }
+            
+            if let contextTask = contextTask {
+                result.task = contextTask
+            }
+            
             context.insert(result)
             
             if userProfile == nil {
@@ -120,11 +146,29 @@ class FocusResultViewModel: ObservableObject {
             
             profile.needsSync = true
             
+            if shouldMarkComplete, let contextTask = contextTask {
+                print("Marking task '\(contextTask.name)' as completed")
+                contextTask.isCompleted = true
+                contextTask.needsSync = true
+                print("Task isCompleted: \(contextTask.isCompleted), needsSync: \(contextTask.needsSync)")
+            } else {
+                print("NOT marking task as complete - shouldMarkComplete: \(shouldMarkComplete), task: \(contextTask?.name ?? "nil")")
+            }
+            
             try context.save()
+            print("Context saved successfully")
             history.append(result)
             
             try await userProfileManager.saveProfile(profile)
             print("Synced to CloudKit: +\(totalPoints) points")
+            
+            if shouldMarkComplete, let contextTask = contextTask {
+                print("Syncing task to CloudKit...")
+                await taskManager.syncTask(contextTask)
+                print("Synced task completion to CloudKit")
+            } else {
+                print("Skipping task sync - shouldMarkComplete: \(shouldMarkComplete), task: \(contextTask?.name ?? "nil")")
+            }
             
             isSyncing = false
             

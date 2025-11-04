@@ -19,25 +19,28 @@ struct DetailTaskView: View {
     
     @State private var isShowingDatePicker: Bool = false
     @State private var isShowingTimePicker: Bool = false
-//    @State private var isDeepFocusOn: Bool = false
+    //    @State private var isDeepFocusOn: Bool = false
     @State private var isNudgeMeOn: Bool = true
     
     @ObservedObject var taskVM: TaskViewModel
     @EnvironmentObject var focusVM: FocusSessionViewModel
-    @State private var showFocusView: Bool = false
+    //@State private var showFocusView: Bool = false
     
     let task: GoalTask
     let taskManager: TaskManager
+    let onStartFocus: () -> Void
     
-    init(task: GoalTask, taskManager: TaskManager, viewModel: TaskViewModel) {
+    init(task: GoalTask, taskManager: TaskManager, viewModel: TaskViewModel, onStartFocus: @escaping () -> Void) {
         self.task = task
         self.taskManager = taskManager
         self.taskVM = viewModel
+        self.onStartFocus = onStartFocus
         
         _taskName = State(initialValue: task.name)
         _taskDate = State(initialValue: task.workingTime)
         _focusDuration = State(initialValue: task.focusDuration)
         _isCompleted = State(initialValue: task.isCompleted)
+        
     }
     
     var body: some View {
@@ -132,12 +135,11 @@ struct DetailTaskView: View {
             }
             .safeAreaInset(edge: .bottom) {
                 Button(action: {
-                    focusVM.taskTitle = self.taskName
-                    focusVM.goalName = self.task.goal?.name
-                    focusVM.sessionDuration = TimeInterval(focusDuration * 60)
+                    focusVM.setTask(task, goal: task.goal)
                     focusVM.nudgeMeEnabled = isNudgeMeOn
                     focusVM.startSession()
-                    showFocusView = true
+                    // showFocusView = true
+                    onStartFocus()
                 }) {
                     Text("Start Focus")
                         .font(.headline)
@@ -165,10 +167,6 @@ struct DetailTaskView: View {
                 )
             }
             .presentationDetents([.large])
-            .fullScreenCover(isPresented: $showFocusView) {
-                FocusModeView()
-                    .environmentObject(focusVM)
-            }
         }
     }
 }
@@ -198,7 +196,8 @@ struct DetailTaskView: View {
     return DetailTaskView(
         task: sampleTask,
         taskManager: dummyManager,
-        viewModel: dummyViewModel
+        viewModel: dummyViewModel,
+        onStartFocus: { print("Preview Start Focus Tapped") }
     )
     .modelContainer(for: [Goal.self, GoalTask.self])
     .environmentObject(mockFocusVM)
