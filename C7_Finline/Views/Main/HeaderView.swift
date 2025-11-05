@@ -61,7 +61,8 @@ struct HeaderView: View {
             }
         }
         .padding(.horizontal)
-        .padding(.vertical, 4)
+        .padding(.top, 4)
+        .padding(.bottom, 12)
         .navigationDestination(isPresented: $navigateToProfile) {
             ProfileView(viewModel: ProfileViewModel())
         }

@@ -12,20 +12,15 @@ struct GoalHeaderView: View {
 
     var body: some View {
         HStack {
-            Text(goalName)
-                .font(.headline)
+            Text(goalName.capitalized)
+                .font(.body)
+                .fontWeight(.medium)
                 .foregroundColor(.black)
-            Spacer()
-            Image(systemName: "arrow.up.right")
-                .font(.title3)
-                .padding(8)
+            Image(systemName: "chevron.right")
+                .font(.body)
+                .fontWeight(.medium)
                 .foregroundColor(.black)
-                .cornerRadius(50)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
-        .background(Color.secondary)
-        .cornerRadius(50)
     }
 }
 
