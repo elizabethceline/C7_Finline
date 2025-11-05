@@ -87,6 +87,8 @@ final class FocusSessionViewModel: ObservableObject {
             return
         }
         
+        print("Starting session... Nudge Me Enabled: \(nudgeMeEnabled)")
+        
         isFocusing = true
         remainingTime = sessionDuration
         lastTickDate = Date()
@@ -141,9 +143,9 @@ final class FocusSessionViewModel: ObservableObject {
         fishingVM.stopFishing()
         authManager.clearShield()
         
-        if let task = task {
-            task.isCompleted = true
-        }
+//        if let task = task {
+//            task.isCompleted = true
+//        }
         
         shouldReturnToStart = true
     }
@@ -340,19 +342,38 @@ final class FocusSessionViewModel: ObservableObject {
         nudgesTriggered.removeAll()
     }
     
+    // Set task
+    func setTask(_ task: GoalTask, goal: Goal?) {
+        self.task = task
+        self.goal = goal
+        self.goalName = goal?.name
+        self.taskTitle = task.name
+        self.sessionDuration = TimeInterval(task.focusDuration * 60)
+        self.remainingTime = self.sessionDuration
+    }
+    
     // Result
     @MainActor
-    func createResult(using context: ModelContext) -> FocusResultViewModel {
+    func createResult(using context: ModelContext, didComplete: Bool? = nil) -> FocusResultViewModel {
+        print("createResult called")
+        print("didComplete parameter: \(String(describing: didComplete))")
+        print("remainingTime: \(remainingTime)")
+        print("Task: \(task?.name ?? "nil")")
+        
         let resultVM = FocusResultViewModel(
             context: context,
             networkMonitor: NetworkMonitor()
         )
         
+        let shouldMarkComplete = didComplete ?? (remainingTime <= 0)
+        print("Final shouldMarkComplete: \(shouldMarkComplete)")
+        
         resultVM.recordSessionResult(
             fish: fishingVM.caughtFish,
             bonusPoints: bonusPointsFromNudge,
             duration: sessionDuration,
-            task: task
+            task: task,
+            shouldMarkComplete: shouldMarkComplete
         )
         
         return resultVM

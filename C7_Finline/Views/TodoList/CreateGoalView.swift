@@ -90,11 +90,12 @@ struct CreateGoalView: View {
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    NavigationLink(destination: CreateTaskView(goalName: goalName, goalDeadline: goalDeadline, mainVM: mainVM)) {
+                    NavigationLink(destination: CreateTaskView(goalName: goalName, goalDeadline: goalDeadline,dismissParent: dismiss, mainVM: mainVM)) {
                         Image(systemName: "checkmark")
                             .fontWeight(.semibold)
                     }
                     .disabled(goalName.isEmpty)
+
                 }
             }
             .sheet(isPresented: $isShowingDatePicker) {

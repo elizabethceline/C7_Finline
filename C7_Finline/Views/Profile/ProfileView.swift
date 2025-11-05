@@ -160,6 +160,7 @@ struct ProfileView: View {
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
+
                     
                     // NITIP FOCUS MODE START
                     Button {

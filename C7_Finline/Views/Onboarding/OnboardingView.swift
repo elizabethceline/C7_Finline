@@ -46,7 +46,7 @@ struct OnboardingView: View {
                         viewModel.saveUserProfile(
                             username: viewModel.username,
                             productiveHours: viewModel.productiveHours,
-                            points: 0
+                            points: viewModel.points,
                         )
 
                         UserDefaults.standard.set(

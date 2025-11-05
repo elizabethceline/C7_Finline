@@ -18,6 +18,7 @@ struct C7_FinlineApp: App {
             Goal.self,
             GoalTask.self,
             PurchasedItem.self 
+            FocusSessionResult.self
         ])
 
         let modelConfiguration = ModelConfiguration(
@@ -40,6 +41,7 @@ struct C7_FinlineApp: App {
         WindowGroup {
             RootView()
                 .environmentObject(focusVM)
+                .environmentObject(networkMonitor)
         }
         .modelContainer(sharedModelContainer)
     }
