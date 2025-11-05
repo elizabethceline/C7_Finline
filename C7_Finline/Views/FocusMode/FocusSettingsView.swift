@@ -3,7 +3,7 @@ import SwiftUI
 struct FocusSettingsView: View {
     @EnvironmentObject var focusVM: FocusSessionViewModel
     @Binding var isNudgeMeOn: Bool
-    var onDone: () -> Void // Closure to call when checkmark is tapped
+    var onDone: () -> Void 
     
     @Environment(\.dismiss) private var dismiss
     
@@ -31,7 +31,6 @@ struct FocusSettingsView: View {
             .navigationTitle("Focus Settings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                // --- 1. "X" Button (Cancel) ---
                 ToolbarItem(placement: .cancellationAction) {
                     Button {
                         dismiss()
@@ -41,7 +40,6 @@ struct FocusSettingsView: View {
                     }
                 }
                 
-                // --- 2. "Checkmark" Button (Done) ---
                 ToolbarItem(placement: .confirmationAction) {
                     Button {
                         onDone()
@@ -51,15 +49,14 @@ struct FocusSettingsView: View {
                     }
                 }
             }
-            // --- 3. Removed the .safeAreaInset button ---
         }
     }
 }
 
 #Preview {
+    @Previewable @State var isNudgeOn = true
     // Create dummy data for the preview
     let mockFocusVM = FocusSessionViewModel()
-    @State var isNudgeOn = true
     
     return FocusSettingsView(
         isNudgeMeOn: $isNudgeOn,
