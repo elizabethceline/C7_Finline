@@ -7,6 +7,7 @@
 
 import SwiftData
 import SwiftUI
+import CloudKit
 
 struct ProfileView: View {
     @ObservedObject var viewModel: ProfileViewModel
@@ -14,6 +15,10 @@ struct ProfileView: View {
     @Environment(\.modelContext) private var modelContext
     @FocusState private var isNameFieldFocused: Bool
     @State private var showAlert = false
+    @State private var showShopModal = false  
+    //NITIP FOCUS MODE START//
+    @State private var navigateToFocus: Bool = false
+    //NITIP DOCUS MODE END//
     
     var body: some View {
         NavigationStack {
@@ -27,7 +32,7 @@ struct ProfileView: View {
                             .frame(width: 240, height: 240)
                         
                         Button {
-                            // ke shop
+                            showShopModal = true
                         } label: {
                             Image(systemName: "hanger")
                                 .font(.body)
@@ -39,6 +44,12 @@ struct ProfileView: View {
                                         .fill(Color.primary)
                                 )
                         }
+                        .sheet(isPresented: $showShopModal) {
+                            AsyncShopSheet(viewModel: viewModel)
+                                .presentationDetents([.height(600)])
+                        }
+
+
                     }
                     .frame(maxWidth: .infinity)
                     
@@ -149,6 +160,19 @@ struct ProfileView: View {
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
+
+                    
+                    // NITIP FOCUS MODE START
+                    Button {
+                        navigateToFocus = true
+                    } label: {
+                        Label(
+                            "Focus Mode",
+                            systemImage: "lock.desktopcomputer"
+                        )
+                    }
+                    .padding()
+                    // NITIP FOCUS MODE END
                 }
                 .onAppear {
                     viewModel.setModelContext(modelContext)
@@ -168,6 +192,11 @@ struct ProfileView: View {
                     dismissButton: .default(Text("OK"))
                 )
             }
+            // NITIP FOCUS MODE START
+            .navigationDestination(isPresented: $navigateToFocus) {
+                TestCloud()
+            }
+            // NITIP FOCUS MODE END
         }
     }
     
@@ -184,7 +213,6 @@ struct ProfileView: View {
         let secs = Int(seconds) % 60
         return String(format: "%02d:%02d:%02d", hrs, mins, secs)
     }
-    
 }
 
 struct StatCard: View {
@@ -208,6 +236,33 @@ struct StatCard: View {
         )
     }
 }
+
+struct AsyncShopSheet: View {
+    @ObservedObject var viewModel: ProfileViewModel
+    @Environment(\.modelContext) private var modelContext
+
+    @State private var userRecordID: CKRecord.ID? = nil
+
+    var body: some View {
+        Group {
+            if let id = userRecordID {
+                ShopView(
+                    viewModel: ShopViewModel(
+                        userProfileManager: viewModel.userProfileManagerInstance,
+                        networkMonitor: viewModel.networkMonitorInstance
+                    ),
+                    userRecordID: id
+                )
+            } else {
+                ProgressView("Loading...")
+            }
+        }
+        .task {
+            self.userRecordID = await viewModel.userRecordID
+        }
+    }
+}
+
 
 #Preview {
     ProfileView(viewModel: ProfileViewModel())
