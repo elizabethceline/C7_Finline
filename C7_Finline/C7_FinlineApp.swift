@@ -38,7 +38,7 @@ struct C7_FinlineApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ShopTestView(networkMonitor: networkMonitor, modelContext: ModelContext(sharedModelContainer))
+            RootView()
                 .environmentObject(focusVM)
         }
         .modelContainer(sharedModelContainer)

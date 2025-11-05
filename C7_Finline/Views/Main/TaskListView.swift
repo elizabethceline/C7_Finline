@@ -108,7 +108,6 @@ struct TaskListView: View {
             if let task = selectedTask {
                 DetailTaskView(
                     task: task,
-                    taskManager: taskManager,
                     viewModel: taskVM
                 )
             }

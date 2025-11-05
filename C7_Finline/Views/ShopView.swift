@@ -1,34 +1,28 @@
-//
-//  ShopView.swift
-//  C7_Finline
-//
-//  Created by Richie Reuben Hermanto on 04/11/25.
-//
-
 import SwiftUI
+import CloudKit
+import SwiftData
 
 struct ShopView: View {
-    
     @Environment(\.dismiss) private var dismiss
-    @State private var selectedItem: ShopItem? = .dogo
-    @State private var coins: Int = 23500
-    
+    @Environment(\.modelContext) private var modelContext
+
+    @StateObject var viewModel: ShopViewModel
+    let userRecordID: CKRecord.ID
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 16) {
+                // Header koin
                 HStack {
                     Spacer()
-                    
                     HStack(spacing: 6) {
-                        Text(String(format: "%.3f", Double(coins) / 1000))
+                        Text("\(viewModel.coins)")
                             .font(.system(size: 18, weight: .bold))
                             .foregroundColor(.white)
-                        
                         ZStack {
                             Circle()
                                 .fill(Color.yellow)
                                 .frame(width: 28, height: 28)
-                            
                             Text("$")
                                 .font(.system(size: 16, weight: .bold))
                                 .foregroundColor(.orange)
@@ -37,29 +31,37 @@ struct ShopView: View {
                     .padding(.horizontal, 14)
                     .padding(.vertical, 10)
                     .background(
-                        Capsule()
-                            .fill(Color.primary)
+                        Capsule().fill(Color.primary)
                     )
                     .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 2)
                 }
                 .padding(.horizontal)
                 .padding(.top, 8)
                 .padding(.bottom, 30)
-                
+
+                // Daftar item toko
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 50) {
                     ForEach(ShopItem.allCases, id: \.rawValue) { item in
                         ShopCardView(
                             item: item,
-                            isSelected: selectedItem == item,
-                            onTap: { selectedItem = item }
+                            isSelected: viewModel.selectedItem == item,
+                            onTap: {
+                                viewModel.selectedItem = item
+                                Task {
+                                    await viewModel.reduceCoins(by: item.price)
+                                }
+                            }
                         )
                     }
                 }
                 .padding(.horizontal)
-                
+
                 Spacer()
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .task {
+                viewModel.setModelContext(modelContext)
+                await viewModel.fetchUserProfile(userRecordID: userRecordID)
+            }
             .background(Color(.systemBackground))
             .navigationTitle("Shop")
             .navigationBarTitleDisplayMode(.inline)
@@ -73,12 +75,13 @@ struct ShopView: View {
                     }
                 }
             }
+            .alert("Error", isPresented: .constant(!viewModel.errorMessage.isEmpty)) {
+                Button("OK") { viewModel.errorMessage = "" }
+            } message: {
+                Text(viewModel.errorMessage)
+            }
         }
         .presentationDetents([.medium])
         .presentationDragIndicator(.visible)
     }
-}
-
-#Preview {
-    ShopView()
 }

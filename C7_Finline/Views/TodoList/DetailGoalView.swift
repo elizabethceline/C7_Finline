@@ -57,7 +57,6 @@ struct DetailGoalView: View {
             if let task = selectedTask {
                 DetailTaskView(
                     task: task,
-                    taskManager: TaskManager(networkMonitor: NetworkMonitor()),
                     viewModel: taskVM
                 )
             }

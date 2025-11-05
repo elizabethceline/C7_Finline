@@ -100,7 +100,7 @@ struct DebugDataView: View {
                     }
                     .sheet(isPresented: $showDetailModal) {
                         if let selectedTask {
-                            DetailTaskView(task: selectedTask, taskManager: taskManager, viewModel: taskViewModel)
+                            DetailTaskView(task: selectedTask, viewModel: taskViewModel)
                         }
                     }
                 }

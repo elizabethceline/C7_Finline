@@ -7,6 +7,7 @@
 
 import SwiftData
 import SwiftUI
+import CloudKit
 
 struct ProfileView: View {
     @ObservedObject var viewModel: ProfileViewModel
@@ -44,9 +45,11 @@ struct ProfileView: View {
                                 )
                         }
                         .sheet(isPresented: $showShopModal) {
-                            ShopView()
+                            AsyncShopSheet(viewModel: viewModel)
                                 .presentationDetents([.height(600)])
                         }
+
+
                     }
                     .frame(maxWidth: .infinity)
                     
@@ -232,6 +235,33 @@ struct StatCard: View {
         )
     }
 }
+
+struct AsyncShopSheet: View {
+    @ObservedObject var viewModel: ProfileViewModel
+    @Environment(\.modelContext) private var modelContext
+
+    @State private var userRecordID: CKRecord.ID? = nil
+
+    var body: some View {
+        Group {
+            if let id = userRecordID {
+                ShopView(
+                    viewModel: ShopViewModel(
+                        userProfileManager: viewModel.userProfileManagerInstance,
+                        networkMonitor: viewModel.networkMonitorInstance
+                    ),
+                    userRecordID: id
+                )
+            } else {
+                ProgressView("Loading...")
+            }
+        }
+        .task {
+            self.userRecordID = await viewModel.userRecordID
+        }
+    }
+}
+
 
 #Preview {
     ProfileView(viewModel: ProfileViewModel())

@@ -27,11 +27,9 @@ struct DetailTaskView: View {
     @State private var showFocusView: Bool = false
     
     let task: GoalTask
-    let taskManager: TaskManager
     
-    init(task: GoalTask, taskManager: TaskManager, viewModel: TaskViewModel) {
+    init(task: GoalTask, viewModel: TaskViewModel) {
         self.task = task
-        self.taskManager = taskManager
         self.taskVM = viewModel
         
         _taskName = State(initialValue: task.name)
@@ -197,7 +195,6 @@ struct DetailTaskView: View {
     
     return DetailTaskView(
         task: sampleTask,
-        taskManager: dummyManager,
         viewModel: dummyViewModel
     )
     .modelContainer(for: [Goal.self, GoalTask.self])
