@@ -76,7 +76,14 @@ final class FishingViewModel: ObservableObject {
                     }
                 }
                 let baseWait = Double.random(in: 60...120)
-                let wait = deepFocusEnabled ? baseWait * 0.7 : baseWait
+                var wait = deepFocusEnabled ? baseWait * 0.7 : baseWait
+                
+                if catchCount == 0 && wait > (duration - elapsed) {
+                    
+                    wait = (duration - elapsed) * Double.random(in: 0.5...0.9)
+                    
+                    print("Short session detected. Adjusting first wait time to \(wait)s to guarantee a catch.")
+                }
 
                 print("Waiting \(wait)s before next catch attempt... (elapsed: \(elapsed)s / \(duration)s)")
 
