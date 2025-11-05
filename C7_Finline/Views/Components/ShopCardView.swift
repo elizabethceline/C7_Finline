@@ -27,26 +27,25 @@ struct ShopCardView: View {
             
             if isSelected {
                 Text("Selected")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(.white)
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(Color.primary)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 8)
-                    .background(Color(red: 0.35, green: 0.71, blue: 0.82))
                     .clipShape(Capsule())
                     .offset(y: -40)
 
             } else {
                 HStack(spacing: 6) {
                     Image(systemName: "bitcoinsign.circle.fill")
-                        .font(.system(size: 14))
+                        .font(.system(size: 20))
                         .foregroundColor(.yellow)
                     Text("\(item.price)")
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(.system(size: 20, weight: .semibold))
                         .foregroundColor(.white)
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 8)
-                .background(Color(red: 0.35, green: 0.71, blue: 0.82))
+                .background(Color.primary.opacity(0.6))
                 .clipShape(Capsule())
                 .offset(y: -40)
 
@@ -58,11 +57,11 @@ struct ShopCardView: View {
         .frame(width: 170, height: 200)
         .background(
             RoundedRectangle(cornerRadius: 20)
-                .fill(Color(red: 0.85, green: 0.95, blue: 0.98))
+                .fill(Color.secondary)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 20)
-                .strokeBorder(isSelected ? Color(red: 0.35, green: 0.71, blue: 0.82) : Color.clear, lineWidth: 3)
+                .strokeBorder(isSelected ? Color.primary : Color.clear, lineWidth: 3)
         )
         .onTapGesture {
             onTap()
