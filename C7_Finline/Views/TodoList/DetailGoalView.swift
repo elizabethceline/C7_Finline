@@ -77,6 +77,15 @@ struct DetailGoalView: View {
         }
         .listStyle(.insetGrouped)
         .navigationTitle("Goal Detail")
+//         .navigationDestination(isPresented: $goToTaskDetail) {
+//             if let task = selectedTask {
+//                 DetailTaskView(
+//                     task: task,
+//                     viewModel: taskVM
+//                 )
+//             }
+//         }
+
 //        .navigationDestination(isPresented: $goToTaskDetail) {
 //            if let task = selectedTask {
 //                DetailTaskView(

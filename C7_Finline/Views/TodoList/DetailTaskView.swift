@@ -30,12 +30,13 @@ struct DetailTaskView: View {
     @State private var isShowingDismissAlert = false
     
     let task: GoalTask
+
     let taskManager: TaskManager
     let onStartFocus: () -> Void
     
     init(task: GoalTask, taskManager: TaskManager, viewModel: TaskViewModel, onStartFocus: @escaping () -> Void) {
         self.task = task
-        self.taskManager = taskManager
+        self.taskManager = taskManager     
         self.taskVM = viewModel
         self.onStartFocus = onStartFocus
         

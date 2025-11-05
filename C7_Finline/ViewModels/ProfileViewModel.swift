@@ -8,6 +8,7 @@
 import Combine
 import Foundation
 import SwiftData
+import CloudKit
 
 class ProfileViewModel: ObservableObject {
     @Published var username: String = ""
@@ -32,6 +33,23 @@ class ProfileViewModel: ObservableObject {
     private let userProfileManager: UserProfileManager
     private let goalManager: GoalManager
     private let taskManager: TaskManager
+    
+    // MARK: - Public Accessors
+    var userProfileManagerInstance: UserProfileManager { userProfileManager }
+    var networkMonitorInstance: NetworkMonitor { networkMonitor }
+
+    @MainActor
+    var userRecordID: CKRecord.ID? {
+        get async {
+            do {
+                return try await CloudKitManager.shared.fetchUserRecordID()
+            } catch {
+                print("Failed to get user record ID: \(error)")
+                return nil
+            }
+        }
+    }
+
     
     var errorMessage = ""
 
