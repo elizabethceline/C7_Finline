@@ -17,7 +17,7 @@ struct C7_FinlineApp: App {
             UserProfile.self,
             Goal.self,
             GoalTask.self,
-            PurchasedItem.self 
+            PurchasedItem.self,
             FocusSessionResult.self
         ])
 

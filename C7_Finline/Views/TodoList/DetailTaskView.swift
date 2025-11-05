@@ -36,6 +36,7 @@ struct DetailTaskView: View {
     
     init(task: GoalTask, taskManager: TaskManager, viewModel: TaskViewModel, onStartFocus: @escaping () -> Void) {
         self.task = task
+        self.taskManager = taskManager     
         self.taskVM = viewModel
         self.onStartFocus = onStartFocus
         

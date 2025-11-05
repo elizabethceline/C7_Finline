@@ -109,11 +109,11 @@ struct DebugDataView: View {
                             .buttonStyle(.plain)
                         }
                     }
-                    .sheet(isPresented: $showDetailModal) {
-                        if let selectedTask {
-                            DetailTaskView(task: selectedTask, viewModel: taskViewModel)
-                        }
-                    }
+//                    .sheet(isPresented: $showDetailModal) {
+//                        if let selectedTask {
+//                            DetailTaskView(task: selectedTask, taskManager: TaskManager(networkMonitor: NetworkMonitor()), viewModel: taskViewModel)
+//                        }
+//                    }
                     .fullScreenCover(isPresented: isCoverPresented) {
                                         Group {
                                             if let mode = coverMode {
