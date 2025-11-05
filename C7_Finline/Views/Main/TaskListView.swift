@@ -146,14 +146,15 @@ struct TaskListView: View {
                     .listRowBackground(Color.clear)
             }
         }
-        .navigationDestination(isPresented: $navigateToDetail) {
-            if let task = selectedTask {
-                DetailTaskView(
-                    task: task,
-                    viewModel: taskVM
-                )
-            }
-        }
+//        .navigationDestination(isPresented: $navigateToDetail) {
+//            if let task = selectedTask {
+//                DetailTaskView(
+//                    task: task,
+//                    taskManager: TaskManager(networkMonitor: NetworkMonitor()),
+//                    viewModel: taskVM
+//                )
+//            }
+//        }
         .navigationDestination(isPresented: $goToGoalDetail) {
             if let goal = selectedGoal {
                 DetailGoalView(
