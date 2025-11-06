@@ -39,7 +39,6 @@ struct EditGoalView: View {
                 } header: {
                     Text("Goal")
                         .font(.headline)
-                        .foregroundStyle(.secondary)
                 }
 
                 Section {
@@ -58,7 +57,7 @@ struct EditGoalView: View {
                             Image(systemName: "chevron.right")
                                 .foregroundStyle(.secondary)
                         }
-                        .foregroundStyle(.black)
+                        .foregroundColor(Color(.label))
                     }
 
                     Button {
@@ -76,12 +75,11 @@ struct EditGoalView: View {
                             Image(systemName: "chevron.right")
                                 .foregroundStyle(.secondary)
                         }
-                        .foregroundStyle(.black)
+                        .foregroundColor(Color(.label))
                     }
                 } header: {
                     Text("Schedule")
                         .font(.headline)
-                        .foregroundStyle(.secondary)
                 }
             }
             .scrollContentBackground(.hidden)
