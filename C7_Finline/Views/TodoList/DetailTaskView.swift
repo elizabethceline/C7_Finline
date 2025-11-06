@@ -76,7 +76,6 @@ struct DetailTaskView: View {
                             }
                             Spacer()
                             Image(systemName: "chevron.right")
-                                .foregroundStyle(.secondary)
                         }
                         .foregroundColor(Color(.label))
                     }
@@ -94,7 +93,6 @@ struct DetailTaskView: View {
                             }
                             Spacer()
                             Image(systemName: "chevron.right")
-                                .foregroundStyle(.secondary)
                         }
                         .foregroundColor(Color(.label))
                     }

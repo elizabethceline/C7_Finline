@@ -29,7 +29,7 @@ struct GoalCardView: View {
                     } label: {
                         Image(systemName: "pencil")
                             .font(.title2)
-                            .foregroundStyle(Color.black)
+                            .foregroundStyle(Color(.label))
                     }
                 }
                 HStack(spacing: 8) {
@@ -54,7 +54,7 @@ struct GoalCardView: View {
         .background(
             LinearGradient(
                 colors: [
-                    .white,
+                    Color(.systemBackground),
                     Color.secondary
                 ],
                 startPoint: .topLeading,
