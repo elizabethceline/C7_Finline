@@ -1,7 +1,6 @@
 import SwiftUI
 
 struct AddTimeView: View {
-    //@Binding var minutes: Int
     var onAddTime: (Int, Int, Int) -> Void
     @Environment(\.dismiss) private var dismiss
     
@@ -32,7 +31,7 @@ struct AddTimeView: View {
                 
                 Text("hours")
                     .font(.title2)
-                    .frame(width: 80, alignment: .leading)
+                    .frame(width: 70, alignment: .leading)
                 
                 // Minutes Picker
                 Picker("", selection: $selectedMinutes) {
@@ -44,9 +43,9 @@ struct AddTimeView: View {
                 .pickerStyle(.wheel)
                 .frame(maxWidth: .infinity)
                 
-                Text("min")
+                Text("mins")
                     .font(.title2)
-                    .frame(width: 80, alignment: .leading)
+                    .frame(width: 70, alignment: .leading)
                 
                 // Seconds Picker
                 Picker("", selection: $selectedSeconds) {
@@ -58,18 +57,14 @@ struct AddTimeView: View {
                 .pickerStyle(.wheel)
                 .frame(maxWidth: .infinity)
                 
-                Text("sec")
+                Text("secs")
                     .font(.title2)
-                    .frame(width: 80, alignment: .leading)
+                    .frame(width: 70, alignment: .leading)
             }
             .padding(.horizontal)
             
-           // Spacer()
             
             Button("Add Time") {
-                // Convert to total minutes (rounded up if there are seconds)
-//                let totalMinutes = selectedHours * 60 + selectedMinutes + (selectedSeconds > 0 ? 1 : 0)
-//                minutes = totalMinutes
                 onAddTime(selectedHours, selectedMinutes, selectedSeconds)
                 dismiss()
             }

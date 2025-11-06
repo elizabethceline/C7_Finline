@@ -113,7 +113,9 @@ struct DetailGoalView: View {
                                     }
                                 )
                             case .focus:
-                                FocusModeView()
+                                FocusModeView(onGiveUp: { task in 
+                                    coverMode = .detail(task)
+                                                })
                             }
                         }
                     }

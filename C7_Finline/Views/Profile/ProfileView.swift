@@ -15,10 +15,7 @@ struct ProfileView: View {
     @Environment(\.modelContext) private var modelContext
     @FocusState private var isNameFieldFocused: Bool
     @State private var showAlert = false
-    @State private var showShopModal = false  
-    //NITIP FOCUS MODE START//
-    @State private var navigateToFocus: Bool = false
-    //NITIP DOCUS MODE END//
+    @State private var showShopModal = false
     
     var body: some View {
         NavigationStack {
@@ -162,17 +159,7 @@ struct ProfileView: View {
                     .buttonStyle(.plain)
 
                     
-                    // NITIP FOCUS MODE START
-                    Button {
-                        navigateToFocus = true
-                    } label: {
-                        Label(
-                            "Focus Mode",
-                            systemImage: "lock.desktopcomputer"
-                        )
-                    }
-                    .padding()
-                    // NITIP FOCUS MODE END
+                    
                 }
                 .onAppear {
                     viewModel.setModelContext(modelContext)
@@ -192,11 +179,6 @@ struct ProfileView: View {
                     dismissButton: .default(Text("OK"))
                 )
             }
-            // NITIP FOCUS MODE START
-            .navigationDestination(isPresented: $navigateToFocus) {
-                TestCloud()
-            }
-            // NITIP FOCUS MODE END
         }
     }
     
