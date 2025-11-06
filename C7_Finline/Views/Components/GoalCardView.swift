@@ -5,18 +5,19 @@
 //  Created by Richie Reuben Hermanto on 01/11/25.
 //
 
-import SwiftUI
-import SwiftData
 import FoundationModels
+import SwiftData
+import SwiftUI
 
 struct GoalCardView: View {
     @ObservedObject var goalVM: GoalViewModel
     @Environment(\.modelContext) private var modelContext
-    
+    @Environment(\.colorScheme) var colorScheme
+
     var goal: Goal
-    
+
     @State private var isShowingEditModal = false
-    
+
     var body: some View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 10) {
@@ -35,17 +36,19 @@ struct GoalCardView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "clock")
                         .font(.title)
-                    
+
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Due Date")
                             .font(.subheadline)
-                        
-                        Text("\(DateFormatter.readableDate.string(from: goal.due)) | \(DateFormatter.readableTime.string(from: goal.due))")
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
+
+                        Text(
+                            "\(DateFormatter.readableDate.string(from: goal.due)) | \(DateFormatter.readableTime.string(from: goal.due))"
+                        )
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
 
                     }
-                    
+
                 }
             }
             Spacer()
@@ -53,10 +56,15 @@ struct GoalCardView: View {
         .padding()
         .background(
             LinearGradient(
-                colors: [
-                    Color(.systemBackground),
-                    Color.secondary
-                ],
+                colors: colorScheme == .dark
+                    ? [
+                        Color.black,
+                        Color.gray.opacity(0.4),
+                    ]
+                    : [
+                        Color(.systemBackground),
+                        Color.secondary,
+                    ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
@@ -68,4 +76,18 @@ struct GoalCardView: View {
                 .presentationDetents([.medium])
         }
     }
+}
+
+#Preview {
+    GoalCardView(
+        goalVM: GoalViewModel(),
+        goal: Goal(
+            id: "goal_1",
+            name: "Learn SwiftUI",
+            due: Date().addingTimeInterval(86400 * 7),
+            goalDescription: "Build awesome iOS apps using SwiftUI framework.",
+        )
+    )
+    .padding()
+    .background(Color(.systemGray6))
 }
