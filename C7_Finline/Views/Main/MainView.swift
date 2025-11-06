@@ -29,7 +29,7 @@ struct MainView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 20) {
+            VStack(spacing: 12) {
                 HeaderView(
                     viewModel: viewModel,
                     unfinishedTasks: unfinishedTasks,

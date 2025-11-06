@@ -12,31 +12,31 @@ struct TaskListView: View {
     let tasks: [GoalTask]
     let goals: [Goal]
     let selectedDate: Date
-    
+
     @State private var coverMode: FocusCoverMode?
     @EnvironmentObject var focusVM: FocusSessionViewModel
     @Environment(\.modelContext) private var modelContext
-    
+
     private var isCoverPresented: Binding<Bool> {
         Binding(
             get: { coverMode != nil },
             set: { if !$0 { coverMode = nil } }
         )
     }
-    
+
     @State private var removingTaskIds: Set<String> = []
     @State private var showCompleteAlert = false
     @State private var showIncompleteAlert = false
     @State private var showDeleteAlert = false
     @State private var selectedTask: GoalTask?
     //@State private var navigateToDetail = false
-    
+
     @State private var selectedGoal: Goal?
     @State private var goToGoalDetail = false
-    
+
     private let taskManager: TaskManager
     @StateObject private var taskVM: TaskViewModel
-    
+
     init(
         viewModel: MainViewModel,
         tasks: [GoalTask],
@@ -48,20 +48,22 @@ struct TaskListView: View {
         self.tasks = tasks
         self.goals = goals
         self.selectedDate = selectedDate
-        
+
         self.taskManager = TaskManager(networkMonitor: networkMonitor)
         _taskVM = StateObject(
             wrappedValue: TaskViewModel(networkMonitor: networkMonitor)
         )
     }
-    
+
     var body: some View {
         List {
             ForEach(goals) { goal in
                 let filteredTasks = tasks.filter { task in
                     goal.tasks.contains(where: { $0.id == task.id })
                 }
-                let goalTasks = filteredTasks.sorted { $0.workingTime < $1.workingTime }
+                let goalTasks = filteredTasks.sorted {
+                    $0.workingTime < $1.workingTime
+                }
 
                 if !goalTasks.isEmpty {
                     Section {
@@ -72,7 +74,7 @@ struct TaskListView: View {
                             GoalHeaderView(goalName: goal.name)
                         }
                         .listRowInsets(
-                            .init(top: 8, leading: 0, bottom: 8, trailing: 0)
+                            .init(top: 0, leading: 4, bottom: 0, trailing: 0)
                         )
                         .listRowSeparator(.hidden)
                         .listRowBackground(Color.clear)
@@ -85,9 +87,9 @@ struct TaskListView: View {
                             }
                             .listRowInsets(
                                 .init(
-                                    top: 8,
+                                    top: -4,
                                     leading: 0,
-                                    bottom: 8,
+                                    bottom: 12,
                                     trailing: 0
                                 )
                             )
@@ -229,7 +231,7 @@ struct TaskListView: View {
             }
         }
     }
-    
+
     private func completeTask(_ task: GoalTask) {
         withAnimation(.easeInOut(duration: 0.3)) {
             removingTaskIds.insert(task.id)
@@ -240,7 +242,7 @@ struct TaskListView: View {
             selectedTask = nil
         }
     }
-    
+
     private func deleteTask(_ task: GoalTask) {
         withAnimation(.easeInOut(duration: 0.3)) {
             removingTaskIds.insert(task.id)
@@ -261,7 +263,7 @@ struct TaskListView: View {
         goalDescription:
             "Understand the basics of algebraic expressions and equations."
     )
-    
+
     let task1 = GoalTask(
         id: "task_001",
         name: "Study Math",
@@ -270,7 +272,7 @@ struct TaskListView: View {
         isCompleted: false,
         goal: goal
     )
-    
+
     let task2 = GoalTask(
         id: "task_002",
         name: "Practice Exercises",
@@ -279,14 +281,13 @@ struct TaskListView: View {
         isCompleted: true,
         goal: goal
     )
-    
+
     goal.tasks = [task1, task2]
 
     let dummyMonitor = NetworkMonitor()
 
-
     let mockVM = MainViewModelMock(goals: [goal], tasks: [task1, task2])
-    
+
     return TaskListView(
         viewModel: mockVM,
         tasks: [task1, task2],
