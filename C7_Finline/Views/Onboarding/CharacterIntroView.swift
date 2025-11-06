@@ -11,141 +11,151 @@ struct CharacterIntroView: View {
     let onComplete: () -> Void
     @State private var currentMessageIndex = 0
     @State private var showNameInput = false
+    @State private var showFinalMessage = false
     @Binding var username: String
     @FocusState private var isTextFieldFocused: Bool
 
     let messages = [
-        "Hey, I’m Finly 🐧 I’m not lazy, I just… kinda lose focus sometimes.",
-        "My brain just goes whoosh a million thoughts at once. Then I forget what I was even doing.",
-        "But when I focus, I can fishing and eat. I just need someone who can help me stay on track… maybe that’s you?",
-        "Let’s do this together. You focus on your tasks, and I’ll focus too. The more we focus, the more fish we catch and maybe I won’t go hungry this time.",
+        "Hi there, nice to meet you. I'm Finley",
+        "Lately, it's hard for me to go out and fish so I can eat.",
+        "I'm not lazy, I just… kinda lose focus sometimes.",
+        "So I need a friend to focus together!",
+        "And it's you! Well, what is your name?",
     ]
 
     var body: some View {
         GeometryReader { geometry in
-            ZStack(alignment: .bottomLeading) {
+            ZStack(alignment: .bottomTrailing) {
                 // Background
-                LinearGradient(
-                    colors: [Color.white, Color.blue.opacity(0.15)],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .ignoresSafeArea()
+                OnboardingBackground()
 
                 // Content
-                VStack(spacing: 36) {
-
-                    Spacer()
-
-                    if showNameInput {
-                        VStack(spacing: 16) {
-                            Text("Before we start... what should I call you?")
-                                .font(.body)
-                                .multilineTextAlignment(.center)
-
-                            TextField("Enter your name", text: $username)
-                                .multilineTextAlignment(.center)
-                                .focused($isTextFieldFocused)
-                                .padding(.vertical, 6)
-                                .overlay(
-                                    Rectangle()
-                                        .frame(height: 1)
-                                        .foregroundColor(.gray)
-                                        .padding(.horizontal, 16),
-                                    alignment: .bottom
-                                )
-                        }
-                        .padding(.horizontal, 28)
-                        .padding(.vertical, 20)
-                        .background(
-                            RoundedRectangle(cornerRadius: 20)
-                                .fill(Color.white)
-                        )
-                    } else {
-                        VStack(spacing: 16) {
-                            Text(messages[currentMessageIndex])
-                                .font(.body)
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal, 28)
-                                .padding(.vertical, 20)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 20)
-                                        .fill(Color.white)
-                                )
-                                .id(currentMessageIndex)
-                                .transition(.scale.combined(with: .opacity))
-
-                            Text("Tap anywhere to continue")
-                                .font(.subheadline)
-                                .foregroundColor(.gray)
-                        }
-                    }
-
-                    Spacer()
-
-                    Image("penguin")
+                VStack(spacing: 24) {
+                    Image("finley")
                         .resizable()
                         .scaledToFit()
                         .frame(width: geometry.size.width * 0.8)
-                        .opacity(0)
+
+                    if showFinalMessage {
+                        VStack(spacing: 12) {
+                            ChatBubble(
+                                message:
+                                    "Alright \(username), let's do our best!",
+                                showNameTag: true
+                            )
+
+                            Text("Tap the arrow to continue")
+                                .font(.subheadline)
+                                .foregroundColor(
+                                    Color(uiColor: .secondaryLabel)
+                                )
+                        }
+                    } else if showNameInput {
+                        VStack(spacing: 12) {
+                            HStack {
+                                VStack(alignment: .leading) {
+                                    TextField("Your name", text: $username)
+                                        .textInputAutocapitalization(.words)
+                                        .disableAutocorrection(true)
+                                        .font(.headline)
+                                        .focused($isTextFieldFocused)
+                                }
+
+                                Spacer()
+
+                                Image(systemName: "pencil")
+                                    .foregroundColor(Color(uiColor: .label))
+                                    .font(.title2)
+                                    .padding(8)
+                            }
+                            .padding()
+                            .background(
+                                RoundedRectangle(cornerRadius: 20)
+                                    .fill(Color(uiColor: .systemBackground))
+                            )
+                            .frame(height: 120)
+                            .padding(.horizontal, 28)
+
+                            Text("Tap anywhere to continue")
+                                .font(.subheadline)
+                                .foregroundColor(
+                                    Color(uiColor: .secondaryLabel)
+                                )
+                        }
+                    } else {
+                        VStack(spacing: 12) {
+                            ChatBubble(
+                                message: messages[currentMessageIndex],
+                                showNameTag: true
+                            )
+
+                            Text("Tap anywhere to continue")
+                                .font(.subheadline)
+                                .foregroundColor(
+                                    Color(uiColor: .secondaryLabel)
+                                )
+                        }
+                    }
                 }
-                .padding()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .contentShape(Rectangle())
                 .onTapGesture {
-                    guard !showNameInput else { return }
-                    withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
-                        if currentMessageIndex < messages.count - 1 {
-                            currentMessageIndex += 1
-                        } else {
-                            showNameInput = true
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                                isTextFieldFocused = true
+                    if showFinalMessage {
+                        return
+                    }
+
+                    if showNameInput {
+                        if !username.trimmingCharacters(in: .whitespaces)
+                            .isEmpty
+                        {
+                            isTextFieldFocused = false
+                            withAnimation(
+                                .spring(response: 0.4, dampingFraction: 0.7)
+                            ) {
+                                showFinalMessage = true
                             }
+                        } else {
+                            isTextFieldFocused = true
+                        }
+                        return
+                    }
+
+                    if currentMessageIndex < messages.count - 1 {
+                        currentMessageIndex += 1
+                    } else {
+                        withAnimation(
+                            .spring(response: 0.4, dampingFraction: 0.7)
+                        ) {
+                            showNameInput = true
+                        }
+                        DispatchQueue.main.asyncAfter(
+                            deadline: .now() + 0.3
+                        ) {
+                            isTextFieldFocused = true
                         }
                     }
                 }
 
-                // Penguin
-                Image("penguin")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: geometry.size.width * 0.8)
-                    .alignmentGuide(.bottom) { d in d[.bottom] }
-                    .ignoresSafeArea(edges: .bottom)
+                if showFinalMessage {
+                    Button {
+                        onComplete()
 
-                // Next button
-                if showNameInput && !username.trimmingCharacters(in: .whitespaces).isEmpty {
-                    VStack {
-                        Spacer()
-                        HStack {
-                            Spacer()
-                            Button {
-                                withAnimation {
-                                    onComplete()
-                                }
-                            } label: {
-                                Image(systemName: "arrow.right")
-                                    .font(.system(size: geometry.size.width * 0.05, weight: .bold))
-                                    .foregroundColor(.white)
-                                    .frame(
-                                        width: geometry.size.width * 0.15,
-                                        height: geometry.size.width * 0.15
-                                    )
-                                    .background(Color.blue)
-                                    .clipShape(Circle())
-                            }
-                            .padding(.trailing, 28)
-                            .padding(.bottom, 40)
-                        }
+                    } label: {
+                        Image(
+                            systemName: "arrow.right"
+                        )
+                        .font(.title2)
+                        .foregroundColor(Color(uiColor: .label))
+                        .padding()
                     }
+                    .padding(.trailing, 28)
+                    .buttonStyle(.glass)
                 }
             }
-            .ignoresSafeArea(edges: .bottom)
         }
     }
 }
 
 #Preview {
-    CharacterIntroView(onComplete: {}, username: .constant("Budi") )
+    CharacterIntroView(onComplete: {}, username: .constant("Budi"))
 }

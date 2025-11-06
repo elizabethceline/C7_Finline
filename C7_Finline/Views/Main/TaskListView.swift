@@ -12,52 +12,98 @@ struct TaskListView: View {
     let tasks: [GoalTask]
     let goals: [Goal]
     let selectedDate: Date
-    
+
+    @State private var coverMode: FocusCoverMode?
+    @EnvironmentObject var focusVM: FocusSessionViewModel
+    @Environment(\.modelContext) private var modelContext
+
+    private var isCoverPresented: Binding<Bool> {
+        Binding(
+            get: { coverMode != nil },
+            set: { if !$0 { coverMode = nil } }
+        )
+    }
+
     @State private var removingTaskIds: Set<String> = []
     @State private var showCompleteAlert = false
+    @State private var showIncompleteAlert = false
     @State private var showDeleteAlert = false
     @State private var selectedTask: GoalTask?
+    //@State private var navigateToDetail = false
+
+    @State private var selectedGoal: Goal?
+    @State private var goToGoalDetail = false
+
+    private let taskManager: TaskManager
+    @StateObject private var taskVM: TaskViewModel
+
+    init(
+        viewModel: MainViewModel,
+        tasks: [GoalTask],
+        goals: [Goal],
+        selectedDate: Date,
+        networkMonitor: NetworkMonitor
+    ) {
+        self.viewModel = viewModel
+        self.tasks = tasks
+        self.goals = goals
+        self.selectedDate = selectedDate
+
+        self.taskManager = TaskManager(networkMonitor: networkMonitor)
+        _taskVM = StateObject(
+            wrappedValue: TaskViewModel(networkMonitor: networkMonitor)
+        )
+    }
 
     var body: some View {
         List {
             ForEach(goals) { goal in
-                let goalTasks = tasks.filter { task in
+                let filteredTasks = tasks.filter { task in
                     goal.tasks.contains(where: { $0.id == task.id })
                 }
-                .sorted { $0.workingTime < $1.workingTime }
+                let goalTasks = filteredTasks.sorted {
+                    $0.workingTime < $1.workingTime
+                }
 
                 if !goalTasks.isEmpty {
                     Section {
-                        GoalHeaderView(goalName: goal.name)
+                        Button {
+                            selectedGoal = goal
+                            goToGoalDetail = true
+                        } label: {
+                            GoalHeaderView(goalName: goal.name)
+                        }
+                        .listRowInsets(
+                            .init(top: 0, leading: 4, bottom: 0, trailing: 0)
+                        )
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
+
+                        ForEach(goalTasks) { task in
+                            Button {
+                                coverMode = .detail(task)
+                            } label: {
+                                TaskCardView(task: task)
+                            }
                             .listRowInsets(
-                                EdgeInsets(
-                                    top: 8,
+                                .init(
+                                    top: -4,
                                     leading: 0,
-                                    bottom: 8,
+                                    bottom: 12,
                                     trailing: 0
                                 )
                             )
                             .listRowSeparator(.hidden)
                             .listRowBackground(Color.clear)
-
-                        ForEach(goalTasks) { task in
-                            TaskCardView(task: task)
-                                .listRowInsets(
-                                    EdgeInsets(
-                                        top: 8,
-                                        leading: 0,
-                                        bottom: 8,
-                                        trailing: 0
-                                    )
-                                )
-                                .listRowSeparator(.hidden)
-                                .listRowBackground(Color.clear)
-                                .opacity(removingTaskIds.contains(task.id) ? 0 : 1)
-                                .offset(y: removingTaskIds.contains(task.id) ? -10 : 0)
-                                .swipeActions(
-                                    edge: .trailing,
-                                    allowsFullSwipe: false
-                                ) {
+                            .opacity(removingTaskIds.contains(task.id) ? 0 : 1)
+                            .offset(
+                                y: removingTaskIds.contains(task.id) ? -10 : 0
+                            )
+                            .swipeActions(
+                                edge: .trailing,
+                                allowsFullSwipe: false
+                            ) {
+                                if !task.isCompleted {
                                     Button {
                                         selectedTask = task
                                         showCompleteAlert = true
@@ -68,74 +114,139 @@ struct TaskListView: View {
                                         )
                                     }
                                     .tint(.green)
-
+                                } else {
                                     Button {
                                         selectedTask = task
-                                        showDeleteAlert = true
+                                        showIncompleteAlert = true
                                     } label: {
-                                        Label("Delete", systemImage: "trash")
+                                        Label(
+                                            "Incomplete",
+                                            systemImage: "arrow.uturn.left"
+                                        )
                                     }
-                                    .tint(.red)
+                                    .tint(.gray)
                                 }
 
+                                Button {
+                                    selectedTask = task
+                                    showDeleteAlert = true
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
+                                }
+                                .tint(.red)
+                            }
                         }
                     }
                     .listSectionSeparator(.hidden)
                 }
             }
+
+            if !tasks.isEmpty {
+                Color.clear
+                    .frame(height: 48)
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
+            }
         }
+//        .navigationDestination(isPresented: $navigateToDetail) {
+//            if let task = selectedTask {
+//                DetailTaskView(
+//                    task: task,
+//                    taskManager: TaskManager(networkMonitor: NetworkMonitor()),
+//                    viewModel: taskVM
+//                )
+//            }
+//        }
+        .navigationDestination(isPresented: $goToGoalDetail) {
+            if let goal = selectedGoal {
+                DetailGoalView(
+                    goal: goal,
+                    goalVM: GoalViewModel()
+                )
+            }
+        }
+        .fullScreenCover(isPresented: isCoverPresented) {
+            Group {
+                if let mode = coverMode {
+                    switch mode {
+                    case .detail(let task):
+                        DetailTaskView(
+                            task: task,
+                            taskManager: taskManager,
+                            viewModel: taskVM,
+                            onStartFocus: {
+                                coverMode = .focus
+                            }
+                        )
+                    case .focus:
+                        FocusModeView(onGiveUp: { task in 
+                            coverMode = .detail(task)
+                        })
+                    }
+                }
+            }
+            .environmentObject(focusVM)
+            .environment(\.modelContext, modelContext)
+        }
+        .environmentObject(focusVM)
         .animation(.easeInOut(duration: 0.3), value: tasks)
         .animation(.easeInOut(duration: 0.3), value: removingTaskIds)
         .listStyle(.plain)
         .scrollIndicators(.hidden)
         .ignoresSafeArea(edges: .bottom)
         .alert("Did you finish it already?", isPresented: $showCompleteAlert) {
-            Button("Not yet", role: .cancel) {
-                selectedTask = nil
-            }
+            Button("Not yet", role: .cancel) { selectedTask = nil }
             Button("Yes") {
-                if let task = selectedTask {
-                    completeTask(task)
-                }
+                if let task = selectedTask { completeTask(task) }
             }
         } message: {
             if let task = selectedTask {
-                Text("Are you sure you want to mark '\(task.name)' as completed?")
+                Text(
+                    "Are you sure you want to mark '\(task.name)' as completed?"
+                )
+            }
+        }
+        .alert("Why are you doing this?", isPresented: $showIncompleteAlert) {
+            Button("Keep it completed", role: .cancel) { selectedTask = nil }
+            Button("Mark as Incomplete") {
+                if let task = selectedTask { completeTask(task) }
+            }
+        } message: {
+            if let task = selectedTask {
+                Text(
+                    "Are you sure you want to mark '\(task.name)' as incomplete?"
+                )
             }
         }
         .alert("Delete Task", isPresented: $showDeleteAlert) {
-            Button("Cancel", role: .cancel) {
-                selectedTask = nil
-            }
+            Button("Cancel", role: .cancel) { selectedTask = nil }
             Button("Delete", role: .destructive) {
-                if let task = selectedTask {
-                    deleteTask(task)
-                }
+                if let task = selectedTask { deleteTask(task) }
             }
         } message: {
             if let task = selectedTask {
-                Text("Are you sure you want to delete '\(task.name)'? This action cannot be undone.")
+                Text(
+                    "Are you sure you want to delete '\(task.name)'? This action cannot be undone."
+                )
             }
         }
     }
-    
+
     private func completeTask(_ task: GoalTask) {
-        _ = withAnimation(.easeInOut(duration: 0.3)) {
+        withAnimation(.easeInOut(duration: 0.3)) {
             removingTaskIds.insert(task.id)
         }
-        
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             viewModel.toggleTaskCompletion(task: task)
             removingTaskIds.remove(task.id)
             selectedTask = nil
         }
     }
-    
+
     private func deleteTask(_ task: GoalTask) {
-        _ = withAnimation(.easeInOut(duration: 0.3)) {
+        withAnimation(.easeInOut(duration: 0.3)) {
             removingTaskIds.insert(task.id)
         }
-        
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             viewModel.deleteTask(task: task)
             removingTaskIds.remove(task.id)
@@ -173,15 +284,27 @@ struct TaskListView: View {
 
     goal.tasks = [task1, task2]
 
+    let dummyMonitor = NetworkMonitor()
+
+    let mockVM = MainViewModelMock(goals: [goal], tasks: [task1, task2])
+
     return TaskListView(
-        viewModel: MainViewModel(),
-        tasks: [
-            task1, task2, task1, task2, task2, task1, task2, task1, task2,
-            task1, task2, task2, task1, task2,
-        ],
+        viewModel: mockVM,
+        tasks: [task1, task2],
         goals: [goal],
-        selectedDate: Date()
+        selectedDate: Date(),
+        networkMonitor: dummyMonitor
     )
     .padding()
     .background(Color.gray.opacity(0.1))
+    .environmentObject(FocusSessionViewModel())
+}
+
+@MainActor
+final class MainViewModelMock: MainViewModel {
+    init(goals: [Goal], tasks: [GoalTask]) {
+        super.init()
+        self.goals = goals
+        self.tasks = tasks
+    }
 }

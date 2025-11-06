@@ -27,6 +27,7 @@ struct EditProductiveHoursView: View {
 
             Spacer()
         }
+        .background(Color(uiColor: .systemGray6).ignoresSafeArea())
         .navigationTitle("Activity Time")
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {

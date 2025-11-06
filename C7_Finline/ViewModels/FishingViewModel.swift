@@ -2,12 +2,17 @@ import Foundation
 import SwiftUI
 import Combine
 
-@MainActor
+//@MainActor
 final class FishingViewModel: ObservableObject {
     @Published var caughtFish: [Fish] = []
     @Published var isFishing: Bool = false
     @Published var elapsedTime: TimeInterval = 0
     @Published var totalDuration: TimeInterval = 0
+    
+    @Published var isPaused: Bool = false
+    private let pauseContinuation = PassthroughSubject<Void, Never>()
+    private var cancellables = Set<AnyCancellable>()
+
     
     private var fishingTask: Task<Void, Never>?
     private let userProfileManager: UserProfileManager?
@@ -16,7 +21,7 @@ final class FishingViewModel: ObservableObject {
         self.userProfileManager = userProfileManager
     }
 
-    func startFishing(for duration: TimeInterval, deepFocusEnabled: Bool) async {
+    func startFishing(for duration: TimeInterval, deepFocusEnabled: Bool, resume: Bool = false) async {
         guard !isFishing else {
             print("Already fishing, skipping...")
             return
@@ -26,7 +31,9 @@ final class FishingViewModel: ObservableObject {
 
         isFishing = true
         totalDuration = duration
-        caughtFish.removeAll()
+        if !resume {
+            caughtFish.removeAll()
+        }
         elapsedTime = 0
 
         fishingTask = Task { [weak self] in
@@ -58,8 +65,25 @@ final class FishingViewModel: ObservableObject {
             while elapsed < duration {
                 if Task.isCancelled { break }
 
+                if isPaused{
+                    print("Fishing paused. Waiting to resume..")
+                    await withCheckedContinuation { continuation in
+                        Task { [weak self] in
+                            self?.pauseContinuation.sink {
+                                continuation.resume()
+                            }.store(in: &self!.cancellables)
+                        }
+                    }
+                }
                 let baseWait = Double.random(in: 60...120)
-                let wait = deepFocusEnabled ? baseWait * 0.7 : baseWait
+                var wait = deepFocusEnabled ? baseWait * 0.7 : baseWait
+                
+                if catchCount == 0 && wait > (duration - elapsed) {
+                    
+                    wait = (duration - elapsed) * Double.random(in: 0.5...0.9)
+                    
+                    print("Short session detected. Adjusting first wait time to \(wait)s to guarantee a catch.")
+                }
 
                 print("Waiting \(wait)s before next catch attempt... (elapsed: \(elapsed)s / \(duration)s)")
 
@@ -112,6 +136,20 @@ final class FishingViewModel: ObservableObject {
             print("Fishing loop ended. Total fish caught: \(caughtFish.count)")
             isFishing = false
         }
+    
+    func pauseFishing() {
+        guard isFishing, !isPaused else { return }
+        isPaused = true
+        print("Fishing paused")
+    }
+
+    func resumeFishing() {
+        guard isFishing, isPaused else { return }
+        isPaused = false
+        pauseContinuation.send(())
+        print("Fishing resumed")
+    }
+
 
     private static func rollRarity(probabilities: [FishRarity: Double]) -> FishRarity {
         let ordered: [FishRarity] = [.common, .uncommon, .rare, .superRare, .legendary]

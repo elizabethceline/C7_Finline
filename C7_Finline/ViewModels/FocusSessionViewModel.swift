@@ -5,197 +5,200 @@ import Combine
 
 #if os(iOS)
 import ManagedSettings
-import FamilyControls
+//import FamilyControls
 import UIKit
 #elseif os(macOS)
 import AppKit
 #endif
 
-//@MainActor
 final class FocusSessionViewModel: ObservableObject {
+    // Focus Session
     @Published var isFocusing = false
     @Published var remainingTime: TimeInterval = 0
-    @Published var sessionDuration: TimeInterval = 25 * 60
-    @Published var deepFocusEnabled = true
-    @Published var totalFocusedSeconds: TimeInterval = 0
-    @Published var isAuthorized: Bool = false
-    @Published var errorMessage: String?
+    @Published var sessionDuration: TimeInterval = 30 * 60
     @Published var shouldReturnToStart = false
     @Published var taskTitle: String = ""
-    @Published var nudgeMeEnabled: Bool = false
-    @Published var isShowingNudgeAlert: Bool = false
     @Published var goalName: String?
-    //@Published var taskDescription: String?
+    @Published var errorMessage: String?
+    
+    // Rest Mode
+    @Published var isResting: Bool = false
+    @Published var totalRestSeconds: TimeInterval = 0
+    @Published var restAllowanceSeconds: TimeInterval = 0
+    @Published var restRemainingTime: TimeInterval = 0
+    
+    var earnedRestMinutes: Int {
+        let restSeconds = (sessionDuration / (30 * 60)) * (5 * 60)
+        return Int(restSeconds / 60)
+    }
+    
+    var canRest: Bool {
+        remainingRestSeconds >= 300
+    }
+    
+    var remainingRestSeconds: TimeInterval {
+        max(0, restAllowanceSeconds - totalRestSeconds)
+    }
+    
+    // Nudge
+    @Published var nudgeMeEnabled: Bool = true
+    @Published var isShowingNudgeAlert: Bool = false
+    var bonusPointsFromNudge: Int = 0
+    
     private var nudgesTriggered = Set<Int>()
     private var isContinuingSession = false
     
-    private var hasNudgeBeenTriggered: Bool = false
-    var bonusPointsFromNudge: Int = 0
-    @Published var accumulatedFish: [Fish] = []
-    
-#if os(iOS)
-    @Published var selection = FamilyActivitySelection()
-    private let managedStore = ManagedSettingsStore()
-#else
-    @Published var selection = FamilyActivitySelectionFallback()
-#endif
-    
-    let fishingVM = FishingViewModel()
-    let userProfileManager: UserProfileManager
-    private let networkMonitor: NetworkMonitor
-    //    let fishResultVM: FishResultViewModel
-    //    private let userProfileManager: UserProfileManager?
-    
-    private var timer: Timer?
-    private var lastTickDate: Date?
-    private let selectionDefaultsKey = "FocusSelectionData"
-    private var cancellables = Set<AnyCancellable>()
-    
-    private var modelContext: ModelContext?
-    private var currentUserProfile: UserProfile?
-    
-#if os(macOS)
-    struct FamilyActivitySelectionFallback: Codable, Equatable {
-        var applicationTokens: Set<String> = []
-        var webDomainTokens: Set<String> = []
-    }
-#endif
-    
-    //    init() {
-    //        loadSelection()
-    //        updateAuthorizationStatus()
-    //    }
-    //
+    // Dependencies
+    let fishingVM: FishingViewModel
+    var authManager: FocusAuthorizationManager
     
     private(set) var goal: Goal?
     private(set) var task: GoalTask?
     
+    // Private properties
+    private var timer: Timer?
+    private var restTimer: Timer?
+    private var lastTickDate: Date?
+    private var currentRestStart: Date?
     
-    //    init(networkMonitor: NetworkMonitor = NetworkMonitor()) {
-    //        self.networkMonitor = networkMonitor
-    //        self.userProfileManager = UserProfileManager(networkMonitor: networkMonitor)
-    //        loadSelection()
-    //        updateAuthorizationStatus()
-    //    }
-    
-    init(goal: Goal? = nil, task: GoalTask? = nil, networkMonitor: NetworkMonitor = NetworkMonitor()) {
+    init(
+        goal: Goal? = nil,
+        task: GoalTask? = nil,
+        fishingVM: FishingViewModel = FishingViewModel(),
+        authManager: FocusAuthorizationManager = FocusAuthorizationManager()
+    ) {
         self.goal = goal
         self.task = task
-        self.networkMonitor = networkMonitor
-        self.userProfileManager = UserProfileManager(networkMonitor: networkMonitor)
+        self.fishingVM = fishingVM
+        self.authManager = authManager
         
-        loadSelection()
-        updateAuthorizationStatus()
-        
-        if let goal = goal, let task = task {
-            self.goalName = goal.name
+        if let task = task {
+            self.goalName = goal?.name
             self.taskTitle = task.name
             self.sessionDuration = TimeInterval(task.focusDuration * 60)
             self.remainingTime = self.sessionDuration
         }
     }
     
-    //    init(userProfileManager: UserProfileManager? = nil) {
-    //           self.userProfileManager = userProfileManager
-    //           self.fishingVM = FishingViewModel(userProfileManager: userProfileManager)
-    //           loadSelection()
-    //           updateAuthorizationStatus()
-    //       }
-    
-    @MainActor
-    func setModelContext(_ context: ModelContext) {
-        guard self.modelContext == nil else { return }
-        self.modelContext = context
-        loadUserProfileIfNeeded()
-    }
-    
-    @MainActor
-    private func loadUserProfileIfNeeded() {
-        guard let context = modelContext else { return }
-        do {
-            let descriptor = FetchDescriptor<UserProfile>()
-            self.currentUserProfile = try context.fetch(descriptor).first
-        } catch {
-            print("⚠️ Failed to load user profile: \(error.localizedDescription)")
-            self.currentUserProfile = nil
-        }
-    }
-    
+    // Focus Session
     func startSession() {
         guard !isFocusing else {
             errorMessage = "Session is already in progress."
             return
         }
-        accumulatedFish.removeAll()
-        shouldReturnToStart = false
-        //hasNudgeBeenTriggered = false
-        bonusPointsFromNudge = 0
+        
+        print("Starting session... Nudge Me Enabled: \(nudgeMeEnabled)")
+        
         isFocusing = true
         remainingTime = sessionDuration
         lastTickDate = Date()
+        shouldReturnToStart = false
+        bonusPointsFromNudge = 0
+        
+        isResting = false
+        totalRestSeconds = 0
+        let fullBlocks = floor(sessionDuration / (30 * 60))
+        restAllowanceSeconds = fullBlocks * (5 * 60)
+        currentRestStart = nil
         
         nudgesTriggered.removeAll()
         isShowingNudgeAlert = false
         
-        if deepFocusEnabled {
-            if isAuthorized {
-                applyShield()
-            } else {
-                configureAuthorizationIfNeeded()
-                errorMessage = "Screen Time authorization required."
-            }
+        if authManager.isEnabled && authManager.isAuthorized {
+            authManager.applyShield()
         }
         
         Task {
-            await fishingVM.startFishing(for: sessionDuration, deepFocusEnabled: deepFocusEnabled)
-        }
+                if authManager.isEnabled {
+                    if !authManager.isAuthorized {
+                        print("Deep Focus is ON but not authorized. Requesting authorization...")
+                        await authManager.requestAuthorization()
+                    }
+                    
+                    if authManager.isAuthorized {
+                        authManager.applyShield()
+                        print(" Deep Focus shield applied successfully.")
+                    } else {
+                        print("Deep Focus not applied — user denied or authorization failed.")
+                    }
+                }
+                
+                await fishingVM.startFishing(
+                    for: sessionDuration,
+                    deepFocusEnabled: authManager.isEnabled
+                )
+            }
         
         startTimer()
-        print("nudge me: (\(nudgeMeEnabled))")
     }
     
     func endSession() async {
-        guard isFocusing else {
-            errorMessage = "No active session to end"
-            return
-        }
+        guard isFocusing else { return }
+        
+        timer?.invalidate()
+        timer = nil
         isFocusing = false
         isContinuingSession = false
         
-        if let task = task {
-            task.isCompleted = true
-        } else {
-            errorMessage = "No task found to complete."
-        }
-        
-        if let timer = timer {
-            timer.invalidate()
-            self.timer = nil
-        } else {
-            errorMessage = "Timer not found - session may not have started properly"
-        }
-        
-        bankCaughtFish()
         fishingVM.stopFishing()
+        authManager.clearShield()
         
-        if deepFocusEnabled { clearShield() }
+//        if let task = task {
+//            task.isCompleted = true
+//        }
         
-        if let last = lastTickDate {
-            let delta = Date().timeIntervalSince(last)
-            totalFocusedSeconds += min(sessionDuration, delta)
+        shouldReturnToStart = true
+    }
+    
+    func giveUp() async {
+        guard isFocusing else { return }
+        
+        timer?.invalidate()
+        timer = nil
+        
+        fishingVM.stopFishing()
+        authManager.clearShield()
+        
+        isFocusing = false
+        shouldReturnToStart = true
+    }
+    
+    func addMoreTime(hours: Int = 0, minutes: Int = 0, seconds: Int = 0) async {
+        let extraTime = TimeInterval((hours * 3600) + (minutes * 60) + seconds)
+        
+        isContinuingSession = true
+        
+        self.remainingTime += extraTime
+        self.sessionDuration += extraTime
+        self.shouldReturnToStart = false
+        self.isFocusing = true
+        
+        self.nudgeMeEnabled = false
+        self.isShowingNudgeAlert = false
+        self.nudgesTriggered.removeAll()
+        
+        if authManager.isEnabled {
+            authManager.applyShield()
         }
         
-        await saveBestFocusTimeIfNeeded()
+        Task {
+            await fishingVM.startFishing(
+                for: extraTime,
+                deepFocusEnabled: authManager.isEnabled,
+                resume: true
+            )
+        }
         
-        await MainActor.run {
-            shouldReturnToStart = true
+        if timer == nil {
+            startTimer()
         }
     }
     
-    
-    
-    private func startTimer() {
-        nudgesTriggered.removeAll()
+    // Timer
+    private func startTimer(isResuming: Bool = false) {
+        if !isResuming {
+            nudgesTriggered.removeAll()
+        }
         
         timer?.invalidate()
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
@@ -205,14 +208,6 @@ final class FocusSessionViewModel: ObservableObject {
                 if self.remainingTime > 1 {
                     self.remainingTime -= 1
                     self.lastTickDate = Date()
-                    //                    let halfwayPoint = self.sessionDuration / 2
-                    //                    if self.nudgeMeEnabled &&
-                    //                        !self.hasNudgeBeenTriggered &&
-                    //                        self.remainingTime <= halfwayPoint {
-                    //
-                    //                        self.isShowingNudgeAlert = true
-                    //                        self.hasNudgeBeenTriggered = true
-                    //                    }
                     self.checkNudgeAlerts()
                 } else {
                     self.remainingTime = 0
@@ -223,10 +218,83 @@ final class FocusSessionViewModel: ObservableObject {
         RunLoop.current.add(timer!, forMode: .common)
     }
     
+    // Rest
+    func startRest(for seconds: TimeInterval) {
+        guard !isResting, seconds > 0, seconds <= remainingRestSeconds else { return }
+        
+        isResting = true
+        currentRestStart = Date()
+        totalRestSeconds += seconds
+        restRemainingTime = seconds
+        
+        pauseSession()
+        startRestTimer()
+    }
+    
+    func endRest() {
+        guard isResting else { return }
+        
+        currentRestStart = nil
+        isResting = false
+        stopRestTimer()
+        resumeSession()
+    }
+    
+    private func pauseSession() {
+        guard isFocusing else { return }
+        
+        timer?.invalidate()
+        timer = nil
+        isFocusing = false
+        
+        fishingVM.pauseFishing()
+        authManager.clearShield()
+    }
+    
+    private func resumeSession() {
+        guard !isFocusing, remainingTime > 0 else { return }
+        
+        isFocusing = true
+        lastTickDate = Date()
+        startTimer(isResuming: true)
+        isResting = false
+        
+        fishingVM.resumeFishing()
+        
+        if authManager.isEnabled && authManager.isAuthorized {
+            authManager.applyShield()
+        }
+    }
+    
+    private func startRestTimer() {
+        restTimer?.invalidate()
+        restTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+            guard let self else { return }
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                if self.restRemainingTime > 0 {
+                    self.restRemainingTime -= 1
+                } else {
+                    self.endRest()
+                }
+            }
+        }
+        RunLoop.current.add(restTimer!, forMode: .common)
+    }
+
+    
+    private func stopRestTimer() {
+        restTimer?.invalidate()
+        restTimer = nil
+    }
+    
+    // Nudge
     private func checkNudgeAlerts() {
         guard nudgeMeEnabled, !isContinuingSession else { return }
+        
         let totalSeconds = sessionDuration
         var maxNudges = 0
+        
         switch totalSeconds {
         case 0..<5*60:
             maxNudges = 0
@@ -247,230 +315,67 @@ final class FocusSessionViewModel: ObservableObject {
             if !nudgesTriggered.contains(i) && remainingTime <= triggerTime {
                 isShowingNudgeAlert = true
                 nudgesTriggered.insert(i)
-                print("Nudge \(i) triggered at remaining time: \(remainingTime)")
             }
         }
     }
     
-    private func bankCaughtFish(){
-        self.accumulatedFish.append(contentsOf: fishingVM.caughtFish)
+    func userConfirmedNudge() {
+        isShowingNudgeAlert = false
+        bonusPointsFromNudge += 20
     }
     
-    func addMoreTime(hours: Int = 0, minutes: Int = 0, seconds: Int = 0) async {
-        let extraTime = TimeInterval((hours * 3600) + (minutes * 60) + seconds)
-        
-        bankCaughtFish()
-        
-        isContinuingSession = true
-        
-        self.remainingTime += extraTime
-        self.sessionDuration += extraTime
-        self.shouldReturnToStart = false
-        self.isFocusing = true
-        self.hasNudgeBeenTriggered = true
-        
-        self.nudgeMeEnabled = false
-        self.isShowingNudgeAlert = false
-        self.nudgesTriggered.removeAll()
-        
-        if deepFocusEnabled {
-            applyShield()
-        }
-        
-        Task {
-            await fishingVM.startFishing(for: extraTime, deepFocusEnabled: deepFocusEnabled)
-        }
-        
-        if timer == nil {
-            self.startTimer()
-        }
-        
-        print("Added \(hours)h \(minutes)m \(seconds)s! New total: \(sessionDuration / 60) minutes")
-    }
-    
-    func stopSessionForEarlyFinish() async {
-        guard isFocusing else { return }
-        isFocusing = false
-        
-        timer?.invalidate()
-        timer = nil
-        
-        bankCaughtFish()
-        fishingVM.stopFishing()
-        
-        if deepFocusEnabled { clearShield() }
-        
-        if let last = lastTickDate {
-            let delta = Date().timeIntervalSince(last)
-            totalFocusedSeconds += min(sessionDuration, delta)
-        }
-    }
-    
-    func giveUp() async{
-        guard isFocusing else { return }
-        
-        print("Session given up!")
-        // Stop timer immediately
-        timer?.invalidate()
-        timer = nil
-        
-        fishingVM.stopFishing()
-        if deepFocusEnabled { clearShield() }
-        
-        isFocusing = false
-        shouldReturnToStart = true
-    }
-    
+    // Reset
     func resetSession() {
         timer?.invalidate()
         timer = nil
-        
+        restTimer?.invalidate()
+        restTimer = nil
         
         isFocusing = false
+        isResting = false
         shouldReturnToStart = false
         remainingTime = 0
         taskTitle = ""
         
         isShowingNudgeAlert = false
-        hasNudgeBeenTriggered = false
         bonusPointsFromNudge = 0
-        accumulatedFish.removeAll()
+        nudgesTriggered.removeAll()
     }
     
-    func userConfirmedNudge() {
-        isShowingNudgeAlert = false
-        self.bonusPointsFromNudge += 20
-        print("User confirmed nudge, 20 points awarded.")
+    // Set task
+    func setTask(_ task: GoalTask, goal: Goal?) {
+        self.task = task
+        self.goal = goal
+        self.goalName = goal?.name
+        self.taskTitle = task.name
+        self.sessionDuration = TimeInterval(task.focusDuration * 60)
+        self.remainingTime = self.sessionDuration
     }
     
-    private func applyShield() {
-#if os(iOS)
-        if selection.applicationTokens.isEmpty && selection.webDomainTokens.isEmpty {
-            managedStore.shield.applicationCategories = .all()
-            managedStore.shield.webDomainCategories = .all()
-        } else {
-            managedStore.shield.applications = selection.applicationTokens
-            managedStore.shield.webDomains = selection.webDomainTokens
-        }
-#endif
-    }
-    
-    private func clearShield() {
-#if os(iOS)
-        managedStore.shield.applications = nil
-        managedStore.shield.webDomains = nil
-        managedStore.shield.applicationCategories = nil
-        managedStore.shield.webDomainCategories = nil
-#endif
-    }
-    
-    private func saveSelection() {
-        do {
-            let data = try JSONEncoder().encode(selection)
-            UserDefaults.standard.set(data, forKey: selectionDefaultsKey)
-        } catch {
-            print("Failed to encode selection: \(error)")
-        }
-    }
-    
-    private func loadSelection() {
-        guard let data = UserDefaults.standard.data(forKey: selectionDefaultsKey) else { return }
-#if os(iOS)
-        if let decoded = try? JSONDecoder().decode(FamilyActivitySelection.self, from: data) {
-            selection = decoded
-        }
-#else
-        if let decoded = try? JSONDecoder().decode(FamilyActivitySelectionFallback.self, from: data) {
-            selection = decoded
-        }
-#endif
-    }
-    
-    func configureAuthorizationIfNeeded() {
-#if os(iOS)
-        Task { @MainActor in
-            do {
-                let center = AuthorizationCenter.shared
-                switch center.authorizationStatus {
-                case .notDetermined, .denied:
-                    try await center.requestAuthorization(for: .individual)
-                default:
-                    break
-                }
-                updateAuthorizationStatus()
-                if isAuthorized && isFocusing && deepFocusEnabled {
-                    applyShield()
-                }
-            } catch {
-                self.errorMessage = error.localizedDescription
-                print("FamilyControls authorization error: \(error)")
-            }
-        }
-#else
-        isAuthorized = false
-#endif
-    }
-    
-    private func updateAuthorizationStatus() {
-#if os(iOS)
-        let status = AuthorizationCenter.shared.authorizationStatus
-        isAuthorized = (status == .approved)
-        if !isAuthorized {
-            print("Screen Time access not yet granted.")
-        }
-#else
-        isAuthorized = false
-#endif
-    }
-    
-    func openSettings() {
-#if os(iOS)
-        if let url = URL(string: UIApplication.openSettingsURLString) {
-            UIApplication.shared.open(url)
-        }
-#elseif os(macOS)
-        if let url = URL(string: "x-apple.systempreferences:com.apple.ScreenTime-Settings.extension") {
-            NSWorkspace.shared.open(url)
-        } else {
-            NSWorkspace.shared.open(
-                URL(fileURLWithPath: "/System/Applications/System Settings.app")
-            )
-        }
-#endif
-    }
-    
+    // Result
     @MainActor
-    private func saveBestFocusTimeIfNeeded() async {
-        if currentUserProfile == nil {
-            loadUserProfileIfNeeded()
-        }
+    func createResult(using context: ModelContext, didComplete: Bool? = nil) -> FocusResultViewModel {
+        print("createResult called")
+        print("didComplete parameter: \(String(describing: didComplete))")
+        print("remainingTime: \(remainingTime)")
+        print("Task: \(task?.name ?? "nil")")
         
-        guard let profile = currentUserProfile else {
-            print ("No user profile available to update bestFocusTime")
-            return
-        }
+        let resultVM = FocusResultViewModel(
+            context: context,
+            networkMonitor: NetworkMonitor()
+        )
         
-        if sessionDuration > profile.bestFocusTime {
-            profile.bestFocusTime = sessionDuration
-            profile.needsSync = true
-            
-            if let context = modelContext {
-                do {
-                    try context.save()
-                } catch {
-                    print("Failed to save profile locally: \(error.localizedDescription)")
-                }
-            }
-            
-            do {
-                try await userProfileManager.saveProfile(profile)
-                print("Best focus time updated and synced: \(profile.bestFocusTime) seconds")
-            } catch {
-                print("Failed to sync profile to CloudKit: \(error.localizedDescription)")
-            }
-        } else {
-            print("No new bestFocusTime (current: \(sessionDuration), best: \(profile.bestFocusTime))")
-        }
+        let shouldMarkComplete = didComplete ?? (remainingTime <= 0)
+        print("Final shouldMarkComplete: \(shouldMarkComplete)")
+        
+        resultVM.recordSessionResult(
+            fish: fishingVM.caughtFish,
+            bonusPoints: bonusPointsFromNudge,
+            duration: sessionDuration,
+            task: task,
+            shouldMarkComplete: shouldMarkComplete
+        )
+        
+        return resultVM
     }
 }
-

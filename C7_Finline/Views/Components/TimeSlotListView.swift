@@ -16,7 +16,8 @@ struct TimeSlotListView: View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 12) {
                 ForEach(TimeSlot.allCases, id: \.self) { slot in
-                    let selected = productiveHours
+                    let selected =
+                        productiveHours
                         .first(where: { $0.day == selectedDay })?
                         .timeSlots.contains(slot) ?? false
 
@@ -28,18 +29,26 @@ struct TimeSlotListView: View {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(slot.rawValue.capitalized)
                                     .font(.headline)
+                                    .foregroundColor(Color(uiColor: .label))
                                 Text(slot.hours)
                                     .font(.caption)
-                                    .foregroundColor(.secondary)
+                                    .foregroundColor(
+                                        Color(uiColor: .secondaryLabel)
+                                    )
                             }
                             Spacer()
-                            Image(systemName: selected ? "checkmark.circle.fill" : "circle")
-                                .foregroundColor(.blue.opacity(selected ? 1 : 0.6))
-                                .font(.title2)
+                            Image(
+                                systemName: selected
+                                    ? "checkmark.circle.fill" : "circle"
+                            )
+                            .foregroundColor(
+                                .primary.opacity(selected ? 1 : 0.6)
+                            )
+                            .font(.title2)
                         }
                         .padding()
                         .frame(maxWidth: .infinity)
-                        .background(Color.blue.opacity(0.05))
+                        .background(Color(uiColor: .systemBackground))
                         .cornerRadius(20)
                     }
                     .buttonStyle(.plain)
@@ -65,9 +74,10 @@ struct TimeSlotListView: View {
     TimeSlotListView(
         productiveHours: .constant([
             ProductiveHours(day: .monday, timeSlots: [.morning, .evening]),
-            ProductiveHours(day: .tuesday, timeSlots: [.afternoon])
+            ProductiveHours(day: .tuesday, timeSlots: [.afternoon]),
         ]),
         selectedDay: .monday,
         onChange: {}
     )
+    .background(Color(uiColor: .systemGray6))
 }

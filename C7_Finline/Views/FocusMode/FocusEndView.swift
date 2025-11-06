@@ -1,7 +1,9 @@
 import SwiftUI
+import SwiftData
 
 struct FocusEndView: View {
-    @ObservedObject var viewModel: FishResultViewModel
+//    @ObservedObject var viewModel: FishResultViewModel
+    @ObservedObject var viewModel: FocusResultViewModel
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
@@ -51,7 +53,7 @@ struct FocusEndView: View {
                                 // Fish name
                                 Text(name)
                                     .font(.title3)
-                                    .foregroundColor(.primary)
+                                    //.foregroundColor(.primary)
                                 Text("+\(totalPoints)")
                                     .font(.title3)
 
@@ -78,7 +80,7 @@ struct FocusEndView: View {
                         HStack(spacing: 16) {
                             Text("Bonus Points")
                                 .font(.title3)
-                                .foregroundColor(.primary)
+                                //.foregroundColor(.primary)
                             Spacer()
                             Text("+\(viewModel.bonusPoints)")
                                 .font(.title.bold())
@@ -89,6 +91,16 @@ struct FocusEndView: View {
                 .padding(.horizontal, 24)
                 .padding(.vertical, 20)
                 .background(Color.white.opacity(0.8))
+//                .background {
+//                    // Use glassEffect here if supported
+//                    if #available(iOS 26.0, *) {
+//                        Color.clear
+//                            .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 24))
+//                    } else {
+//                        RoundedRectangle(cornerRadius: 24)
+//                            .fill(.ultraThinMaterial)
+//                    }
+//                }
                 .clipShape(RoundedRectangle(cornerRadius: 20))
                 //.padding(.horizontal)
                 
@@ -98,7 +110,7 @@ struct FocusEndView: View {
                 VStack(spacing: 16) {
                     Text("+\(viewModel.grandTotal) pts")
                         .font(.system(size: 60, weight: .bold))
-                        .foregroundColor(.primary)
+                        //.foregroundColor(.primary)
                     
                     Button("Back to main Menu") {
                         dismiss()
@@ -106,13 +118,21 @@ struct FocusEndView: View {
                     .font(.headline)
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(Color.blue)
+                    .background(Color.primary)
                     .foregroundColor(.white)
                     .clipShape(RoundedRectangle(cornerRadius: 24))
                 }
                 .padding(.horizontal)
                 .padding(.vertical)
-                .background(Color.white.opacity(0.8))
+                .background {
+                    if #available(iOS 26.0, *) {
+                        Color.clear
+                            .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 24))
+                    } else {
+                        RoundedRectangle(cornerRadius: 24)
+                            .fill(.ultraThinMaterial)
+                    }
+                }
                 .clipShape(RoundedRectangle(cornerRadius: 24))
                 //.padding(.horizontal)
                 //.padding()
@@ -123,44 +143,31 @@ struct FocusEndView: View {
     }
 }
 
+
 #Preview {
-    let mockVM = MockFishResultViewModel()
-    ZStack {
+    let mockFish = [
+        Fish.sample(of: .common),
+        Fish.sample(of: .common),
+        Fish.sample(of: .common),
+        Fish.sample(of: .uncommon),
+        Fish.sample(of: .uncommon),
+        Fish.sample(of: .rare),
+        Fish.sample(of: .legendary)
+    ]
+    
+    let mockResult = FocusSessionResult(
+        caughtFish: mockFish,
+        duration: 1800,
+        task: nil
+    )
+    
+    let mockVM = FocusResultViewModel(context: nil, networkMonitor: NetworkMonitor())
+    mockVM.currentResult = mockResult
+    mockVM.bonusPoints = 20
+    
+    return ZStack {
         Color.gray
             .ignoresSafeArea()
         FocusEndView(viewModel: mockVM)
-    }
-}
-
-final class MockFishResultViewModel: FishResultViewModel {
-    init() {
-        super.init(context: nil)
-        self.currentResult = FishingResult(caughtFish: fishCaught)
-        self.bonusPoints = 20
-    }
-    
-    override var fishCaught: [Fish] {
-        [
-            Fish.sample(of: .common),
-            Fish.sample(of: .common),
-            Fish.sample(of: .common),
-            Fish.sample(of: .common),
-            Fish.sample(of: .common),
-            Fish.sample(of: .common),
-            Fish.sample(of: .common),
-            Fish.sample(of: .uncommon),
-            Fish.sample(of: .uncommon),
-            Fish.sample(of: .uncommon),
-            Fish.sample(of: .rare),
-            Fish.sample(of: .legendary)
-        ]
-    }
-    
-    override var totalPoints: Int {
-        fishCaught.reduce(0) { $0 + $1.points }
-    }
-    
-    override var grandTotal: Int {
-        totalPoints + bonusPoints
     }
 }

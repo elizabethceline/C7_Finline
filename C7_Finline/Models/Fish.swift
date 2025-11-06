@@ -1,14 +1,13 @@
 import Foundation
-import SwiftData
 
-@Model
-final class Fish: Identifiable, Equatable {
-    @Attribute(.unique) var id: UUID = UUID()
+struct Fish: Identifiable, Equatable, Codable {
+    var id: UUID = UUID()
     var rarity: String
     var name: String
     var points: Int
 
-    init(rarity: String, name: String, points: Int) {
+    init(id: UUID = UUID(), rarity: String, name: String, points: Int) {
+        self.id = id
         self.rarity = rarity
         self.name = name
         self.points = points
@@ -17,7 +16,7 @@ final class Fish: Identifiable, Equatable {
     static func == (lhs: Fish, rhs: Fish) -> Bool {
         lhs.id == rhs.id
     }
-
+    
     static func sample(of rarity: FishRarity) -> Fish {
         switch rarity {
         case .common: return Fish(rarity: "common", name: "Blue Fish", points: 5)
@@ -30,4 +29,3 @@ final class Fish: Identifiable, Equatable {
 }
 
 enum FishRarity: String, Codable, CaseIterable { case common, uncommon, rare, superRare, legendary }
-
