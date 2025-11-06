@@ -29,7 +29,6 @@ struct CreateGoalView: View {
                     } header: {
                         Text("Goal")
                             .font(.headline)
-                            .foregroundStyle(.secondary)
                 }
 
                 Section {
@@ -40,6 +39,7 @@ struct CreateGoalView: View {
                             Label {
                                 Text(goalDeadline.formatted(date: .long, time: .omitted))
                                     .font(.body)
+                                    .foregroundColor(Color(.label))
                             } icon: {
                                 Image(systemName: "calendar")
                                     .foregroundColor(.primary)
@@ -47,6 +47,7 @@ struct CreateGoalView: View {
                             Spacer()
                             Image(systemName: "chevron.right")
                                 .foregroundStyle(.secondary)
+                                .foregroundColor(Color(.label))
                         }
                         .foregroundStyle(.black)
                     }
@@ -58,20 +59,20 @@ struct CreateGoalView: View {
                             Label {
                                 Text(goalDeadline.formatted(date: .omitted, time: .shortened))
                                     .font(.body)
+                                    .foregroundColor(Color(.label))
                             } icon: {
                                 Image(systemName: "clock")
                                     .foregroundColor(.primary)
                             }
                             Spacer()
                             Image(systemName: "chevron.right")
-                                .foregroundStyle(.secondary)
+                                .foregroundColor(Color(.label))
                         }
                         .foregroundStyle(.black)
                     }
                 } header: {
                     Text("Deadline")
                         .font(.headline)
-                        .foregroundStyle(.secondary)
                 }
                 
                 

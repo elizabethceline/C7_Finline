@@ -22,7 +22,7 @@ struct TaskCardView: View {
                 Text(formattedTime(task.workingTime))
                     .font(.caption)
                     .foregroundColor(Color(uiColor: .secondaryLabel))
-                Text(task.name)
+                Text(task.name.capitalized)
                     .font(.body)
                     .fontWeight(.medium)
                     .foregroundColor(Color(uiColor: .label))
@@ -48,7 +48,7 @@ struct TaskCardView: View {
         }
         .padding()
         .background(
-            RoundedRectangle(cornerRadius: 30)
+            RoundedRectangle(cornerRadius: 24)
                 .fill(Color(uiColor: .systemBackground))
         )
         .opacity(task.isCompleted ? 0.6 : 1)

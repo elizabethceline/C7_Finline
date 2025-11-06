@@ -76,9 +76,8 @@ struct DetailTaskView: View {
                             }
                             Spacer()
                             Image(systemName: "chevron.right")
-                                .foregroundStyle(.secondary)
                         }
-                        .foregroundStyle(.black)
+                        .foregroundColor(Color(.label))
                     }
                     
                     Button {
@@ -94,9 +93,8 @@ struct DetailTaskView: View {
                             }
                             Spacer()
                             Image(systemName: "chevron.right")
-                                .foregroundStyle(.secondary)
                         }
-                        .foregroundStyle(.black)
+                        .foregroundColor(Color(.label))
                     }
                     
                     Stepper(value: $focusDuration, in: 1...180, step: 1) {
@@ -177,7 +175,6 @@ struct DetailTaskView: View {
                         .cornerRadius(50)
                         .padding([.horizontal, .bottom])
                 }
-                .background(.ultraThinMaterial)
             }
             .sheet(isPresented: $isShowingDatePicker) {
                 DateTimePickerView(

@@ -20,7 +20,6 @@ struct GenerateTaskWithAIView: View {
                 Section(header:
                     Text("Goal Info")
                         .font(.headline)
-                        .foregroundColor(.secondary)
                 ) {
                     HStack {
                         Text("Goal")

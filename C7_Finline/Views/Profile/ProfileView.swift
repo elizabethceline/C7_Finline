@@ -16,6 +16,7 @@ struct ProfileView: View {
     @FocusState private var isNameFieldFocused: Bool
     @State private var showAlert = false
     @State private var showShopModal = false
+
     @State private var navigateToFocus = false
     @State private var userRecordID: CKRecord.ID?
     

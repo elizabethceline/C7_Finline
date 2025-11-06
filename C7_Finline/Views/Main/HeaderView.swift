@@ -20,11 +20,11 @@ struct HeaderView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     if unfinishedTasks.isEmpty {
                         Text("Do your tasks today and earn points!")
-                            .foregroundColor(Color(.black).opacity(0.7))
+                            .foregroundColor(Color(.label).opacity(0.7))
                             .font(.body)
                     } else {
                         Text(tasksMessage)
-                            .foregroundColor(Color(.black).opacity(0.7))
+                            .foregroundColor(Color(.label).opacity(0.7))
                             .font(.body)
                     }
                 }
@@ -61,7 +61,8 @@ struct HeaderView: View {
             }
         }
         .padding(.horizontal)
-        .padding(.vertical, 4)
+        .padding(.top, 4)
+        .padding(.bottom, 12)
         .navigationDestination(isPresented: $navigateToProfile) {
             ProfileView(viewModel: ProfileViewModel())
         }

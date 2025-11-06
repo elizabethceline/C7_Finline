@@ -29,7 +29,7 @@ struct MainView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 20) {
+            VStack(spacing: 12) {
                 HeaderView(
                     viewModel: viewModel,
                     unfinishedTasks: unfinishedTasks,
@@ -83,7 +83,7 @@ struct MainView: View {
 
                         if !unfinishedTasks.isEmpty {
                             Text("|")
-                                .foregroundColor(.black)
+                                .foregroundColor(Color(.label))
                                 .padding(.leading, 4)
 
                             Button {
