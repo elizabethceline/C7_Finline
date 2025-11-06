@@ -85,6 +85,7 @@ struct ContentCardView: View {
                         Text("Showing: \(viewModel.taskFilter.rawValue)")
                             .font(.caption)
                             .fontWeight(.medium)
+                            .foregroundColor(Color(.label))
                         Spacer()
                         Button("Clear") {
                             withAnimation {
@@ -96,7 +97,7 @@ struct ContentCardView: View {
                     }
                     .padding(.horizontal)
                     .padding(.vertical, 8)
-                    .background(Color.white)
+                    .background(Color(.systemBackground))
                     .cornerRadius(8)
                     .padding(.bottom, 8)
                 }

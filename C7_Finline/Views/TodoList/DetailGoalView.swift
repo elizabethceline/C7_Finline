@@ -77,6 +77,8 @@ struct DetailGoalView: View {
                 taskSection
             }
         }
+        .scrollContentBackground(.hidden)
+        .background(Color(.systemGray6).ignoresSafeArea())
         .listStyle(.insetGrouped)
         .navigationTitle("Goal Detail")
 //         .navigationDestination(isPresented: $goToTaskDetail) {
@@ -148,7 +150,6 @@ struct DetailGoalView: View {
                 modelContext: modelContext
             )
         }
-        .background(Color.gray.opacity(0.2).ignoresSafeArea())
 
         .alert("Delete Task", isPresented: $showDeleteAlert) {
             Button("Cancel", role: .cancel) {
@@ -276,7 +277,6 @@ struct DetailGoalView: View {
                 header:
                     Text(date, format: .dateTime.day().month(.wide).year())
                     .font(.title3)
-                    .foregroundColor(.black)
                     .fontWeight(.semibold)
             ) {
                 ForEach(tasks) { task in

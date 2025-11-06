@@ -7,50 +7,62 @@
 
 import SwiftUI
 
+enum ShopCardStatus {
+    case selected, choose, price
+}
+
 struct ShopCardView: View {
     let item: ShopItem
-    let isSelected: Bool
+    let status: ShopCardStatus
+    let price: Int
     let onTap: () -> Void
-    
+
     var body: some View {
         VStack(spacing: 12) {
             item.image
                 .resizable()
                 .scaledToFit()
                 .frame(width: 180, height: 180)
-                .offset( y: -23)
-            
+                .offset(y: -23)
+
             Text(item.displayName)
                 .font(.system(size: 16, weight: .medium))
                 .foregroundColor(.primary)
                 .offset(y: -40)
-            
-            if isSelected {
-                Text("Selected")
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundColor(Color.primary)
+
+            Group {
+                switch status {
+                case .selected:
+                    Text("Selected")
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundColor(.primary)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
+                        .clipShape(Capsule())
+                case .choose:
+                    Text("Choose")
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
+                        .background(Color.blue)
+                        .clipShape(Capsule())
+                case .price:
+                    HStack(spacing: 6) {
+                        Image(systemName: "bitcoinsign.circle.fill")
+                            .font(.system(size: 20))
+                            .foregroundColor(.yellow)
+                        Text("\(price)")
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundColor(.white)
+                    }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 8)
+                    .background(Color.primary.opacity(0.6))
                     .clipShape(Capsule())
-                    .offset(y: -40)
-
-            } else {
-                HStack(spacing: 6) {
-                    Image(systemName: "bitcoinsign.circle.fill")
-                        .font(.system(size: 20))
-                        .foregroundColor(.yellow)
-                    Text("\(item.price)")
-                        .font(.system(size: 20, weight: .semibold))
-                        .foregroundColor(.white)
                 }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 8)
-                .background(Color.primary.opacity(0.6))
-                .clipShape(Capsule())
-                .offset(y: -40)
-
             }
-            
+            .offset(y: -40)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 16)
@@ -61,31 +73,9 @@ struct ShopCardView: View {
         )
         .overlay(
             RoundedRectangle(cornerRadius: 20)
-                .strokeBorder(isSelected ? Color.primary : Color.clear, lineWidth: 3)
+                .strokeBorder(status == .selected ? Color.primary : Color.clear, lineWidth: 3)
         )
-        .onTapGesture {
-            onTap()
-        }
+        .onTapGesture { onTap() }
     }
 }
 
-#Preview {
-    let columns = [
-        GridItem(.flexible()),
-        GridItem(.flexible())
-    ]
-    
-    return ScrollView {
-        LazyVGrid(columns: columns, spacing: 16) {
-            ForEach(ShopItem.allCases, id: \.rawValue) { item in
-                ShopCardView(
-                    item: item,
-                    isSelected: item == .dogo, 
-                    onTap: { print("Tapped \(item.displayName)") }
-                )
-            }
-        }
-        .padding()
-    }
-    .previewLayout(.sizeThatFits)
-}
