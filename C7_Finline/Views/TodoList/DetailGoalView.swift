@@ -38,6 +38,8 @@ struct DetailGoalView: View {
 
     @State private var isSelecting = false
     @State private var selectedTaskIds: Set<String> = []
+    
+    @State private var showAddTaskModal = false
 
     var body: some View {
         List {
@@ -79,28 +81,6 @@ struct DetailGoalView: View {
         .background(Color(.systemGray6).ignoresSafeArea())
         .listStyle(.insetGrouped)
         .navigationTitle("Goal Detail")
-        //         .navigationDestination(isPresented: $goToTaskDetail) {
-        //             if let task = selectedTask {
-        //                 DetailTaskView(
-        //                     task: task,
-        //                     viewModel: taskVM
-        //                 )
-        //             }
-        //         }
-
-        //        .navigationDestination(isPresented: $goToTaskDetail) {
-        //            if let task = selectedTask {
-        //                DetailTaskView(
-        //                    task: task,
-        //                    taskManager: TaskManager(networkMonitor: NetworkMonitor()),
-        //                    viewModel: taskVM,
-        //                    onStartFocus: {
-        //                        coverMode = .focus
-        //                    }
-        //                )
-        //
-        //            }
-        //        }
         .fullScreenCover(isPresented: isCoverPresented) {
             Group {
                 if let mode = coverMode {
@@ -217,6 +197,9 @@ struct DetailGoalView: View {
                             withAnimation {
                                 isSelecting = true
                             }
+                        }
+                        Button("Add Task") { 
+                            showAddTaskModal = true
                         }
                     } label: {
                         Image(systemName: "ellipsis")

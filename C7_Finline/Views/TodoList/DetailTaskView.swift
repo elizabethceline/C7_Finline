@@ -5,6 +5,13 @@
 //  Created by Richie Reuben Hermanto on 30/10/25.
 //
 
+//
+//  DetailTask.swift
+//  C7_Finline
+//
+//  Created by Richie Reuben Hermanto on 30/10/25.
+//
+
 import SwiftUI
 import SwiftData
 
@@ -19,26 +26,27 @@ struct DetailTaskView: View {
     
     @State private var isShowingDatePicker: Bool = false
     @State private var isShowingTimePicker: Bool = false
-    //    @State private var isDeepFocusOn: Bool = false
     @State private var isNudgeMeOn: Bool = true
+    
+    @State private var isShowingDurationPicker = false
+    @State private var durationHours = 1
+    @State private var durationMinutes = 0
     
     @ObservedObject var taskVM: TaskViewModel
     @EnvironmentObject var focusVM: FocusSessionViewModel
     @State private var isShowingFocusSettings = false
-    //@State private var showFocusView: Bool = false
     @State private var isShowingUnsavedChangesAlert = false
     @State private var isShowingDismissAlert = false
     @State private var isShowingDeleteAlert = false
     
     let task: GoalTask
-
     let taskManager: TaskManager
     let onStartFocus: () -> Void
     let onTaskDeleted: ((GoalTask) -> Void)?
     
     init(task: GoalTask, taskManager: TaskManager, viewModel: TaskViewModel, onStartFocus: @escaping () -> Void, onTaskDeleted: ((GoalTask) -> Void)? = nil) {
         self.task = task
-        self.taskManager = taskManager     
+        self.taskManager = taskManager
         self.taskVM = viewModel
         self.onStartFocus = onStartFocus
         self.onTaskDeleted = onTaskDeleted
@@ -48,6 +56,8 @@ struct DetailTaskView: View {
         _focusDuration = State(initialValue: task.focusDuration)
         _isCompleted = State(initialValue: task.isCompleted)
         
+        _durationHours = State(initialValue: task.focusDuration / 60)
+        _durationMinutes = State(initialValue: task.focusDuration % 60)
     }
     
     private var hasUnsavedChanges: Bool {
@@ -112,26 +122,32 @@ struct DetailTaskView: View {
                         .foregroundColor(Color(.label))
                     }
                     
-                    Stepper(value: $focusDuration, in: 1...180, step: 1) {
+                    Button {
+                        isShowingDurationPicker = true
+                    } label: {
                         HStack {
-                            Text("Focus Duration")
-                                .foregroundStyle(.secondary)
+                            Label {
+                                Text("\(focusDuration) mins")
+                                    .font(.body)
+                                    .foregroundColor(Color(.label))
+                            } icon: {
+                                Image(systemName: "timer")
+                                    .foregroundColor(.primary)
+                            }
                             Spacer()
-                            Text("\(focusDuration) mins")
-                                .font(.body)
+                            Image(systemName: "chevron.right")
+                        }
+                        .foregroundStyle(.black)
+                    }
+                    .sheet(isPresented: $isShowingDurationPicker) {
+                        TimerPickerSheetView(
+                            hours: $durationHours,
+                            minutes: $durationMinutes
+                        ) { totalMinutes in
+                            focusDuration = totalMinutes
                         }
                     }
                 }
-                //                Section {
-                //                    HStack(spacing: 16) {
-                //                        ToggleCardView(icon: "moon.fill", title: "Deep Focus", isOn: $focusVM.authManager.isEnabled)
-                //                        ToggleCardView(icon: "bell.fill", title: "Nudge Me", isOn: $isNudgeMeOn)
-                //                    }
-                //                    .padding(.vertical, 8)
-                //                }
-                //                .listRowInsets(EdgeInsets(top: 0, leading: 2, bottom: 0, trailing: 2))
-                //                .listRowBackground(Color.clear)
-                
                 Section {
                     Button(role: .destructive) {
                         isShowingDeleteAlert = true
@@ -215,7 +231,6 @@ struct DetailTaskView: View {
                     displayedComponents: [.hourAndMinute]
                 )
             }
-            .presentationDetents([.large])
             .sheet(isPresented: $isShowingFocusSettings) {
                 FocusSettingsView(
                     isNudgeMeOn: $isNudgeMeOn,
@@ -282,7 +297,6 @@ struct DetailTaskView: View {
             } message: {
                 Text("There's unsaved changes, do you want to save before closing?")
             }
-            
         }
     }
 }
@@ -307,6 +321,7 @@ struct DetailTaskView: View {
         isCompleted: false,
         goal: sampleGoal
     )
+    
     let mockFocusVM = FocusSessionViewModel()
     
     return DetailTaskView(
