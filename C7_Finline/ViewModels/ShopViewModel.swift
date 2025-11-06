@@ -61,13 +61,14 @@ class ShopViewModel: ObservableObject {
         }
     }
 
+    // ShopViewModel.swift
     func fetchUserProfile(userRecordID: CKRecord.ID) async {
         guard let context = modelContext else { return }
 
-        // Tampilkan local data dulu agar UI cepat
+        // Load local data first for quick UI
         loadLocalData()
 
-        // Kemudian fetch remote (CloudKit) di background
+        // Fetch from CloudKit
         isLoading = true
         defer { isLoading = false }
 
@@ -79,9 +80,10 @@ class ShopViewModel: ObservableObject {
             self.userProfile = profile
             self.coins = profile.points
 
-            // After profile fetched, fetch purchased items
-            let items = try await shopManager.fetchPurchasedItems(modelContext: context)
+            // PERBAIKAN: Fetch dari CloudKit, bukan hanya lokal
+            let items = try await shopManager.fetchPurchasedItemsFromCloud(modelContext: context)
             self.purchasedItems = items
+            
             if let selected = items.first(where: { $0.isSelected }),
                let shopItem = ShopItem(rawValue: selected.itemName) {
                 self.selectedItem = shopItem
@@ -169,4 +171,6 @@ class ShopViewModel: ObservableObject {
             alertMessage = "Failed to add points: \(error.localizedDescription)"
         }
     }
+    
+    
 }

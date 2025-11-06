@@ -87,4 +87,43 @@ class ShopManager {
             print("Failed to sync purchased item: \(error.localizedDescription)")
         }
     }
+    
+    func fetchPurchasedItemsFromCloud(modelContext: ModelContext) async throws -> [PurchasedItem] {
+        guard networkMonitor.isConnected else {
+            return try modelContext.fetch(FetchDescriptor<PurchasedItem>())
+        }
+        
+        let query = CKQuery(recordType: "PurchasedItems", predicate: NSPredicate(value: true))
+        let records = try await cloudKit.fetchRecords(query: query)
+        for record in records {
+            let itemId = record.recordID.recordName
+            let itemName = record["itemName"] as? String ?? ""
+            let isSelected = (record["isSelected"] as? Int) == 1
+            
+            let existing = try? modelContext.fetch(
+                FetchDescriptor<PurchasedItem>(
+                    predicate: #Predicate { $0.id == itemId }
+                )
+            ).first
+            
+            if let existing = existing {
+                existing.itemName = itemName
+                existing.isSelected = isSelected
+                existing.needsSync = false
+            } else {
+                let newItem = PurchasedItem(
+                    id: itemId,
+                    itemName: itemName,
+                    isSelected: isSelected,
+                    needsSync: false
+                )
+                modelContext.insert(newItem)
+            }
+        }
+        
+        try modelContext.save()
+        return try modelContext.fetch(FetchDescriptor<PurchasedItem>())
+    }
+    
+    
 }
