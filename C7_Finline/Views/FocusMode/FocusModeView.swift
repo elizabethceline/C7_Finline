@@ -53,11 +53,11 @@ struct FocusModeView: View {
                     .animation(.easeInOut(duration: 0.5), value: viewModel.isResting)
             }
 
-            VStack { // decorative character
-                Image("charaSementara")
-                    .resizable()
-                    .scaledToFit()
-            }
+//            VStack { // decorative character
+//                Image("charaSementara")
+//                    .resizable()
+//                    .scaledToFit()
+//            }
 
             content // <-- broken out into a computed property
                 .padding()
@@ -167,7 +167,7 @@ struct FocusModeView: View {
     // MARK: - Subviews split for compiler friendliness
 
     private var backgroundView: some View {
-        Image("backgroundSementara")
+        Image(viewModel.isResting ? "restmode" : "focusmode")
             .resizable()
             .frame(height: 910)
     }
