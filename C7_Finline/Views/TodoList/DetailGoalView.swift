@@ -38,6 +38,8 @@ struct DetailGoalView: View {
 
     @State private var isSelecting = false
     @State private var selectedTaskIds: Set<String> = []
+    
+    @State private var showAddTaskModal = false
 
     var body: some View {
         List {
@@ -99,6 +101,24 @@ struct DetailGoalView: View {
 //
 //            }
 //        }
+        .sheet(isPresented: $showAddTaskModal) {
+            NavigationStack {
+                AddTaskToExistingGoalView(
+                    goal: goal,
+                    taskVM: taskVM,
+                    mainVM: MainViewModel(),  // Or pass your existing mainVM if available
+                    onTasksAdded: {
+                        // Refresh tasks after adding
+                        Task {
+                            await taskVM.getGoalTaskByGoalId(
+                                for: goal,
+                                modelContext: modelContext
+                            )
+                        }
+                    }
+                )
+            }
+        }
         .fullScreenCover(isPresented: isCoverPresented) {
                     Group {
                         if let mode = coverMode {
@@ -214,6 +234,9 @@ struct DetailGoalView: View {
                             withAnimation {
                                 isSelecting = true
                             }
+                        }
+                        Button("Add Task") { 
+                            showAddTaskModal = true
                         }
                     } label: {
                         Image(systemName: "ellipsis")

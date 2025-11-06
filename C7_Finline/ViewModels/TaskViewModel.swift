@@ -471,4 +471,13 @@ extension TaskViewModel {
             )
         )
     }
+    
+    func groupExistingTasks(_ tasks: [GoalTask]) -> [(date: Date, tasks: [GoalTask])] {
+        let grouped = Dictionary(grouping: tasks) { task in
+            Calendar.current.startOfDay(for: task.workingTime)
+        }
+        
+        return grouped.map { (date: $0.key, tasks: $0.value) }
+            .sorted { $0.date < $1.date }
+    }
 }
