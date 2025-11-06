@@ -145,47 +145,29 @@ struct FocusEndView: View {
 
 
 #Preview {
-    let container = try! ModelContainer(for: Goal.self, GoalTask.self)
-        let mockVM = MockFocusResultViewModel(context: container.mainContext)
+    let mockFish = [
+        Fish.sample(of: .common),
+        Fish.sample(of: .common),
+        Fish.sample(of: .common),
+        Fish.sample(of: .uncommon),
+        Fish.sample(of: .uncommon),
+        Fish.sample(of: .rare),
+        Fish.sample(of: .legendary)
+    ]
     
-    ZStack {
+    let mockResult = FocusSessionResult(
+        caughtFish: mockFish,
+        duration: 1800,
+        task: nil
+    )
+    
+    let mockVM = FocusResultViewModel(context: nil, networkMonitor: NetworkMonitor())
+    mockVM.currentResult = mockResult
+    mockVM.bonusPoints = 20
+    
+    return ZStack {
         Color.gray
             .ignoresSafeArea()
         FocusEndView(viewModel: mockVM)
-    }
-    .modelContainer(container)
-}
-
-final class MockFocusResultViewModel: FocusResultViewModel {
-    
-    init(context: ModelContext) {
-        super.init(context: context, networkMonitor: NetworkMonitor())
-        
-        self.bonusPoints = 20
-    }
-    
-    override var fishCaught: [Fish] {
-        [
-            Fish.sample(of: .common),
-            Fish.sample(of: .common),
-            Fish.sample(of: .common),
-            Fish.sample(of: .common),
-            Fish.sample(of: .common),
-            Fish.sample(of: .common),
-            Fish.sample(of: .common),
-            Fish.sample(of: .uncommon),
-            Fish.sample(of: .uncommon),
-            Fish.sample(of: .uncommon),
-            Fish.sample(of: .rare),
-            Fish.sample(of: .legendary)
-        ]
-    }
-    
-    var totalPoints: Int {
-        fishCaught.reduce(0) { $0 + $1.points }
-    }
-    
-    override var grandTotal: Int {
-        totalPoints + bonusPoints
     }
 }
