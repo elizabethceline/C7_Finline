@@ -60,7 +60,7 @@ struct DebugDataView: View {
                     Section("Stored Goals (\(goals.count))") {
                         ForEach(goals) { goal in
                             NavigationLink {
-                                DetailGoalView(goal: goal, goalVM: goalVM)
+                                DetailGoalView(goal: goal, goalVM: goalVM, mainVM: MainViewModel())
                             } label: {
                                 VStack(alignment: .leading) {
                                     Text(goal.name)

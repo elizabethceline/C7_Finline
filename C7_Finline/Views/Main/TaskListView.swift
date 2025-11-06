@@ -135,6 +135,49 @@ struct TaskListView: View {
                                 }
                                 .tint(.red)
                             }
+                            .contextMenu {
+                                if !task.isCompleted {
+                                    Button {
+                                        selectedTask = task
+                                        showCompleteAlert = true
+                                    } label: {
+                                        Label(
+                                            "Mark as Complete",
+                                            systemImage: "checkmark.circle"
+                                        )
+                                    }
+                                } else {
+                                    Button {
+                                        selectedTask = task
+                                        showIncompleteAlert = true
+                                    } label: {
+                                        Label(
+                                            "Mark as Incomplete",
+                                            systemImage: "arrow.uturn.left"
+                                        )
+                                    }
+                                }
+
+                                Button {
+                                    selectedTask = task
+                                    showDeleteAlert = true
+                                } label: {
+                                    Label("Delete Task", systemImage: "trash")
+                                }
+
+                                Divider()
+
+                                Button {
+                                    coverMode = .detail(task)
+                                } label: {
+                                    Label(
+                                        "View Detail",
+                                        systemImage: "info.circle"
+                                    )
+                                }
+                            } preview: {
+                                TaskPreviewView(task: task)
+                            }
                         }
                     }
                     .listSectionSeparator(.hidden)
@@ -148,20 +191,21 @@ struct TaskListView: View {
                     .listRowBackground(Color.clear)
             }
         }
-//        .navigationDestination(isPresented: $navigateToDetail) {
-//            if let task = selectedTask {
-//                DetailTaskView(
-//                    task: task,
-//                    taskManager: TaskManager(networkMonitor: NetworkMonitor()),
-//                    viewModel: taskVM
-//                )
-//            }
-//        }
+        //        .navigationDestination(isPresented: $navigateToDetail) {
+        //            if let task = selectedTask {
+        //                DetailTaskView(
+        //                    task: task,
+        //                    taskManager: TaskManager(networkMonitor: NetworkMonitor()),
+        //                    viewModel: taskVM
+        //                )
+        //            }
+        //        }
         .navigationDestination(isPresented: $goToGoalDetail) {
             if let goal = selectedGoal {
                 DetailGoalView(
                     goal: goal,
-                    goalVM: GoalViewModel()
+                    goalVM: GoalViewModel(),
+                    mainVM: viewModel
                 )
             }
         }
@@ -176,10 +220,13 @@ struct TaskListView: View {
                             viewModel: taskVM,
                             onStartFocus: {
                                 coverMode = .focus
+                            },
+                            onTaskDeleted: { deletedTask in
+                                viewModel.deleteTask(task: deletedTask)
                             }
                         )
                     case .focus:
-                        FocusModeView(onGiveUp: { task in 
+                        FocusModeView(onGiveUp: { task in
                             coverMode = .detail(task)
                         })
                     }

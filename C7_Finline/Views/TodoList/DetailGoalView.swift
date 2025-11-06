@@ -13,16 +13,17 @@ struct DetailGoalView: View {
     let goal: Goal
     @ObservedObject var goalVM: GoalViewModel
     @StateObject private var taskVM = TaskViewModel()
+    @ObservedObject var mainVM: MainViewModel
     @Environment(\.modelContext) private var modelContext
 
     @State private var coverMode: FocusCoverMode?
-        @EnvironmentObject var focusVM: FocusSessionViewModel
+    @EnvironmentObject var focusVM: FocusSessionViewModel
     private var isCoverPresented: Binding<Bool> {
-            Binding(
-                get: { coverMode != nil },
-                set: { if !$0 { coverMode = nil } }
-            )
-        }
+        Binding(
+            get: { coverMode != nil },
+            set: { if !$0 { coverMode = nil } }
+        )
+    }
 
     @State private var selectedTask: GoalTask?
     @State private var goToTaskDetail = false
@@ -38,7 +39,7 @@ struct DetailGoalView: View {
 
     @State private var isSelecting = false
     @State private var selectedTaskIds: Set<String> = []
-    
+
     @State private var showAddTaskModal = false
 
     var body: some View {
@@ -81,69 +82,41 @@ struct DetailGoalView: View {
         .background(Color(.systemGray6).ignoresSafeArea())
         .listStyle(.insetGrouped)
         .navigationTitle("Goal Detail")
-//         .navigationDestination(isPresented: $goToTaskDetail) {
-//             if let task = selectedTask {
-//                 DetailTaskView(
-//                     task: task,
-//                     viewModel: taskVM
-//                 )
-//             }
-//         }
-
-//        .navigationDestination(isPresented: $goToTaskDetail) {
-//            if let task = selectedTask {
-//                DetailTaskView(
-//                    task: task,
-//                    taskManager: TaskManager(networkMonitor: NetworkMonitor()),
-//                    viewModel: taskVM,
-//                    onStartFocus: {
-//                        coverMode = .focus
-//                    }
-//                )
-//
-//            }
-//        }
-        .sheet(isPresented: $showAddTaskModal) {
-            CreateTaskManuallyView(
-                taskVM: taskVM,
-                taskDeadline: goal.due,
-                goalId: goal.id,
-                onTaskCreated: {
-                    Task {
-                        print("Before refresh - Goal has \(goal.tasks.count) tasks")
-                        await taskVM.getGoalTaskByGoalId(
-                            for: goal,
-                            modelContext: modelContext
-                        )
-                        print("After refresh - TaskVM has \(taskVM.goalTasks.count) tasks")
-                    }
-                }
-            )
-            .presentationDetents([.medium])
-        }
         .fullScreenCover(isPresented: isCoverPresented) {
-                    Group {
-                        if let mode = coverMode {
-                            switch mode {
-                            case .detail(let task):
-                                DetailTaskView(
-                                    task: task,
-                                    taskManager: TaskManager(networkMonitor: NetworkMonitor()),
-                                    viewModel: taskVM,
-                                    onStartFocus: {
-                                        coverMode = .focus
+            Group {
+                if let mode = coverMode {
+                    switch mode {
+                    case .detail(let task):
+                        DetailTaskView(
+                            task: task,
+                            taskManager: TaskManager(
+                                networkMonitor: NetworkMonitor()
+                            ),
+                            viewModel: taskVM,
+                            onStartFocus: {
+                                coverMode = .focus
+                            },
+                            onTaskDeleted: { deletedTask in
+                                Task {
+                                    taskVM.goalTasks.removeAll {
+                                        $0.id == deletedTask.id
                                     }
-                                )
-                            case .focus:
-                                FocusModeView(onGiveUp: { task in 
-                                    coverMode = .detail(task)
-                                                })
+                                    mainVM.deleteTask(task: deletedTask)
+                                    try? modelContext.save()
+                                }
                             }
-                        }
+
+                        )
+                    case .focus:
+                        FocusModeView(onGiveUp: { task in
+                            coverMode = .detail(task)
+                        })
                     }
-                    .environmentObject(focusVM)
-                    .environment(\.modelContext, modelContext)
                 }
+            }
+            .environmentObject(focusVM)
+            .environment(\.modelContext, modelContext)
+        }
         .task {
             await taskVM.getGoalTaskByGoalId(
                 for: goal,
@@ -236,7 +209,7 @@ struct DetailGoalView: View {
                                 isSelecting = true
                             }
                         }
-                        Button("Add Task") { 
+                        Button("Add Task") {
                             showAddTaskModal = true
                         }
                     } label: {
@@ -301,8 +274,8 @@ struct DetailGoalView: View {
                             if isSelecting {
                                 toggleSelection(for: task)
                             } else {
-//                                selectedTask = task
-//                                goToTaskDetail = true
+                                //                                selectedTask = task
+                                //                                goToTaskDetail = true
                                 coverMode = .detail(task)
                             }
                         } label: {
@@ -352,6 +325,50 @@ struct DetailGoalView: View {
                             Label("Delete", systemImage: "trash")
                         }
                         .tint(.red)
+                    }
+
+                    .contextMenu {
+                        if !task.isCompleted {
+                            Button {
+                                taskToComplete = task
+                                showCompleteAlert = true
+                            } label: {
+                                Label(
+                                    "Mark as Complete",
+                                    systemImage: "checkmark.circle"
+                                )
+                            }
+                        } else {
+                            Button {
+                                taskToIncomplete = task
+                                showIncompleteAlert = true
+                            } label: {
+                                Label(
+                                    "Mark as Incomplete",
+                                    systemImage: "arrow.uturn.left"
+                                )
+                            }
+                        }
+
+                        Button {
+                            taskToDelete = task
+                            showDeleteAlert = true
+                        } label: {
+                            Label("Delete Task", systemImage: "trash")
+                        }
+
+                        Divider()
+
+                        Button {
+                            coverMode = .detail(task)
+                        } label: {
+                            Label(
+                                "View Detail",
+                                systemImage: "info.circle"
+                            )
+                        }
+                    } preview: {
+                        TaskPreviewView(task: task)
                     }
                 }
             }
@@ -464,7 +481,11 @@ struct DetailGoalView: View {
     let goalVM = GoalViewModel()
 
     return NavigationStack {
-            DetailGoalView(goal: sampleGoal, goalVM: goalVM)
-        }
-        .environmentObject(FocusSessionViewModel()) // <-- ADD THIS
+        DetailGoalView(
+            goal: sampleGoal,
+            goalVM: goalVM,
+            mainVM: MainViewModel()
+        )
+    }
+    .environmentObject(FocusSessionViewModel())  // <-- ADD THIS
 }
