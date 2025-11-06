@@ -6,10 +6,12 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct CreateTaskManuallyView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var taskVM: TaskViewModel
+    @Environment(\.modelContext) private var modelContext
     
     @State private var taskName: String = ""
     @State private var taskDeadline: Date
@@ -19,10 +21,20 @@ struct CreateTaskManuallyView: View {
     @State private var isShowingTimePicker: Bool = false
     
     private var existingTask: AIGoalTask?
+    private var goalId: String?
+    var onTaskCreated: (() -> Void)?
     
-    init(taskVM: TaskViewModel, taskDeadline: Date = Date(), existingTask: AIGoalTask? = nil) {
+    init(
+        taskVM: TaskViewModel,
+        taskDeadline: Date = Date(),
+        existingTask: AIGoalTask? = nil,
+        goalId: String? = nil,  
+        onTaskCreated: (() -> Void)? = nil
+    ) {
         self.taskVM = taskVM
         self.existingTask = existingTask
+        self.goalId = goalId
+        self.onTaskCreated = onTaskCreated
         
         if let existingTask = existingTask {
             _taskName = State(initialValue: existingTask.name)
@@ -125,6 +137,17 @@ struct CreateTaskManuallyView: View {
                                 workingTime: formattedDate,
                                 focusDuration: focusDuration
                             )
+                        } else if let goalId = goalId {
+                            Task {
+                                await taskVM.createTaskForGoal(
+                                    goalId: goalId,
+                                    name: taskName,
+                                    workingTime: taskDeadline,
+                                    focusDuration: focusDuration,
+                                    modelContext: modelContext
+                                )
+                                onTaskCreated?()
+                            }
                         } else {
                             taskVM.createTaskManually(
                                 name: taskName,

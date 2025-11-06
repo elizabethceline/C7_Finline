@@ -38,6 +38,8 @@ struct DetailGoalView: View {
 
     @State private var isSelecting = false
     @State private var selectedTaskIds: Set<String> = []
+    
+    @State private var showAddTaskModal = false
 
     var body: some View {
         List {
@@ -101,6 +103,24 @@ struct DetailGoalView: View {
 //
 //            }
 //        }
+        .sheet(isPresented: $showAddTaskModal) {
+            CreateTaskManuallyView(
+                taskVM: taskVM,
+                taskDeadline: goal.due,
+                goalId: goal.id,
+                onTaskCreated: {
+                    Task {
+                        print("Before refresh - Goal has \(goal.tasks.count) tasks")
+                        await taskVM.getGoalTaskByGoalId(
+                            for: goal,
+                            modelContext: modelContext
+                        )
+                        print("After refresh - TaskVM has \(taskVM.goalTasks.count) tasks")
+                    }
+                }
+            )
+            .presentationDetents([.medium])
+        }
         .fullScreenCover(isPresented: isCoverPresented) {
                     Group {
                         if let mode = coverMode {
@@ -215,6 +235,9 @@ struct DetailGoalView: View {
                             withAnimation {
                                 isSelecting = true
                             }
+                        }
+                        Button("Add Task") { 
+                            showAddTaskModal = true
                         }
                     } label: {
                         Image(systemName: "ellipsis")

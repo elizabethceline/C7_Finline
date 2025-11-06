@@ -224,6 +224,41 @@ final class TaskViewModel: ObservableObject {
             print("Task not found for deletion")
         }
     }
+    //Create Task on Goal Detail View
+    func createTaskForGoal(
+        goalId: String,
+        name: String,
+        workingTime: Date,
+        focusDuration: Int,
+        modelContext: ModelContext
+    ) async {
+        let goalPredicate = #Predicate<Goal> { $0.id == goalId }
+        guard let goal = try? modelContext.fetch(
+            FetchDescriptor(predicate: goalPredicate)
+        ).first else {
+            print("Goal not found")
+            return
+        }
+        
+        print("Found goal: \(goal.name)")
+        
+        let newTask = taskManager.createTask(
+            goal: goal,
+            name: name,
+            workingTime: workingTime,
+            focusDuration: focusDuration,
+            modelContext: modelContext
+        )
+        print("Created task: \(newTask.name) for goal: \(goal.name)")
+        print("Goal now has \(goal.tasks.count) tasks")
+        
+        do {
+            try modelContext.save()
+            print("Context saved successfully")
+        } catch {
+            print("Failed to save context: \(error)")
+        }
+    }
 
     private func sortTasksByDate() {
         let dateFormatter = ISO8601DateFormatter()
