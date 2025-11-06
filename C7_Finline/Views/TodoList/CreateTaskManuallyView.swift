@@ -19,6 +19,11 @@ struct CreateTaskManuallyView: View {
     
     @State private var isShowingDatePicker: Bool = false
     @State private var isShowingTimePicker: Bool = false
+    @State private var isShowingDurationPicker = false
+    @State private var durationHours = 0
+    @State private var durationMinutes = 1
+    @State private var durationSeconds = 0
+
     
     private var existingTask: AIGoalTask?
     private var goalId: String?
@@ -97,17 +102,33 @@ struct CreateTaskManuallyView: View {
                             .foregroundColor(Color(.label))                        }
                         .foregroundStyle(.black)
                     }
-                    
-                    Stepper(value: $focusDuration, in: 1...180, step: 1) {
+                    Button {
+                        isShowingDurationPicker = true
+                    } label: {
                         HStack {
-                            Text("Focus Duration")
-                                .foregroundStyle(.secondary)
+                            Label {
+                                Text("\(focusDuration) mins")
+                                    .font(.body)
+                                    .foregroundColor(Color(.label))
+                            } icon: {
+                                Image(systemName: "timer")
+                                    .foregroundColor(.primary)
+                            }
                             Spacer()
-                            Text("\(focusDuration) mins")
-                                .font(.body)
+                            Image(systemName: "chevron.right")
                                 .foregroundColor(Color(.label))
                         }
+                        .foregroundStyle(.black)
                     }
+                    .sheet(isPresented: $isShowingDurationPicker) {
+                        TimerPickerSheetView(
+                            hours: $durationHours,
+                            minutes: $durationMinutes
+                        ) { totalMinutes in
+                            focusDuration = totalMinutes 
+                        }
+                    }
+
                 } header: {
                     Text("Schedule")
                         .font(.headline)
