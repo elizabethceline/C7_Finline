@@ -5,8 +5,8 @@
 //  Created by Elizabeth Celine Liong on 26/10/25.
 //
 
-import SwiftData
 import SwiftUI
+import SwiftData
 import CloudKit
 
 struct ProfileView: View {
@@ -16,17 +16,38 @@ struct ProfileView: View {
     @FocusState private var isNameFieldFocused: Bool
     @State private var showAlert = false
     @State private var showShopModal = false
+
+    @State private var navigateToFocus = false
+    @State private var userRecordID: CKRecord.ID?
+    
+    @StateObject private var shopVM: ShopViewModel
+    
+    init(viewModel: ProfileViewModel) {
+        self.viewModel = viewModel
+        _shopVM = StateObject(
+            wrappedValue: ShopViewModel(
+                userProfileManager: viewModel.userProfileManagerInstance,
+                networkMonitor: viewModel.networkMonitorInstance
+            )
+        )
+    }
     
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
+                    
                     ZStack(alignment: .bottomTrailing) {
+                        let imageToShow = shopVM.selectedImage
+                        ?? viewModel.shopVM?.purchasedItems.first(where: { $0.isSelected })?.shopItem?.image
+                        ?? Image("finley")
                         
-                        Image("finley")
+                        imageToShow
                             .resizable()
                             .scaledToFill()
                             .frame(width: 240, height: 240)
+                            .clipShape(RoundedRectangle(cornerRadius: 20))
+                            .shadow(radius: 5)
                         
                         Button {
                             showShopModal = true
@@ -36,34 +57,33 @@ struct ProfileView: View {
                                 .fontWeight(.bold)
                                 .foregroundColor(.white)
                                 .padding(12)
-                                .background(
-                                    Circle()
-                                        .fill(Color.primary)
-                                )
+                                .background(Circle().fill(Color.primary))
                         }
                         .sheet(isPresented: $showShopModal) {
-                            AsyncShopSheet(viewModel: viewModel)
-                                .presentationDetents([.height(600)])
+                            if let id = userRecordID {
+                                ShopView(viewModel: shopVM, userRecordID: id)
+                                    .presentationDetents([.height(600)])
+                            } else {
+                                ProgressView("Loading...")
+                                    .presentationDetents([.height(300)])
+                            }
                         }
-
 
                     }
                     .frame(maxWidth: .infinity)
+                    .padding(.top, 16)
                     
                     HStack {
                         VStack(alignment: .leading) {
                             if viewModel.isEditingName {
-                                TextField(
-                                    "Your name",
-                                    text: $viewModel.tempUsername
-                                )
-                                .textInputAutocapitalization(.words)
-                                .disableAutocorrection(true)
-                                .font(.headline)
-                                .focused($isNameFieldFocused)
-                                .onSubmit {
-                                    handleSaveUsername()
-                                }
+                                TextField("Your name", text: $viewModel.tempUsername)
+                                    .textInputAutocapitalization(.words)
+                                    .disableAutocorrection(true)
+                                    .font(.headline)
+                                    .focused($isNameFieldFocused)
+                                    .onSubmit {
+                                        handleSaveUsername()
+                                    }
                             } else {
                                 Text(
                                     viewModel.username.isEmpty
@@ -83,9 +103,7 @@ struct ProfileView: View {
                                     isNameFieldFocused = false
                                 } else {
                                     viewModel.startEditingUsername()
-                                    DispatchQueue.main.asyncAfter(
-                                        deadline: .now() + 0.1
-                                    ) {
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                                         isNameFieldFocused = true
                                     }
                                 }
@@ -116,14 +134,13 @@ struct ProfileView: View {
                     }
                     .padding(.horizontal)
                     
-                    // Best Focus Time
                     HStack {
                         Text("Best Focus Time")
                             .font(.body)
                         Spacer()
-                        Text(formatTime(viewModel.bestFocusTime))
-                            .font(.title3)
-                            .fontWeight(.semibold)
+//                        Text(viewModel.bestFocusTime)
+//                            .font(.title3)
+//                            .fontWeight(.semibold)
                     }
                     .padding(.vertical, 24)
                     .padding(.horizontal)
@@ -133,11 +150,8 @@ struct ProfileView: View {
                     )
                     .padding(.horizontal)
                     
-                    // Edit productive hours
                     NavigationLink(
-                        destination: EditProductiveHoursView(
-                            viewModel: viewModel
-                        )
+                        destination: EditProductiveHoursView(viewModel: viewModel)
                     ) {
                         HStack {
                             Text("Edit your activity time")
@@ -157,27 +171,53 @@ struct ProfileView: View {
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-
                     
-                    
+                    Button {
+                        navigateToFocus = true
+                    } label: {
+                        Label("Focus Mode", systemImage: "lock.desktopcomputer")
+                            .font(.body)
+                            .fontWeight(.medium)
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(Color.blue.opacity(0.15))
+                            )
+                    }
+                    .padding(.horizontal)
                 }
                 .onAppear {
                     viewModel.setModelContext(modelContext)
+                    shopVM.setModelContext(modelContext)
+                    Task {
+                        // Ambil record ID hanya sekali
+                        if userRecordID == nil {
+                            userRecordID = await viewModel.userRecordID
+                        }
+
+                        // Setelah ID tersedia, fetch profil dan item shop
+                        if let id = userRecordID {
+                            await shopVM.fetchUserProfile(userRecordID: id)
+                        }
+                    }
                 }
+
                 .padding(.vertical)
             }
             .background(Color(uiColor: .systemGray6).ignoresSafeArea())
             .refreshable {
                 viewModel.fetchUserProfile()
+                if let id = await viewModel.userRecordID {
+                    await shopVM.fetchUserProfile(userRecordID: id)
+                }
             }
             .navigationTitle("Profile")
             .navigationBarTitleDisplayMode(.inline)
             .alert(isPresented: $showAlert) {
-                Alert(
-                    title: Text("Invalid Username"),
-                    message: Text(viewModel.errorMessage),
-                    dismissButton: .default(Text("OK"))
-                )
+                Alert(title: Text("Invalid Username"),
+                      message: Text(viewModel.errorMessage),
+                      dismissButton: .default(Text("OK")))
             }
         }
     }
@@ -188,14 +228,8 @@ struct ProfileView: View {
             showAlert = true
         }
     }
-    
-    private func formatTime(_ seconds: TimeInterval) -> String {
-        let hrs = Int(seconds) / 3600
-        let mins = (Int(seconds) % 3600) / 60
-        let secs = Int(seconds) % 60
-        return String(format: "%02d:%02d:%02d", hrs, mins, secs)
-    }
 }
+
 
 struct StatCard: View {
     let title: String
@@ -222,21 +256,14 @@ struct StatCard: View {
 struct AsyncShopSheet: View {
     @ObservedObject var viewModel: ProfileViewModel
     @Environment(\.modelContext) private var modelContext
-
+    
     @State private var userRecordID: CKRecord.ID? = nil
-
+    
     var body: some View {
         Group {
-            if let id = userRecordID {
-                ShopView(
-                    viewModel: ShopViewModel(
-                        userProfileManager: viewModel.userProfileManagerInstance,
-                        networkMonitor: viewModel.networkMonitorInstance
-                    ),
-                    userRecordID: id
-                )
-            } else {
-                ProgressView("Loading...")
+            if let shopVM = viewModel.shopVM,
+               let id = userRecordID {
+                ShopView(viewModel: shopVM, userRecordID: id)
             }
         }
         .task {
@@ -244,7 +271,6 @@ struct AsyncShopSheet: View {
         }
     }
 }
-
 
 #Preview {
     ProfileView(viewModel: ProfileViewModel())
