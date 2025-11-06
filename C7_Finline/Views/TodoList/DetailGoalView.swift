@@ -104,22 +104,22 @@ struct DetailGoalView: View {
 //            }
 //        }
         .sheet(isPresented: $showAddTaskModal) {
-            NavigationStack {
-                AddTaskToExistingGoalView(
-                    goal: goal,
-                    taskVM: taskVM,
-                    mainVM: MainViewModel(),  // Or pass your existing mainVM if available
-                    onTasksAdded: {
-                        // Refresh tasks after adding
-                        Task {
-                            await taskVM.getGoalTaskByGoalId(
-                                for: goal,
-                                modelContext: modelContext
-                            )
-                        }
+            CreateTaskManuallyView(
+                taskVM: taskVM,
+                taskDeadline: goal.due,
+                goalId: goal.id,
+                onTaskCreated: {
+                    Task {
+                        print("Before refresh - Goal has \(goal.tasks.count) tasks")
+                        await taskVM.getGoalTaskByGoalId(
+                            for: goal,
+                            modelContext: modelContext
+                        )
+                        print("After refresh - TaskVM has \(taskVM.goalTasks.count) tasks")
                     }
-                )
-            }
+                }
+            )
+            .presentationDetents([.medium])
         }
         .fullScreenCover(isPresented: isCoverPresented) {
                     Group {
