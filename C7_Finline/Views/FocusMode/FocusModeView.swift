@@ -5,6 +5,8 @@ struct FocusModeView: View {
     @EnvironmentObject var viewModel: FocusSessionViewModel
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    
+    var onGiveUp: (GoalTask) -> Void
 
     @State private var isGivingUp = false
     @State private var resultVM: FocusResultViewModel?
@@ -65,9 +67,9 @@ struct FocusModeView: View {
             if newValue && !isGivingUp && resultVM == nil {
                 isShowingTimesUpAlert = true
             }
-            if newValue && isGivingUp {
-                dismiss()
-            }
+//            if newValue && isGivingUp {
+//                dismiss()
+//            }
         }
         .task(id: viewModel.isShowingNudgeAlert) {
             if viewModel.isShowingNudgeAlert {
@@ -83,14 +85,16 @@ struct FocusModeView: View {
             isGivingUp = false
             resultVM = nil
         }
-
-        // Alerts & sheets kept on the root (unchanged)
         .alert("Do you want to give up?", isPresented: $isShowingGiveUpAlert) {
             Button("Yes", role: .destructive) {
                 Task {
                     isGivingUp = true
                     await viewModel.giveUp()
-                    dismiss()
+                    if let task = viewModel.task {
+                        onGiveUp(task)
+                    } else {
+                        dismiss()
+                    }
                 }
             }
             Button("No", role: .cancel) { }
@@ -221,7 +225,7 @@ struct FocusModeView: View {
 
             // Timer display + buttons
             timerCard
-                .padding(.vertical)
+                //.padding(.vertical)
                 .padding(.bottom, 40)
         }
     }
@@ -233,20 +237,6 @@ struct FocusModeView: View {
                 .monospacedDigit()
 
             HStack {
-                if viewModel.canRest && viewModel.isFocusing {
-                    Button {
-                        isShowingRestModal = true
-                    } label: {
-                        Text("Rest")
-                            .font(.headline)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.primary)
-                            .foregroundColor(.white)
-                            .clipShape(RoundedRectangle(cornerRadius: 24))
-                    }
-                }
-
                 Button {
                     Task {
                         if isEarlyFinishAllowed {
@@ -263,6 +253,20 @@ struct FocusModeView: View {
                         .background(Color.primary)
                         .foregroundColor(.white)
                         .clipShape(RoundedRectangle(cornerRadius: 24))
+                }
+                
+                if viewModel.canRest && viewModel.isFocusing {
+                    Button {
+                        isShowingRestModal = true
+                    } label: {
+                        Text("Rest")
+                            .font(.headline)
+//                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.primary)
+                            .foregroundColor(.white)
+                            .clipShape(RoundedRectangle(cornerRadius: 24))
+                    }
                 }
             }
         }
@@ -288,7 +292,9 @@ struct FocusModeView: View {
     mockSessionVM.goalName = "Write my Thesis"
     mockSessionVM.remainingTime = 120
 
-    return FocusModeView()
+    return FocusModeView(
+        onGiveUp: { task in print("Preview Give Up Tapped") }
+    )
         .environmentObject(mockSessionVM)
         .modelContainer(for: [Goal.self, GoalTask.self], inMemory: true)
 }
