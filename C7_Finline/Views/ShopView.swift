@@ -93,6 +93,7 @@ struct ShopView: View {
             HStack(spacing: 6) {
                 Text("\(viewModel.coins)")
                     .font(.system(size: 18, weight: .bold))
+                    .foregroundStyle(Color.white)
                 Image(systemName: "bitcoinsign.circle.fill")
                     .foregroundColor(.yellow)
                     .imageScale(.large)
@@ -122,3 +123,4 @@ struct ShopView: View {
         }
     }
 }
+
