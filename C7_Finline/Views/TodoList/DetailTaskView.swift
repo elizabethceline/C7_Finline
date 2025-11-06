@@ -28,17 +28,20 @@ struct DetailTaskView: View {
     //@State private var showFocusView: Bool = false
     @State private var isShowingUnsavedChangesAlert = false
     @State private var isShowingDismissAlert = false
+    @State private var isShowingDeleteAlert = false
     
     let task: GoalTask
 
     let taskManager: TaskManager
     let onStartFocus: () -> Void
+    let onTaskDeleted: ((GoalTask) -> Void)?
     
-    init(task: GoalTask, taskManager: TaskManager, viewModel: TaskViewModel, onStartFocus: @escaping () -> Void) {
+    init(task: GoalTask, taskManager: TaskManager, viewModel: TaskViewModel, onStartFocus: @escaping () -> Void, onTaskDeleted: ((GoalTask) -> Void)? = nil) {
         self.task = task
         self.taskManager = taskManager     
         self.taskVM = viewModel
         self.onStartFocus = onStartFocus
+        self.onTaskDeleted = onTaskDeleted
         
         _taskName = State(initialValue: task.name)
         _taskDate = State(initialValue: task.workingTime)
@@ -50,7 +53,8 @@ struct DetailTaskView: View {
     private var hasUnsavedChanges: Bool {
         taskName != task.name ||
         focusDuration != task.focusDuration ||
-        taskDate != task.workingTime
+        taskDate != task.workingTime ||
+        isCompleted != task.isCompleted
     }
     
     var body: some View {
@@ -60,6 +64,17 @@ struct DetailTaskView: View {
                     TextField("Task Name", text: $taskName)
                         .textInputAutocapitalization(.words)
                         .disableAutocorrection(true)
+                }
+                
+                Section("Status") {
+                    Toggle(isOn: $isCompleted) {
+                        HStack {
+                            Image(systemName: isCompleted ? "checkmark.circle.fill" : "circle")
+                                .foregroundColor(isCompleted ? .green : .gray)
+                            Text(isCompleted ? "Completed" : "Incomplete")
+                        }
+                    }
+                    .tint(.green)
                 }
                 
                 Section("Schedule") {
@@ -117,6 +132,17 @@ struct DetailTaskView: View {
                 //                .listRowInsets(EdgeInsets(top: 0, leading: 2, bottom: 0, trailing: 2))
                 //                .listRowBackground(Color.clear)
                 
+                Section {
+                    Button(role: .destructive) {
+                        isShowingDeleteAlert = true
+                    } label: {
+                        HStack {
+                            Image(systemName: "trash")
+                            Text("Delete Task")
+                        }
+                        .frame(maxWidth: .infinity)
+                    }
+                }
             }
             .navigationTitle("Task Details")
             .navigationBarTitleDisplayMode(.inline)
@@ -145,6 +171,7 @@ struct DetailTaskView: View {
                                 isCompleted: isCompleted,
                                 modelContext: modelContext
                             )
+                            dismiss()
                         }
                     } label: {
                         Text("Save")
@@ -154,26 +181,24 @@ struct DetailTaskView: View {
                 }
             }
             .safeAreaInset(edge: .bottom) {
-                Button(action: {
-                    if hasUnsavedChanges {
-                        isShowingUnsavedChangesAlert = true
-                    } else {
-                        focusVM.setTask(task, goal: task.goal)
-                        //                    focusVM.nudgeMeEnabled = isNudgeMeOn
-                        //                    focusVM.startSession()
-                        //                    // showFocusView = true
-                        //                    onStartFocus()
-                        isShowingFocusSettings = true
+                if !isCompleted {
+                    Button(action: {
+                        if hasUnsavedChanges {
+                            isShowingUnsavedChangesAlert = true
+                        } else {
+                            focusVM.setTask(task, goal: task.goal)
+                            isShowingFocusSettings = true
+                        }
+                    }) {
+                        Text("Start Focus")
+                            .font(.headline)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.primary)
+                            .foregroundColor(.white)
+                            .cornerRadius(50)
+                            .padding([.horizontal, .bottom])
                     }
-                }) {
-                    Text("Start Focus")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.primary)
-                        .foregroundColor(.white)
-                        .cornerRadius(50)
-                        .padding([.horizontal, .bottom])
                 }
             }
             .sheet(isPresented: $isShowingDatePicker) {
@@ -203,6 +228,17 @@ struct DetailTaskView: View {
                 )
                 .environmentObject(focusVM)
                 .presentationDetents([.height(300)])
+            }
+            .alert("Delete Task", isPresented: $isShowingDeleteAlert) {
+                Button("Cancel", role: .cancel) { }
+                Button("Delete", role: .destructive) {
+                    Task {
+                        onTaskDeleted?(task)
+                        dismiss()
+                    }
+                }
+            } message: {
+                Text("Are you sure you want to delete '\(taskName)'? This action cannot be undone.")
             }
             .alert("Unsaved Changes", isPresented: $isShowingUnsavedChangesAlert) {
                 Button("Yes") {

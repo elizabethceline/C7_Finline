@@ -219,6 +219,9 @@ struct TaskListView: View {
                             viewModel: taskVM,
                             onStartFocus: {
                                 coverMode = .focus
+                            },
+                            onTaskDeleted: { deletedTask in
+                                viewModel.deleteTask(task: deletedTask)
                             }
                         )
                     case .focus:
