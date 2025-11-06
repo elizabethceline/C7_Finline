@@ -13,6 +13,7 @@ struct DetailGoalView: View {
     let goal: Goal
     @ObservedObject var goalVM: GoalViewModel
     @StateObject private var taskVM = TaskViewModel()
+    @ObservedObject var mainVM: MainViewModel
     @Environment(\.modelContext) private var modelContext
 
     @State private var coverMode: FocusCoverMode?
@@ -38,7 +39,7 @@ struct DetailGoalView: View {
 
     @State private var isSelecting = false
     @State private var selectedTaskIds: Set<String> = []
-    
+
     @State private var showAddTaskModal = false
 
     var body: some View {
@@ -94,7 +95,17 @@ struct DetailGoalView: View {
                             viewModel: taskVM,
                             onStartFocus: {
                                 coverMode = .focus
+                            },
+                            onTaskDeleted: { deletedTask in
+                                Task {
+                                    taskVM.goalTasks.removeAll {
+                                        $0.id == deletedTask.id
+                                    }
+                                    mainVM.deleteTask(task: deletedTask)
+                                    try? modelContext.save()
+                                }
                             }
+
                         )
                     case .focus:
                         FocusModeView(onGiveUp: { task in
@@ -198,7 +209,7 @@ struct DetailGoalView: View {
                                 isSelecting = true
                             }
                         }
-                        Button("Add Task") { 
+                        Button("Add Task") {
                             showAddTaskModal = true
                         }
                     } label: {
@@ -470,7 +481,11 @@ struct DetailGoalView: View {
     let goalVM = GoalViewModel()
 
     return NavigationStack {
-        DetailGoalView(goal: sampleGoal, goalVM: goalVM)
+        DetailGoalView(
+            goal: sampleGoal,
+            goalVM: goalVM,
+            mainVM: MainViewModel()
+        )
     }
     .environmentObject(FocusSessionViewModel())  // <-- ADD THIS
 }

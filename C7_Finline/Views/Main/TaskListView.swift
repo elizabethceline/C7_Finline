@@ -204,7 +204,8 @@ struct TaskListView: View {
             if let goal = selectedGoal {
                 DetailGoalView(
                     goal: goal,
-                    goalVM: GoalViewModel()
+                    goalVM: GoalViewModel(),
+                    mainVM: viewModel
                 )
             }
         }

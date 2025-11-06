@@ -5,13 +5,6 @@
 //  Created by Richie Reuben Hermanto on 30/10/25.
 //
 
-//
-//  DetailTask.swift
-//  C7_Finline
-//
-//  Created by Richie Reuben Hermanto on 30/10/25.
-//
-
 import SwiftUI
 import SwiftData
 
