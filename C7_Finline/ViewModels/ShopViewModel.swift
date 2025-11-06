@@ -61,14 +61,11 @@ class ShopViewModel: ObservableObject {
         }
     }
 
-    // ShopViewModel.swift
     func fetchUserProfile(userRecordID: CKRecord.ID) async {
         guard let context = modelContext else { return }
 
-        // Load local data first for quick UI
         loadLocalData()
 
-        // Fetch from CloudKit
         isLoading = true
         defer { isLoading = false }
 
@@ -80,7 +77,6 @@ class ShopViewModel: ObservableObject {
             self.userProfile = profile
             self.coins = profile.points
 
-            // PERBAIKAN: Fetch dari CloudKit, bukan hanya lokal
             let items = try await shopManager.fetchPurchasedItemsFromCloud(modelContext: context)
             self.purchasedItems = items
             
