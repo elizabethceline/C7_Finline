@@ -32,7 +32,7 @@ struct CreateTaskView: View {
     var body: some View {
         VStack(spacing: 0) {
             Form {
-                Section(header: Text("Goal Info").font(.headline).foregroundColor(.secondary)) {
+                Section(header: Text("Goal Info").font(.headline).foregroundColor(Color(.gray))) {
                     HStack {
                         Text("Goal").foregroundStyle(.secondary)
                         Spacer()
@@ -68,7 +68,7 @@ struct CreateTaskView: View {
                         Section(header:
                             Text(group.date, format: .dateTime.day().month(.wide).year())
                             .font(.title3)
-                                .foregroundColor(.black)
+                            .foregroundColor(Color(.label))
                         ) {
                             ForEach(group.tasks) { aiTask in
                                 let workingDate: Date? = ISO8601DateFormatter.parse(aiTask.workingTime)
@@ -111,17 +111,19 @@ struct CreateTaskView: View {
                         .font(.headline)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(
-                            LinearGradient(
-                                gradient: Gradient(colors: [
-                                    Color(red: 0.15, green: 0.45, blue: 1.0),
-                                    Color(red: 0.30, green: 0.95, blue: 1.0),
-                                    Color(red: 0.80, green: 0.50, blue: 1.0)
-                                ]),
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
+//                        .background(
+//                            LinearGradient(
+//                                gradient: Gradient(colors: [
+//                                    Color(red: 0.15, green: 0.45, blue: 1.0),
+//                                    Color(red: 0.30, green: 0.95, blue: 1.0),
+//                                    Color(red: 0.80, green: 0.50, blue: 1.0)
+//                                ]),
+//                                startPoint: .leading,
+//                                endPoint: .trailing
+//                            )
+//                        )
+                    
+                        .background(Color.primary)
                         .foregroundColor(.white)
                         .cornerRadius(10)
                 }
@@ -132,9 +134,12 @@ struct CreateTaskView: View {
                         .font(.headline)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.primary)
-                        .background(Color.gray.opacity(0.3))
-                        .foregroundColor(.white)
+                        .background(Color(.systemGray5))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(Color.primary, lineWidth: 3)
+                        )
+                        .foregroundColor(Color(.label))
                         .cornerRadius(10)
                 }
             }
@@ -165,7 +170,7 @@ struct CreateTaskView: View {
                 .disabled(taskVM.tasks.isEmpty)
             }
         }
-        .background(Color.gray.opacity(0.2).ignoresSafeArea())
+        .background(Color(.systemGroupedBackground))
         
         .alert("Delete Task", isPresented: $showDeleteAlert) {
             Button("Cancel", role: .cancel) {

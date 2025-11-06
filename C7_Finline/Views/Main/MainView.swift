@@ -83,7 +83,7 @@ struct MainView: View {
 
                         if !unfinishedTasks.isEmpty {
                             Text("|")
-                                .foregroundColor(.black)
+                                .foregroundColor(Color(.label))
                                 .padding(.leading, 4)
 
                             Button {

@@ -15,11 +15,11 @@ struct GoalHeaderView: View {
             Text(goalName.capitalized)
                 .font(.body)
                 .fontWeight(.medium)
-                .foregroundColor(.black)
+                .foregroundColor(Color(.label))
             Image(systemName: "chevron.right")
                 .font(.body)
                 .fontWeight(.medium)
-                .foregroundColor(.black)
+                .foregroundColor(Color(.label))
         }
     }
 }

@@ -46,7 +46,6 @@ struct CreateTaskManuallyView: View {
                 } header: {
                     Text("Task")
                         .font(.headline)
-                        .foregroundStyle(.secondary)
                 }
 
                 Section {
@@ -57,13 +56,14 @@ struct CreateTaskManuallyView: View {
                             Label {
                                 Text(taskDeadline.formatted(date: .long, time: .omitted))
                                     .font(.body)
+                                    .foregroundColor(Color(.label))
                             } icon: {
                                 Image(systemName: "calendar")
                                     .foregroundColor(.primary)
                             }
                             Spacer()
                             Image(systemName: "chevron.right")
-                                .foregroundStyle(.secondary)
+                                .foregroundColor(Color(.label))
                         }
                         .foregroundStyle(.black)
                     }
@@ -75,14 +75,14 @@ struct CreateTaskManuallyView: View {
                             Label {
                                 Text(taskDeadline.formatted(date: .omitted, time: .shortened))
                                     .font(.body)
+                                    .foregroundColor(Color(.label))
                             } icon: {
                                 Image(systemName: "clock")
                                     .foregroundColor(.primary)
                             }
                             Spacer()
                             Image(systemName: "chevron.right")
-                                .foregroundStyle(.secondary)
-                        }
+                            .foregroundColor(Color(.label))                        }
                         .foregroundStyle(.black)
                     }
                     
@@ -93,12 +93,12 @@ struct CreateTaskManuallyView: View {
                             Spacer()
                             Text("\(focusDuration) mins")
                                 .font(.body)
+                                .foregroundColor(Color(.label))
                         }
                     }
                 } header: {
                     Text("Schedule")
                         .font(.headline)
-                        .foregroundStyle(.secondary)
                 }
             }
             .scrollContentBackground(.hidden)
