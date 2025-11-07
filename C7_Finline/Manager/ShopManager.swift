@@ -50,17 +50,24 @@ class ShopManager {
     }
 
     func selectItem(_ item: PurchasedItem, modelContext: ModelContext) async {
-        if let all = try? modelContext.fetch(FetchDescriptor<PurchasedItem>()) {
-            for i in all {
-                i.isSelected = false
+        let allItems = (try? modelContext.fetch(FetchDescriptor<PurchasedItem>())) ?? []
+        for i in allItems {
+            let wasSelected = i.isSelected
+            i.isSelected = (i.id == item.id)
+            if wasSelected != i.isSelected {
+                i.needsSync = true
             }
         }
-        item.isSelected = true
-        item.needsSync = true
+        
         try? modelContext.save()
-
-        Task { await self.syncPurchasedItem(item) }
+        
+        for i in allItems where i.needsSync {
+            Task {
+                await self.syncPurchasedItem(i)
+            }
+        }
     }
+
 
     func syncPurchasedItem(_ item: PurchasedItem) async {
         guard networkMonitor.isConnected else {
