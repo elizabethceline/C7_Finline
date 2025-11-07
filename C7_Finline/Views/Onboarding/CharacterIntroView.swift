@@ -30,11 +30,11 @@ struct CharacterIntroView: View {
                 OnboardingBackground()
 
                 // Content
-                VStack(spacing: 24) {
+                VStack(spacing: 48) {
                     Image("finley")
                         .resizable()
                         .scaledToFit()
-                        .frame(width: geometry.size.width * 0.8)
+                        .frame(width: geometry.size.width * 0.5)
 
                     if showFinalMessage {
                         VStack(spacing: 12) {
