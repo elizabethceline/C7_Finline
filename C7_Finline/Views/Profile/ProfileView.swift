@@ -138,9 +138,10 @@ struct ProfileView: View {
                         Text("Best Focus Time")
                             .font(.body)
                         Spacer()
-//                        Text(viewModel.bestFocusTime)
-//                            .font(.title3)
-//                            .fontWeight(.semibold)
+                        Text(TimeFormatter.format(seconds: viewModel.bestFocusTime))
+                            .font(.title3)
+                            .fontWeight(.semibold)
+
                     }
                     .padding(.vertical, 24)
                     .padding(.horizontal)

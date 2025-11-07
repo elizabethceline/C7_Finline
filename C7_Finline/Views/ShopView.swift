@@ -20,34 +20,34 @@ struct ShopView: View {
         NavigationStack {
             VStack(spacing: 16) {
                 headerView
-
-                HStack(spacing: 12) {
-                    Button {
-                        Task { await viewModel.addCoins(100) }
-                    } label: {
-                        Label("Add 100 Coins", systemImage: "bitcoinsign.circle.fill")
-                            .font(.body)
-                            .fontWeight(.semibold)
-                            .padding()
-                            .frame(maxWidth: .infinity)
-                            .background(RoundedRectangle(cornerRadius: 14).fill(Color.green.opacity(0.2)))
-                    }
-
-                    Button(role: .destructive) {
-                        Task { await viewModel.deleteAllPurchasedItems() }
-                    } label: {
-                        Label("Delete Purchased", systemImage: "trash")
-                            .font(.body)
-                            .fontWeight(.semibold)
-                            .padding()
-                            .frame(maxWidth: .infinity)
-                            .background(RoundedRectangle(cornerRadius: 14).fill(Color.red.opacity(0.2)))
-                    }
-                }
-                .padding(.horizontal)
+//
+//                HStack(spacing: 12) {
+//                    Button {
+//                        Task { await viewModel.addCoins(100) }
+//                    } label: {
+//                        Label("Add 100 Coins", systemImage: "bitcoinsign.circle.fill")
+//                            .font(.body)
+//                            .fontWeight(.semibold)
+//                            .padding()
+//                            .frame(maxWidth: .infinity)
+//                            .background(RoundedRectangle(cornerRadius: 14).fill(Color.green.opacity(0.2)))
+//                    }
+//
+//                    Button(role: .destructive) {
+//                        Task { await viewModel.deleteAllPurchasedItems() }
+//                    } label: {
+//                        Label("Delete Purchased", systemImage: "trash")
+//                            .font(.body)
+//                            .fontWeight(.semibold)
+//                            .padding()
+//                            .frame(maxWidth: .infinity)
+//                            .background(RoundedRectangle(cornerRadius: 14).fill(Color.red.opacity(0.2)))
+//                    }
+//                }
+//                .padding(.horizontal)
 
                 ScrollView {
-                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 40) {
+                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 5) {
                         ForEach(ShopItem.allCases, id: \.rawValue) { item in
                             ShopCardView(
                                 item: item,
@@ -58,7 +58,7 @@ struct ShopView: View {
                         }
                     }
                     .padding(.horizontal)
-                    .padding(.top, 20)
+                    .padding(.top, 5)
                 }
                 Spacer()
             }
