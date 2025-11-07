@@ -82,6 +82,24 @@ struct DetailGoalView: View {
         .background(Color(.systemGray6).ignoresSafeArea())
         .listStyle(.insetGrouped)
         .navigationTitle("Goal Detail")
+        .sheet(isPresented: $showAddTaskModal) {
+            CreateTaskManuallyView(
+                taskVM: taskVM,
+                taskDeadline: goal.due,
+                goalId: goal.id,
+                onTaskCreated: {
+                    Task {
+                        print("Before refresh - Goal has \(goal.tasks.count) tasks")
+                        await taskVM.getGoalTaskByGoalId(
+                            for: goal,
+                            modelContext: modelContext
+                        )
+                        print("After refresh - TaskVM has \(taskVM.goalTasks.count) tasks")
+                    }
+                }
+            )
+            .presentationDetents([.medium])
+        }
         .fullScreenCover(isPresented: isCoverPresented) {
             Group {
                 if let mode = coverMode {
@@ -257,12 +275,12 @@ struct DetailGoalView: View {
                         if isSelecting {
                             Image(
                                 systemName: selectedTaskIds.contains(task.id)
-                                    ? "checkmark.circle.fill" : "circle"
+                                ? "checkmark.circle.fill" : "circle"
                             )
                             .font(.title3)
                             .foregroundColor(
                                 selectedTaskIds.contains(task.id)
-                                    ? .blue : .gray
+                                ? .blue : .gray
                             )
                             .padding(.trailing, 4)
                             .onTapGesture {
