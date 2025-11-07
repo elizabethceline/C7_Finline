@@ -16,6 +16,8 @@ struct ContentCardView: View {
     @State private var contentOffset: CGFloat = 0
     @State private var isAnimating: Bool = false
 
+    @State private var isHorizontalDrag = false
+
     private let calendar = Calendar.current
 
     var tasks: [GoalTask] {
@@ -62,14 +64,25 @@ struct ContentCardView: View {
 
     var body: some View {
         GeometryReader { geo in
-            let drag = DragGesture()
+            let drag = DragGesture(minimumDistance: 10)
+                .onChanged { value in
+                    if !isAnimating && !isHorizontalDrag {
+                        let horizontal = abs(value.translation.width)
+                        let vertical = abs(value.translation.height)
+                        if horizontal > vertical {
+                            isHorizontalDrag = true
+                        }
+                    }
+                }
                 .updating($dragOffset) { value, state, _ in
-                    if !isAnimating {
+                    if !isAnimating && isHorizontalDrag {
                         state = value.translation.width
                     }
                 }
                 .onEnded { value in
-                    if !isAnimating {
+                    defer { isHorizontalDrag = false }
+
+                    if !isAnimating && isHorizontalDrag {
                         if value.translation.width < -50 {
                             changeDay(delta: 1, width: geo.size.width)
                         } else if value.translation.width > 50 {
@@ -85,6 +98,7 @@ struct ContentCardView: View {
                         Text("Showing: \(viewModel.taskFilter.rawValue)")
                             .font(.caption)
                             .fontWeight(.medium)
+                            .foregroundColor(Color(.label))
                         Spacer()
                         Button("Clear") {
                             withAnimation {
@@ -96,11 +110,11 @@ struct ContentCardView: View {
                     }
                     .padding(.horizontal)
                     .padding(.vertical, 8)
-                    .background(Color.white)
+                    .background(Color(.systemBackground))
                     .cornerRadius(8)
                     .padding(.bottom, 8)
                 }
-                
+
                 if tasks.isEmpty {
                     ScrollView(showsIndicators: false) {
                         EmptyStateView()
@@ -128,6 +142,7 @@ struct ContentCardView: View {
             )
             .contentShape(Rectangle())
             .gesture(drag)
+            .scrollDisabled(isHorizontalDrag)
         }
         .refreshable {
             await viewModel.fetchGoals()

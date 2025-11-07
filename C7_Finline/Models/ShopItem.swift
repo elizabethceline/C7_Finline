@@ -11,13 +11,13 @@ import Foundation
 enum ShopItem: String, CaseIterable, Codable {
     case dogo
     case ebet
-    case pinguin
+//    case leo
     
     var price: Int {
         switch self {
         case .dogo: return 100
         case .ebet: return 50
-        case .pinguin: return 30
+//        case .leo: return 125
         }
     }
     
@@ -25,7 +25,7 @@ enum ShopItem: String, CaseIterable, Codable {
         switch self {
         case .dogo: return "Dogo"
         case .ebet: return "Ebet"
-        case .pinguin: return "Pinguin"
+//        case .leo: return "leo"
         }
     }
     
@@ -33,7 +33,7 @@ enum ShopItem: String, CaseIterable, Codable {
         switch self {
         case .dogo: return "dogo"
         case .ebet: return "ebet"
-        case .pinguin: return "ebet"
+//        case .leo: return "leo"
         }
     }
     

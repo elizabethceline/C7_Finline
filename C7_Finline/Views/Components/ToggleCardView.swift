@@ -32,11 +32,11 @@ struct ToggleCardView: View {
                 
                 Spacer()
                 
-                Button(action: {}) {
-                    Image(systemName: "info.circle")
-                        .foregroundStyle(.black)
-                        .font(.title3)
-                }
+//                Button(action: {}) {
+//                    Image(systemName: "info.circle")
+//                        .foregroundStyle(.black)
+//                        .font(.title3)
+//                }
             }
         }
         .padding()

@@ -20,8 +20,7 @@ struct SplashScreenView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(
-                            width: geometry.size.width * 0.5,
-                            height: geometry.size.width * 0.5
+                            width: geometry.size.width * 0.4
                         )
                         .scaleEffect(scale)
                         .opacity(opacity)

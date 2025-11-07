@@ -53,11 +53,11 @@ struct FocusModeView: View {
                     .animation(.easeInOut(duration: 0.5), value: viewModel.isResting)
             }
 
-            VStack { // decorative character
-                Image("charaSementara")
-                    .resizable()
-                    .scaledToFit()
-            }
+//            VStack { // decorative character
+//                Image("charaSementara")
+//                    .resizable()
+//                    .scaledToFit()
+//            }
 
             content // <-- broken out into a computed property
                 .padding()
@@ -167,7 +167,7 @@ struct FocusModeView: View {
     // MARK: - Subviews split for compiler friendliness
 
     private var backgroundView: some View {
-        Image("backgroundSementara")
+        Image(viewModel.isResting ? "restmode" : "focusmode")
             .resizable()
             .frame(height: 910)
     }
@@ -205,19 +205,21 @@ struct FocusModeView: View {
             // Header
             Text(viewModel.goalName ?? "No Goal")
                 .font(.headline)
-                .padding(.horizontal, 20)
-                .padding(.vertical, 10)
-                .background(Color.secondary)
-                .clipShape(RoundedRectangle(cornerRadius: 20))
-                .shadow(radius: 2)
-                .padding()
+                .bold()
+                .padding(.horizontal)
+                .padding(.vertical, 8)
+                //.background(Color.secondary)
+                //.clipShape(RoundedRectangle(cornerRadius: 20))
+               // .shadow(radius: 2)
+                //.padding()
 
             // Task title
             Text(viewModel.taskTitle.isEmpty ? "Focus Session" : viewModel.taskTitle)
-                .font(.system(size: 36, weight: .bold))
-                .foregroundColor(.white)
+                .font(.largeTitle)
+                .bold()
+                //.foregroundColor(.white)
                 .multilineTextAlignment(.leading)
-                .shadow(radius: 6)
+                //.shadow(radius: 6)
                 .padding(.horizontal)
                 .padding(.bottom)
 

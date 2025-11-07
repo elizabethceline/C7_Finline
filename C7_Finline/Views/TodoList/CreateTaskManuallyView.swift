@@ -6,10 +6,12 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct CreateTaskManuallyView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var taskVM: TaskViewModel
+    @Environment(\.modelContext) private var modelContext
     
     @State private var taskName: String = ""
     @State private var taskDeadline: Date
@@ -17,12 +19,27 @@ struct CreateTaskManuallyView: View {
     
     @State private var isShowingDatePicker: Bool = false
     @State private var isShowingTimePicker: Bool = false
+    @State private var isShowingDurationPicker = false
+    @State private var durationHours = 0
+    @State private var durationMinutes = 1
+    @State private var durationSeconds = 0
+
     
     private var existingTask: AIGoalTask?
+    private var goalId: String?
+    var onTaskCreated: (() -> Void)?
     
-    init(taskVM: TaskViewModel, taskDeadline: Date = Date(), existingTask: AIGoalTask? = nil) {
+    init(
+        taskVM: TaskViewModel,
+        taskDeadline: Date = Date(),
+        existingTask: AIGoalTask? = nil,
+        goalId: String? = nil,  
+        onTaskCreated: (() -> Void)? = nil
+    ) {
         self.taskVM = taskVM
         self.existingTask = existingTask
+        self.goalId = goalId
+        self.onTaskCreated = onTaskCreated
         
         if let existingTask = existingTask {
             _taskName = State(initialValue: existingTask.name)
@@ -46,7 +63,6 @@ struct CreateTaskManuallyView: View {
                 } header: {
                     Text("Task")
                         .font(.headline)
-                        .foregroundStyle(.secondary)
                 }
 
                 Section {
@@ -57,13 +73,14 @@ struct CreateTaskManuallyView: View {
                             Label {
                                 Text(taskDeadline.formatted(date: .long, time: .omitted))
                                     .font(.body)
+                                    .foregroundColor(Color(.label))
                             } icon: {
                                 Image(systemName: "calendar")
                                     .foregroundColor(.primary)
                             }
                             Spacer()
                             Image(systemName: "chevron.right")
-                                .foregroundStyle(.secondary)
+                                .foregroundColor(Color(.label))
                         }
                         .foregroundStyle(.black)
                     }
@@ -75,30 +92,46 @@ struct CreateTaskManuallyView: View {
                             Label {
                                 Text(taskDeadline.formatted(date: .omitted, time: .shortened))
                                     .font(.body)
+                                    .foregroundColor(Color(.label))
                             } icon: {
                                 Image(systemName: "clock")
                                     .foregroundColor(.primary)
                             }
                             Spacer()
                             Image(systemName: "chevron.right")
-                                .foregroundStyle(.secondary)
+                            .foregroundColor(Color(.label))                        }
+                        .foregroundStyle(.black)
+                    }
+                    Button {
+                        isShowingDurationPicker = true
+                    } label: {
+                        HStack {
+                            Label {
+                                Text("\(focusDuration) mins")
+                                    .font(.body)
+                                    .foregroundColor(Color(.label))
+                            } icon: {
+                                Image(systemName: "timer")
+                                    .foregroundColor(.primary)
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .foregroundColor(Color(.label))
                         }
                         .foregroundStyle(.black)
                     }
-                    
-                    Stepper(value: $focusDuration, in: 1...180, step: 1) {
-                        HStack {
-                            Text("Focus Duration")
-                                .foregroundStyle(.secondary)
-                            Spacer()
-                            Text("\(focusDuration) mins")
-                                .font(.body)
+                    .sheet(isPresented: $isShowingDurationPicker) {
+                        TimerPickerSheetView(
+                            hours: $durationHours,
+                            minutes: $durationMinutes
+                        ) { totalMinutes in
+                            focusDuration = totalMinutes 
                         }
                     }
+
                 } header: {
                     Text("Schedule")
                         .font(.headline)
-                        .foregroundStyle(.secondary)
                 }
             }
             .scrollContentBackground(.hidden)
@@ -125,6 +158,17 @@ struct CreateTaskManuallyView: View {
                                 workingTime: formattedDate,
                                 focusDuration: focusDuration
                             )
+                        } else if let goalId = goalId {
+                            Task {
+                                await taskVM.createTaskForGoal(
+                                    goalId: goalId,
+                                    name: taskName,
+                                    workingTime: taskDeadline,
+                                    focusDuration: focusDuration,
+                                    modelContext: modelContext
+                                )
+                                onTaskCreated?()
+                            }
                         } else {
                             taskVM.createTaskManually(
                                 name: taskName,
