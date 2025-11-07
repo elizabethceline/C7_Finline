@@ -15,7 +15,7 @@ struct HeaderView: View {
     @State private var navigateToProfile: Bool = false
 
     var body: some View {
-        HStack(alignment: .bottom) {
+        HStack(alignment: .bottom, spacing: 8) {
             ZStack(alignment: .topTrailing) {
                 VStack(alignment: .leading, spacing: 6) {
                     if unfinishedTasks.isEmpty {
@@ -55,9 +55,8 @@ struct HeaderView: View {
             } label: {
                 Image("finley")
                     .resizable()
-                    .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
-                    .frame(width: 75, height: 75)
-                    .clipShape(Circle())
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 52)
             }
         }
         .padding(.horizontal)
@@ -135,4 +134,5 @@ struct TriangleTail: Shape {
         ],
         selectedDate: .constant(Date())
     )
+    .background(Color.red)
 }

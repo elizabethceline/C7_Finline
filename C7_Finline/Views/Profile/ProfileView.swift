@@ -5,9 +5,9 @@
 //  Created by Elizabeth Celine Liong on 26/10/25.
 //
 
-import SwiftUI
-import SwiftData
 import CloudKit
+import SwiftData
+import SwiftUI
 
 struct ProfileView: View {
     @ObservedObject var viewModel: ProfileViewModel
@@ -19,9 +19,9 @@ struct ProfileView: View {
 
     @State private var navigateToFocus = false
     @State private var userRecordID: CKRecord.ID?
-    
+
     @StateObject private var shopVM: ShopViewModel
-    
+
     init(viewModel: ProfileViewModel) {
         self.viewModel = viewModel
         _shopVM = StateObject(
@@ -31,24 +31,26 @@ struct ProfileView: View {
             )
         )
     }
-    
+
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
-                    
+
                     ZStack(alignment: .bottomTrailing) {
-                        let imageToShow = shopVM.selectedImage
-                        ?? viewModel.shopVM?.purchasedItems.first(where: { $0.isSelected })?.shopItem?.image
-                        ?? Image("finley")
-                        
+                        let imageToShow =
+                            shopVM.selectedImage
+                            ?? viewModel.shopVM?.purchasedItems.first(where: {
+                                $0.isSelected
+                            })?.shopItem?.image
+                            ?? Image("finley")
+
                         imageToShow
                             .resizable()
-                            .scaledToFill()
-                            .frame(width: 240, height: 240)
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 180)
                             .clipShape(RoundedRectangle(cornerRadius: 20))
-                            .shadow(radius: 5)
-                        
+
                         Button {
                             showShopModal = true
                         } label: {
@@ -68,34 +70,37 @@ struct ProfileView: View {
                                     .presentationDetents([.height(300)])
                             }
                         }
-
+                        .offset(x: 40, y: 0)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.top, 16)
-                    
+
                     HStack {
                         VStack(alignment: .leading) {
                             if viewModel.isEditingName {
-                                TextField("Your name", text: $viewModel.tempUsername)
-                                    .textInputAutocapitalization(.words)
-                                    .disableAutocorrection(true)
-                                    .font(.headline)
-                                    .focused($isNameFieldFocused)
-                                    .onSubmit {
-                                        handleSaveUsername()
-                                    }
+                                TextField(
+                                    "Your name",
+                                    text: $viewModel.tempUsername
+                                )
+                                .textInputAutocapitalization(.words)
+                                .disableAutocorrection(true)
+                                .font(.headline)
+                                .focused($isNameFieldFocused)
+                                .onSubmit {
+                                    handleSaveUsername()
+                                }
                             } else {
                                 Text(
                                     viewModel.username.isEmpty
-                                    ? "Your Name" : viewModel.username
+                                        ? "Your Name" : viewModel.username
                                 )
                                 .font(.headline)
                             }
                         }
                         .padding(.leading, 8)
-                        
+
                         Spacer()
-                        
+
                         Button {
                             withAnimation {
                                 if viewModel.isEditingName {
@@ -103,7 +108,9 @@ struct ProfileView: View {
                                     isNameFieldFocused = false
                                 } else {
                                     viewModel.startEditingUsername()
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                    DispatchQueue.main.asyncAfter(
+                                        deadline: .now() + 0.1
+                                    ) {
                                         isNameFieldFocused = true
                                     }
                                 }
@@ -121,7 +128,7 @@ struct ProfileView: View {
                             .fill(Color(uiColor: .systemBackground))
                     )
                     .padding(.horizontal)
-                    
+
                     HStack(spacing: 16) {
                         StatCard(
                             title: "Task Complete",
@@ -133,14 +140,18 @@ struct ProfileView: View {
                         )
                     }
                     .padding(.horizontal)
-                    
+
                     HStack {
                         Text("Best Focus Time")
                             .font(.body)
                         Spacer()
-                        Text(TimeFormatter.format(seconds: viewModel.bestFocusTime))
-                            .font(.title3)
-                            .fontWeight(.semibold)
+                        Text(
+                            TimeFormatter.format(
+                                seconds: viewModel.bestFocusTime
+                            )
+                        )
+                        .font(.title3)
+                        .fontWeight(.semibold)
 
                     }
                     .padding(.vertical, 24)
@@ -150,9 +161,11 @@ struct ProfileView: View {
                             .fill(Color(uiColor: .systemBackground))
                     )
                     .padding(.horizontal)
-                    
+
                     NavigationLink(
-                        destination: EditProductiveHoursView(viewModel: viewModel)
+                        destination: EditProductiveHoursView(
+                            viewModel: viewModel
+                        )
                     ) {
                         HStack {
                             Text("Edit your activity time")
@@ -172,21 +185,6 @@ struct ProfileView: View {
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    
-                    Button {
-                        navigateToFocus = true
-                    } label: {
-                        Label("Focus Mode", systemImage: "lock.desktopcomputer")
-                            .font(.body)
-                            .fontWeight(.medium)
-                            .padding()
-                            .frame(maxWidth: .infinity)
-                            .background(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .fill(Color.blue.opacity(0.15))
-                            )
-                    }
-                    .padding(.horizontal)
                 }
                 .onAppear {
                     viewModel.setModelContext(modelContext)
@@ -216,13 +214,15 @@ struct ProfileView: View {
             .navigationTitle("Profile")
             .navigationBarTitleDisplayMode(.inline)
             .alert(isPresented: $showAlert) {
-                Alert(title: Text("Invalid Username"),
-                      message: Text(viewModel.errorMessage),
-                      dismissButton: .default(Text("OK")))
+                Alert(
+                    title: Text("Invalid Username"),
+                    message: Text(viewModel.errorMessage),
+                    dismissButton: .default(Text("OK"))
+                )
             }
         }
     }
-    
+
     private func handleSaveUsername() {
         viewModel.saveUsername()
         if viewModel.errorMessage != "" {
@@ -231,11 +231,10 @@ struct ProfileView: View {
     }
 }
 
-
 struct StatCard: View {
     let title: String
     let value: String
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(value)
@@ -257,13 +256,14 @@ struct StatCard: View {
 struct AsyncShopSheet: View {
     @ObservedObject var viewModel: ProfileViewModel
     @Environment(\.modelContext) private var modelContext
-    
+
     @State private var userRecordID: CKRecord.ID? = nil
-    
+
     var body: some View {
         Group {
             if let shopVM = viewModel.shopVM,
-               let id = userRecordID {
+                let id = userRecordID
+            {
                 ShopView(viewModel: shopVM, userRecordID: id)
             }
         }
