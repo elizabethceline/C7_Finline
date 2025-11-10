@@ -76,3 +76,42 @@ struct FocusLiveActivity: Widget {
         }
     }
 }
+
+// MARK: - Preview
+#Preview("Dynamic Island Preview", as: .content, using: FocusActivityAttributes.preview) {
+    FocusLiveActivity()
+} contentStates: {
+    FocusActivityAttributes.ContentState.previewValue(
+        taskTitle: "Focus Session",
+        remainingTime: 25 * 60,
+        isResting: false
+    )
+    FocusActivityAttributes.ContentState.previewValue(
+        taskTitle: "Short Break",
+        remainingTime: 5 * 60,
+        isResting: true
+    )
+    FocusActivityAttributes.ContentState.previewValue(
+        taskTitle: "Focus Session",
+        remainingTime: 10 * 60,
+        isResting: false
+    )
+    FocusActivityAttributes.ContentState.previewValue(
+        taskTitle: "Session Complete",
+        remainingTime: 0,
+        isResting: false
+    )
+}
+
+// MARK: - Preview Helpers
+extension FocusActivityAttributes {
+    static var preview: FocusActivityAttributes {
+        FocusActivityAttributes(goalName: "Deep Work")
+    }
+}
+
+extension FocusActivityAttributes.ContentState {
+    static func previewValue(taskTitle: String, remainingTime: TimeInterval, isResting: Bool) -> Self {
+        .init(remainingTime: remainingTime, taskTitle: taskTitle, isResting: isResting)
+    }
+}
