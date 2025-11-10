@@ -23,18 +23,24 @@ class MainViewModel: ObservableObject {
     private let networkMonitor: NetworkMonitor
     private let goalManager: GoalManager
     private let taskManager: TaskManager
+    private let syncManager: BackgroundSyncManager
 
     @MainActor
     var isSignedInToiCloud: Bool {
         CloudKitManager.shared.isSignedInToiCloud
     }
 
-    init(networkMonitor: NetworkMonitor = NetworkMonitor()) {
+    init(
+        networkMonitor: NetworkMonitor = NetworkMonitor(),
+        syncManager: BackgroundSyncManager = .shared
+    ) {
         self.networkMonitor = networkMonitor
+        self.syncManager = syncManager
         self.goalManager = GoalManager(networkMonitor: networkMonitor)
         self.taskManager = TaskManager(networkMonitor: networkMonitor)
 
         observeNetworkStatus()
+        observeSyncCompletion()
     }
 
     @MainActor
@@ -42,30 +48,16 @@ class MainViewModel: ObservableObject {
         guard self.modelContext == nil else { return }
         self.modelContext = context
 
-        loadDataFromSwiftData()
-        print("Local data loaded: \(goals.count) goals, \(tasks.count) tasks")
-
         Task {
-            if networkMonitor.isConnected,
-                isSignedInToiCloud
-            {
+            if networkMonitor.isConnected, isSignedInToiCloud {
                 isLoading = true
-                let cloudGoals = try? await goalManager.fetchGoals(
-                    modelContext: context
+
+                await syncManager.performSync(
+                    modelContext: context,
+                    reason: "Initial app launch"
                 )
-                if let cloudGoals = cloudGoals {
-                    updatePublishedGoals(cloudGoals)
-                    try? context.save()
-                    await fetchAllTasks()
-                    print("Fetched \(cloudGoals.count) goals from CloudKit")
-                }
+
                 isLoading = false
-
-                print("Sync pending local changes...")
-                await syncPendingItems()
-
-                print("Refresh cloud tasks & goals")
-                await fetchGoals()
             }
         }
     }
@@ -81,36 +73,55 @@ class MainViewModel: ObservableObject {
                     self.modelContext != nil
                 {
                     Task {
-                        await self.syncPendingItems()
-                        await self.fetchGoals()
+                        await self.syncManager.performSync(
+                            modelContext: self.modelContext,
+                            reason: "Network reconnected"
+                        )
                     }
                 }
             }
             .store(in: &cancellables)
     }
 
-    // load data
-    @MainActor
-    private func loadDataFromSwiftData() {
-        guard let modelContext = modelContext else { return }
+    private func observeSyncCompletion() {
+        NotificationCenter.default.publisher(for: .syncDidComplete)
+            .receive(on: DispatchQueue.main)
+            .sink { _ in
+                print("Sync completed")
+            }
+            .store(in: &cancellables)
 
-        do {
-            // Load goals
-            let goalDescriptor = FetchDescriptor<Goal>(
-                sortBy: [SortDescriptor(\.due, order: .forward)]
-            )
-            let taskDescriptor = FetchDescriptor<GoalTask>()
-
-            let localGoals = try modelContext.fetch(goalDescriptor)
-            let localTasks = try modelContext.fetch(taskDescriptor)
-
-            updatePublishedGoals(localGoals)
-            updatePublishedTasks(localTasks)
-        } catch {
-            self.error =
-                "Failed to load local data: \(error.localizedDescription)"
-        }
+        NotificationCenter.default.publisher(for: .syncDidFail)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] notification in
+                if let error = notification.userInfo?["error"] as? Error {
+                    self?.error = error.localizedDescription
+                }
+            }
+            .store(in: &cancellables)
     }
+
+//    @MainActor
+//    private func loadDataFromSwiftData() {
+//        guard let modelContext = modelContext else { return }
+//
+//        do {
+//            // Load goals
+//            let goalDescriptor = FetchDescriptor<Goal>(
+//                sortBy: [SortDescriptor(\.due, order: .forward)]
+//            )
+//            let taskDescriptor = FetchDescriptor<GoalTask>()
+//
+//            let localGoals = try modelContext.fetch(goalDescriptor)
+//            let localTasks = try modelContext.fetch(taskDescriptor)
+//
+//            updatePublishedGoals(localGoals)
+//            updatePublishedTasks(localTasks)
+//        } catch {
+//            self.error =
+//                "Failed to load local data: \(error.localizedDescription)"
+//        }
+//    }
 
     @MainActor
     private func updatePublishedGoals(_ goals: [Goal]) {
@@ -123,7 +134,15 @@ class MainViewModel: ObservableObject {
         print("Updated tasks: \(tasks.count)")
     }
 
-    // CRUD Goal
+    @MainActor
+    func refreshData() async {
+        guard let modelContext = modelContext else { return }
+
+        isLoading = true
+        await syncManager.triggerManualSync(modelContext: modelContext)
+        isLoading = false
+    }
+
     @MainActor
     func fetchGoals() async {
         guard let modelContext = modelContext,
@@ -184,22 +203,6 @@ class MainViewModel: ObservableObject {
         taskManager.toggleTaskCompletion(task: task)
     }
 
-    func syncPendingItems() async {
-        guard let modelContext = modelContext, networkMonitor.isConnected else {
-            return
-        }
-
-        // Sync deletions
-        await goalManager.syncPendingDeletions()
-        await taskManager.syncPendingDeletions()
-
-        // Sync goals
-        await goalManager.syncPendingGoals(modelContext: modelContext)
-
-        // Sync tasks
-        await taskManager.syncPendingTasks(modelContext: modelContext)
-    }
-
     @MainActor
     func appendNewGoal(_ goal: Goal) {
         self.goals.append(goal)
@@ -211,7 +214,7 @@ class MainViewModel: ObservableObject {
         self.tasks.append(contentsOf: tasks)
         print("Added \(tasks.count) new tasks to MainViewModel")
     }
-    
+
     func filterTasksByDate(for date: Date) -> [GoalTask] {
         let dateTasks = tasks.filter { task in
             Calendar.current.isDate(task.workingTime, inSameDayAs: date)
@@ -234,12 +237,12 @@ class MainViewModel: ObservableObject {
             }
         }
     }
-    
+
     // sorting goals based on earliest unfinished task for the date
     func sortedGoals(for date: Date) -> [Goal] {
         let filteredGoals = filterGoalsByDate(for: date)
         let filteredTasks = filterTasksByDate(for: date)
-        
+
         return filteredGoals.sorted { goal1, goal2 in
             let goal1Tasks = filteredTasks.filter { task in
                 goal1.tasks.contains(where: { $0.id == task.id })
@@ -247,47 +250,56 @@ class MainViewModel: ObservableObject {
             let goal2Tasks = filteredTasks.filter { task in
                 goal2.tasks.contains(where: { $0.id == task.id })
             }
-            
+
             // select earliest unfinished task for each goal
-            let goal1EarliestUnfinished = goal1Tasks
+            let goal1EarliestUnfinished =
+                goal1Tasks
                 .filter { !$0.isCompleted }
                 .min(by: { $0.workingTime < $1.workingTime })
-            
-            let goal2EarliestUnfinished = goal2Tasks
+
+            let goal2EarliestUnfinished =
+                goal2Tasks
                 .filter { !$0.isCompleted }
                 .min(by: { $0.workingTime < $1.workingTime })
-            
+
             // both goals have unfinished tasks
-            if let task1 = goal1EarliestUnfinished, let task2 = goal2EarliestUnfinished {
+            if let task1 = goal1EarliestUnfinished,
+                let task2 = goal2EarliestUnfinished
+            {
                 return task1.workingTime < task2.workingTime
             }
-            
+
             // only goal1 has unfinished task
             if goal1EarliestUnfinished != nil {
                 return true
             }
-            
+
             // only goal2 has unfinished task
             if goal2EarliestUnfinished != nil {
                 return false
             }
-            
+
             // both goals have all tasks completed, compare by earliest task
-            let goal1Earliest = goal1Tasks.min(by: { $0.workingTime < $1.workingTime })
-            let goal2Earliest = goal2Tasks.min(by: { $0.workingTime < $1.workingTime })
-            
+            let goal1Earliest = goal1Tasks.min(by: {
+                $0.workingTime < $1.workingTime
+            })
+            let goal2Earliest = goal2Tasks.min(by: {
+                $0.workingTime < $1.workingTime
+            })
+
             if let task1 = goal1Earliest, let task2 = goal2Earliest {
                 return task1.workingTime < task2.workingTime
             }
-            
+
             return goal1.name < goal2.name
         }
     }
-    
+
     func sortedTasks(for goal: Goal, on date: Date) -> [GoalTask] {
         let filteredTasks = filterTasksByDate(for: date)
-        
-        return filteredTasks
+
+        return
+            filteredTasks
             .filter { task in
                 goal.tasks.contains(where: { $0.id == task.id })
             }
@@ -302,13 +314,14 @@ class MainViewModel: ObservableObject {
     var unfinishedTasks: [GoalTask] {
         tasks.filter { task in
             task.workingTime < Calendar.current.startOfDay(for: Date())
-            && !task.isCompleted
+                && !task.isCompleted
         }
     }
-    
+
     func updateSelectedDate(_ date: Date) {
         DispatchQueue.main.async {
             self.selectedDate = date
         }
     }
 }
+

@@ -27,6 +27,9 @@ struct MainView: View {
 
     private var unfinishedTasks: [GoalTask] { viewModel.unfinishedTasks }
 
+    @Query(sort: \Goal.due, order: .forward) private var goals: [Goal]
+    @Query private var tasks: [GoalTask]
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 12) {
@@ -49,6 +52,8 @@ struct MainView: View {
 
                 ContentCardView(
                     viewModel: viewModel,
+                    goals: goals,
+                    tasks: tasks,
                     selectedDate: $selectedDate,
                     networkMonitor: networkMonitor
                 )
@@ -60,12 +65,20 @@ struct MainView: View {
                     jumpToToday()
                     hasAppeared = true
                 }
+                viewModel.goals = goals
+                viewModel.tasks = tasks
             }
             .onChange(of: currentWeekIndex) { oldValue, newValue in
                 updateSelectedDateFromWeekChange(
                     oldValue: oldValue,
                     newValue: newValue
                 )
+            }
+            .onChange(of: goals) { _, newGoals in
+                viewModel.goals = newGoals
+            }
+            .onChange(of: tasks) { _, newTasks in
+                viewModel.tasks = newTasks
             }
             .toolbar {
                 ToolbarItemGroup(placement: .bottomBar) {
