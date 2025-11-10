@@ -285,10 +285,13 @@ class BackgroundSyncManager: NSObject, ObservableObject {
             await MainActor.run {
                 lastSyncDate = Date()
                 saveLastSyncDate()
-            }
 
-            // Post notification for observers
-            NotificationCenter.default.post(name: .syncDidComplete, object: nil)
+                NotificationCenter.default.post(
+                    name: .syncDidComplete,
+                    object: nil,
+                    userInfo: ["modelContext": context]
+                )
+            }
 
             print("Sync completed successfully")
 

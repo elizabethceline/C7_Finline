@@ -48,23 +48,15 @@ class MainViewModel: ObservableObject {
         guard self.modelContext == nil else { return }
         self.modelContext = context
 
-        loadDataFromSwiftData()
-        print("Local data loaded: \(goals.count) goals, \(tasks.count) tasks")
-
         Task {
-            if networkMonitor.isConnected,
-                isSignedInToiCloud
-            {
+            if networkMonitor.isConnected, isSignedInToiCloud {
                 isLoading = true
-                let success = await syncManager.performSync(
+
+                await syncManager.performSync(
                     modelContext: context,
                     reason: "Initial app launch"
                 )
 
-                if success {
-                    loadDataFromSwiftData()
-                    print("Initial sync completed")
-                }
                 isLoading = false
             }
         }
@@ -94,9 +86,8 @@ class MainViewModel: ObservableObject {
     private func observeSyncCompletion() {
         NotificationCenter.default.publisher(for: .syncDidComplete)
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] _ in
-                print("Sync completed, reloading data...")
-                self?.loadDataFromSwiftData()
+            .sink { _ in
+                print("Sync completed")
             }
             .store(in: &cancellables)
 
@@ -110,27 +101,27 @@ class MainViewModel: ObservableObject {
             .store(in: &cancellables)
     }
 
-    @MainActor
-    private func loadDataFromSwiftData() {
-        guard let modelContext = modelContext else { return }
-
-        do {
-            // Load goals
-            let goalDescriptor = FetchDescriptor<Goal>(
-                sortBy: [SortDescriptor(\.due, order: .forward)]
-            )
-            let taskDescriptor = FetchDescriptor<GoalTask>()
-
-            let localGoals = try modelContext.fetch(goalDescriptor)
-            let localTasks = try modelContext.fetch(taskDescriptor)
-
-            updatePublishedGoals(localGoals)
-            updatePublishedTasks(localTasks)
-        } catch {
-            self.error =
-                "Failed to load local data: \(error.localizedDescription)"
-        }
-    }
+//    @MainActor
+//    private func loadDataFromSwiftData() {
+//        guard let modelContext = modelContext else { return }
+//
+//        do {
+//            // Load goals
+//            let goalDescriptor = FetchDescriptor<Goal>(
+//                sortBy: [SortDescriptor(\.due, order: .forward)]
+//            )
+//            let taskDescriptor = FetchDescriptor<GoalTask>()
+//
+//            let localGoals = try modelContext.fetch(goalDescriptor)
+//            let localTasks = try modelContext.fetch(taskDescriptor)
+//
+//            updatePublishedGoals(localGoals)
+//            updatePublishedTasks(localTasks)
+//        } catch {
+//            self.error =
+//                "Failed to load local data: \(error.localizedDescription)"
+//        }
+//    }
 
     @MainActor
     private func updatePublishedGoals(_ goals: [Goal]) {
@@ -333,3 +324,4 @@ class MainViewModel: ObservableObject {
         }
     }
 }
+
