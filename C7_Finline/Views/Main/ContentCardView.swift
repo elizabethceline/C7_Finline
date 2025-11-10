@@ -9,6 +9,8 @@ import SwiftUI
 
 struct ContentCardView: View {
     @ObservedObject var viewModel: MainViewModel
+    let goals: [Goal]
+    let tasks: [GoalTask]
     @Binding var selectedDate: Date
     let networkMonitor: NetworkMonitor
 
@@ -20,12 +22,30 @@ struct ContentCardView: View {
 
     private let calendar = Calendar.current
 
-    var tasks: [GoalTask] {
-        viewModel.filterTasksByDate(for: selectedDate)
+    var filteredTasks: [GoalTask] {
+        let dateTasks = tasks.filter { task in
+            Calendar.current.isDate(task.workingTime, inSameDayAs: selectedDate)
+        }
+
+        switch viewModel.taskFilter {
+        case .all:
+            return dateTasks
+        case .unfinished:
+            return dateTasks.filter { !$0.isCompleted }
+        case .finished:
+            return dateTasks.filter { $0.isCompleted }
+        }
     }
 
-    var goals: [Goal] {
-        viewModel.filterGoalsByDate(for: selectedDate)
+    var filteredGoals: [Goal] {
+        goals.filter { goal in
+            goal.tasks.contains { task in
+                Calendar.current.isDate(
+                    task.workingTime,
+                    inSameDayAs: selectedDate
+                )
+            }
+        }
     }
 
     private func changeDay(delta: Int, width: CGFloat) {
@@ -115,7 +135,7 @@ struct ContentCardView: View {
                     .padding(.bottom, 8)
                 }
 
-                if tasks.isEmpty {
+                if filteredTasks.isEmpty {
                     ScrollView(showsIndicators: false) {
                         EmptyStateView()
                             .padding(.top, 24)
@@ -124,8 +144,8 @@ struct ContentCardView: View {
                 } else {
                     TaskListView(
                         viewModel: viewModel,
-                        tasks: tasks,
-                        goals: goals,
+                        tasks: filteredTasks,
+                        goals: filteredGoals,
                         selectedDate: selectedDate,
                         networkMonitor: networkMonitor
                     )
@@ -154,6 +174,8 @@ struct ContentCardView: View {
 #Preview {
     ContentCardView(
         viewModel: MainViewModel(),
+        goals: [],
+        tasks: [],
         selectedDate: .constant(Date()),
         networkMonitor: NetworkMonitor()
     )
