@@ -150,9 +150,9 @@ final class FocusSessionViewModel: ObservableObject {
         fishingVM.stopFishing()
         authManager.clearShield()
         
-//        if let task = task {
-//            task.isCompleted = true
-//        }
+        //        if let task = task {
+        //            task.isCompleted = true
+        //        }
         
         shouldReturnToStart = true
         
@@ -306,7 +306,7 @@ final class FocusSessionViewModel: ObservableObject {
         }
         RunLoop.current.add(restTimer!, forMode: .common)
     }
-
+    
     
     private func stopRestTimer() {
         restTimer?.invalidate()
@@ -441,32 +441,52 @@ final class FocusSessionViewModel: ObservableObject {
     private func updateLiveActivity() async {
         guard let activity else { return }
         
-        let updatedContent = ActivityContent(
-            state: FocusActivityAttributes.ContentState(
-                remainingTime: remainingTime,
-                taskTitle: taskTitle,
-                isResting: isResting
-            ),
-            staleDate: nil
+        let updatedState = FocusActivityAttributes.ContentState(
+            remainingTime: remainingTime,
+            taskTitle: taskTitle,
+            isResting: isResting
         )
         
-        await activity.update(updatedContent)
+        await activity.update(using: updatedState)
     }
     
     private func endLiveActivity() async {
         guard let activity else { return }
         
-        let finalContent = ActivityContent(
-            state: FocusActivityAttributes.ContentState(
-                remainingTime: 0,
-                taskTitle: taskTitle,
-                isResting: false
-            ),
-            staleDate: nil
-        )
-        
-        await activity.end(finalContent, dismissalPolicy: .immediate)
+        await activity.end(dismissalPolicy: .immediate)
         self.activity = nil
         print("Live Activity ended")
     }
+    
+    //    private func updateLiveActivity() async {
+    //        guard let activity else { return }
+    //
+    //        let updatedContent = ActivityContent(
+    //            state: FocusActivityAttributes.ContentState(
+    //                remainingTime: remainingTime,
+    //                taskTitle: taskTitle,
+    //                isResting: isResting
+    //            ),
+    //            staleDate: nil
+    //        )
+    //
+    //        await activity.update(updatedContent)
+    //    }
+    //
+    //    private func endLiveActivity() async {
+    //        guard let activity else { return }
+    //
+    //        let finalContent = ActivityContent(
+    //            state: FocusActivityAttributes.ContentState(
+    //                remainingTime: 0,
+    //                taskTitle: taskTitle,
+    //                isResting: false
+    //            ),
+    //            staleDate: nil
+    //        )
+    //
+    //        await activity.end(finalContent, dismissalPolicy: .immediate)
+    //        self.activity = nil
+    //        print("Live Activity ended")
+    //    }
 }
