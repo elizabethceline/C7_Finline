@@ -124,6 +124,7 @@ struct CreateTaskView: View {
 //                        )
                     
                         .background(Color.primary)
+                        .clipShape(RoundedRectangle(cornerRadius: 24))
                         .foregroundColor(.white)
                         .cornerRadius(10)
                 }
@@ -135,13 +136,15 @@ struct CreateTaskView: View {
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(Color(.systemGray5))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(Color.primary, lineWidth: 3)
-                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 24))
                         .foregroundColor(Color(.label))
                         .cornerRadius(10)
                 }
+                Text("*With create with AI, tasks will be automatically created based on the goal you’ve set.")
+                    .font(.footnote)
+                    .foregroundColor(.gray)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                
             }
             .padding()
         }

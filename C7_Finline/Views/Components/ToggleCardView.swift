@@ -11,35 +11,35 @@ struct ToggleCardView: View {
     
     let icon: String
     let title: String
+    let desc: String
     @Binding var isOn: Bool
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack(spacing: 8) {
-                Image(systemName: icon)
-                    .foregroundColor(.primary)
+        HStack(alignment: .center, spacing: 20) {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 8) {
+                    Image(systemName: icon)
+                        .foregroundColor(.primary)
+                    
+                    Text(title)
+                        .font(.headline)
+                        .foregroundStyle(.black)
+                }
+                Spacer()
+                    .frame(height: 4)
                 
-                Text(title)
-                    .font(.headline)
-                    .foregroundStyle(.secondary)
+                Text(desc)
+                    .font(.subheadline)
+                    .foregroundStyle(.black)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             Spacer()
-                .frame(height: 16)
             
-            HStack {
-                Toggle("", isOn: $isOn)
-                    .labelsHidden()
-                
-                Spacer()
-                
-//                Button(action: {}) {
-//                    Image(systemName: "info.circle")
-//                        .foregroundStyle(.black)
-//                        .font(.title3)
-//                }
-            }
+            Toggle("", isOn: $isOn)
+                .labelsHidden()
         }
         .padding()
+        .frame(minHeight: 90)
         .background(
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color(.systemBackground))
@@ -67,10 +67,20 @@ struct ToggleCardView_Previews: PreviewProvider {
         
         var body: some View {
             VStack(spacing: 16) {
-                ToggleCardView(icon: "moon", title: "Enable Dark Mode", isOn: $isOn1)
-                ToggleCardView(icon: "moon", title: "Enable Notifications", isOn: $isOn2)
+                ToggleCardView(
+                    icon: "moon.fill",
+                    title: "Enable Dark Mode",
+                    desc: "Finley will go check on you if you are still working or not!",
+                    isOn: $isOn1
+                )
+                
+                ToggleCardView(
+                    icon: "moon.fill",
+                    title: "Enable Dark Mode",
+                    desc: "Finley helps you stay focused by blocking distracting apps.",
+                    isOn: $isOn2
+                )
             }
         }
     }
 }
-
