@@ -142,16 +142,30 @@ struct DetailTaskView: View {
                     }
                 }
                 Section {
-                    Button(role: .destructive) {
-                        isShowingDeleteAlert = true
-                    } label: {
+                    if !isCompleted {
                         HStack {
-                            Image(systemName: "trash")
-                            Text("Delete Task")
+                            Button(action: {
+                                if hasUnsavedChanges {
+                                    isShowingUnsavedChangesAlert = true
+                                } else {
+                                    focusVM.setTask(task, goal: task.goal)
+                                    isShowingFocusSettings = true
+                                }
+                            }) {
+                                Text("Start Focus")
+                                    .font(.headline)
+                                    .frame(maxWidth: .infinity)
+                                    .padding()
+                                    .background(Color.primary)
+                                    .foregroundColor(.white)
+                                    .cornerRadius(50)
+                            }
                         }
-                        .frame(maxWidth: .infinity)
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
                     }
                 }
+
             }
             .navigationTitle("Task Details")
             .navigationBarTitleDisplayMode(.inline)
@@ -190,24 +204,16 @@ struct DetailTaskView: View {
                 }
             }
             .safeAreaInset(edge: .bottom) {
-                if !isCompleted {
-                    Button(action: {
-                        if hasUnsavedChanges {
-                            isShowingUnsavedChangesAlert = true
-                        } else {
-                            focusVM.setTask(task, goal: task.goal)
-                            isShowingFocusSettings = true
-                        }
-                    }) {
-                        Text("Start Focus")
-                            .font(.headline)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.primary)
-                            .foregroundColor(.white)
-                            .cornerRadius(50)
-                            .padding([.horizontal, .bottom])
+                //start focus
+                
+                Button(role: .destructive) {
+                    isShowingDeleteAlert = true
+                } label: {
+                    HStack {
+                        Image(systemName: "trash")
+                        Text("Delete Task")
                     }
+                    .frame(maxWidth: .infinity)
                 }
             }
             .sheet(isPresented: $isShowingDatePicker) {
