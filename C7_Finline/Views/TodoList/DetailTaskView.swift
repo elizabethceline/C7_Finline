@@ -120,9 +120,20 @@ struct DetailTaskView: View {
                     } label: {
                         HStack {
                             Label {
-                                Text("\(focusDuration) mins")
-                                    .font(.body)
-                                    .foregroundColor(Color(.label))
+                                if durationHours == 0 {
+                                    Text("\(durationMinutes) mins")
+                                        .font(.body)
+                                        .foregroundColor(Color(.label))
+                                } else if durationMinutes == 0 {
+                                    Text("\(durationHours) hours")
+                                        .font(.body)
+                                        .foregroundColor(Color(.label))
+                                } else {
+                                    Text("\(durationHours) hours \(durationMinutes) mins")
+                                        .font(.body)
+                                        .foregroundColor(Color(.label))
+                                }
+                                
                             } icon: {
                                 Image(systemName: "timer")
                                     .foregroundColor(.primary)
