@@ -241,7 +241,7 @@ struct DetailTaskView: View {
                     }
                 )
                 .environmentObject(focusVM)
-                .presentationDetents([.height(300)])
+                .presentationDetents([.height(350)])
             }
             .alert("Delete Task", isPresented: $isShowingDeleteAlert) {
                 Button("Cancel", role: .cancel) { }

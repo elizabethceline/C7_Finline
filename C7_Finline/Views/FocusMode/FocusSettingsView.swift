@@ -10,16 +10,18 @@ struct FocusSettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Focus Options") {
-                    HStack(spacing: 16) {
+                Section() {
+                    VStack(spacing: 16) {
                         ToggleCardView(
                             icon: "moon.fill",
                             title: "Deep Focus",
+                            desc: "Finley helps you stay focused by blocking distracting apps.",
                             isOn: $focusVM.authManager.isEnabled
                         )
                         ToggleCardView(
                             icon: "bell.fill",
                             title: "Nudge Me",
+                            desc: "Finley will go check on you if you are still working or not!",
                             isOn: $isNudgeMeOn
                         )
                     }
@@ -27,7 +29,9 @@ struct FocusSettingsView: View {
                 }
                 .listRowInsets(EdgeInsets(top: 0, leading: 2, bottom: 0, trailing: 2))
                 .listRowBackground(Color.clear)
+                
             }
+            .offset(y:-25)
             .navigationTitle("Focus Settings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
