@@ -10,10 +10,11 @@ import SwiftUI
 struct ChatBubble: View {
     let message: String
     let showNameTag: Bool
+    let shouldCompleteImmediately: Bool
     
     var body: some View {
         ZStack(alignment: .topLeading) {
-            TypingText(text: message)
+            TypingText(text: message, shouldCompleteImmediately: shouldCompleteImmediately)
                 .padding(.horizontal, 28)
                 .frame(height: 120, alignment: .center)
                 .background(
@@ -49,7 +50,8 @@ struct ChatBubble: View {
 #Preview {
     ChatBubble(
         message: "Hi there! I'm Finley!",
-        showNameTag: true
+        showNameTag: true,
+        shouldCompleteImmediately: false
     )
     .padding(48)
     .background(Color.gray.opacity(0.2))
