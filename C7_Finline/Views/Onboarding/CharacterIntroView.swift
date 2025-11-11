@@ -14,6 +14,8 @@ struct CharacterIntroView: View {
     @State private var showFinalMessage = false
     @Binding var username: String
     @FocusState private var isTextFieldFocused: Bool
+    @State private var shouldCompleteTyping = false
+    @State private var isTypingComplete = false
 
     let messages = [
         "Hi there, nice to meet you. I'm Finley",
@@ -41,7 +43,8 @@ struct CharacterIntroView: View {
                             ChatBubble(
                                 message:
                                     "Alright \(username), let's do our best!",
-                                showNameTag: true
+                                showNameTag: true,
+                                shouldCompleteImmediately: shouldCompleteTyping
                             )
 
                             Text("Tap the arrow to continue")
@@ -86,7 +89,8 @@ struct CharacterIntroView: View {
                         VStack(spacing: 12) {
                             ChatBubble(
                                 message: messages[currentMessageIndex],
-                                showNameTag: true
+                                showNameTag: true,
+                                shouldCompleteImmediately: shouldCompleteTyping
                             )
 
                             Text("Tap anywhere to continue")
@@ -114,24 +118,36 @@ struct CharacterIntroView: View {
                             ) {
                                 showFinalMessage = true
                             }
+                            // Reset typing state for new message
+                            shouldCompleteTyping = false
+                            isTypingComplete = false
                         } else {
                             isTextFieldFocused = true
                         }
                         return
                     }
 
-                    if currentMessageIndex < messages.count - 1 {
-                        currentMessageIndex += 1
+                    // complete typing if not done
+                    if !isTypingComplete {
+                        shouldCompleteTyping = true
+                        isTypingComplete = true
                     } else {
-                        withAnimation(
-                            .spring(response: 0.4, dampingFraction: 0.7)
-                        ) {
-                            showNameInput = true
-                        }
-                        DispatchQueue.main.asyncAfter(
-                            deadline: .now() + 0.3
-                        ) {
-                            isTextFieldFocused = true
+                        // proceed to next message
+                        if currentMessageIndex < messages.count - 1 {
+                            currentMessageIndex += 1
+                            shouldCompleteTyping = false
+                            isTypingComplete = false
+                        } else {
+                            withAnimation(
+                                .spring(response: 0.4, dampingFraction: 0.7)
+                            ) {
+                                showNameInput = true
+                            }
+                            DispatchQueue.main.asyncAfter(
+                                deadline: .now() + 0.3
+                            ) {
+                                isTextFieldFocused = true
+                            }
                         }
                     }
                 }
