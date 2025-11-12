@@ -19,7 +19,7 @@ struct HeaderView: View {
             ZStack(alignment: .topTrailing) {
                 VStack(alignment: .leading, spacing: 6) {
                     if unfinishedTasks.isEmpty {
-                        Text("Do your tasks today and earn points!")
+                        Text("You currently have no task, add it if you really need to. Or not...")
                             .foregroundColor(Color(.label).opacity(0.7))
                             .font(.body)
                     } else {
@@ -74,7 +74,7 @@ struct HeaderView: View {
 
     private var tasksMessage: AttributedString {
         let attributed = AttributedString(
-            "You have \(unfinishedTaskText)!\nPlan your day wisely."
+            "Oh no, you have \(unfinishedTaskText).\nPlease start doing your task!"
         )
         //        if let range = attributed.range(of: unfinishedTaskText) {
         //            attributed[range].underlineStyle = .single
