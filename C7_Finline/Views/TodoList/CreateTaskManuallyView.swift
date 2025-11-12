@@ -47,6 +47,11 @@ struct CreateTaskManuallyView: View {
             let parsedDate = formatter.date(from: existingTask.workingTime) ?? Date()
             _taskDeadline = State(initialValue: parsedDate)
             _focusDuration = State(initialValue: existingTask.focusDuration)
+            
+            let hours = existingTask.focusDuration / 60
+            let minutes = existingTask.focusDuration % 60
+            _durationHours = State(initialValue: hours)
+            _durationMinutes = State(initialValue: minutes)
         } else {
             _taskDeadline = State(initialValue: taskDeadline)
         }
