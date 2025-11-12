@@ -10,18 +10,13 @@ import SwiftUI
 struct TaskCardView: View {
     let task: GoalTask
 
-    private func formattedTime(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm"
-        return formatter.string(from: date)
-    }
-
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
-                Text(formattedTime(task.workingTime))
+                Text(formattedTimeRange(start: task.workingTime, durationMinutes: task.focusDuration))
                     .font(.caption)
                     .foregroundColor(Color(uiColor: .secondaryLabel))
+                
                 Text(task.name.capitalized)
                     .font(.body)
                     .fontWeight(.medium)
@@ -53,6 +48,14 @@ struct TaskCardView: View {
         )
         .opacity(task.isCompleted ? 0.6 : 1)
     }
+    
+    private func formattedTimeRange(start: Date, durationMinutes: Int) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        
+        let endTime = Calendar.current.date(byAdding: .minute, value: durationMinutes, to: start) ?? start
+        return "\(formatter.string(from: start)) - \(formatter.string(from: endTime))"
+    }
 }
 
 #Preview {
@@ -60,9 +63,9 @@ struct TaskCardView: View {
         task: GoalTask(
             id: "task_001",
             name: "Study Math",
-            workingTime: Date(),
-            focusDuration: 25,
-            isCompleted: true,
+            workingTime: Calendar.current.date(bySettingHour: 18, minute: 0, second: 0, of: Date())!,
+            focusDuration: 20,
+            isCompleted: false,
             goal: Goal(
                 id: "goal_001",
                 name: "Learn Algebra",
