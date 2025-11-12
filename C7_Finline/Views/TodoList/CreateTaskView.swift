@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import FoundationModels
 
 struct CreateTaskView: View {
     let goalName: String
@@ -28,6 +29,9 @@ struct CreateTaskView: View {
     @StateObject private var taskVM = TaskViewModel()
     @StateObject private var goalVM = GoalViewModel()
     @Environment(\.modelContext) private var modelContext
+    private var isAIAvailable: Bool {
+        SystemLanguageModel.default.isAvailable
+    }
     
     var body: some View {
         VStack(spacing: 0) {
@@ -104,8 +108,8 @@ struct CreateTaskView: View {
                         description: Text("Create tasks manually or use AI to generate tasks automatically.")
                     )
                     .foregroundStyle(
-                            .primary
-                        )
+                        .primary
+                    )
                     .font(.subheadline)
                     .symbolVariant(.fill)
                     .symbolRenderingMode(.hierarchical)
@@ -120,28 +124,22 @@ struct CreateTaskView: View {
             .animation(.easeInOut(duration: 0.3), value: removingTaskIds)
             
             VStack(spacing: 16) {
-                Button(action: { isShowingModalCreateWithAI = true }) {
+                Button(action: {
+                    if isAIAvailable {
+                        isShowingModalCreateWithAI = true
+                    }
+                }) {
                     Text("Create with AI")
                         .font(.headline)
                         .frame(maxWidth: .infinity)
                         .padding()
-                    //                        .background(
-                    //                            LinearGradient(
-                    //                                gradient: Gradient(colors: [
-                    //                                    Color(red: 0.15, green: 0.45, blue: 1.0),
-                    //                                    Color(red: 0.30, green: 0.95, blue: 1.0),
-                    //                                    Color(red: 0.80, green: 0.50, blue: 1.0)
-                    //                                ]),
-                    //                                startPoint: .leading,
-                    //                                endPoint: .trailing
-                    //                            )
-                    //                        )
-                    
-                        .background(Color.primary)
+                        .background(isAIAvailable ? Color.primary : Color.gray.opacity(0.4))
                         .clipShape(RoundedRectangle(cornerRadius: 24))
                         .foregroundColor(.white)
                         .cornerRadius(10)
                 }
+                .disabled(!isAIAvailable)
+                
                 
                 
                 Button(action: { isShowingModalCreateManually = true }) {
@@ -149,15 +147,22 @@ struct CreateTaskView: View {
                         .font(.headline)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color(.systemGray5))
+                        .background(isAIAvailable ? Color.primary : Color.primary)
                         .clipShape(RoundedRectangle(cornerRadius: 24))
-                        .foregroundColor(Color(.label))
+                        .foregroundColor(isAIAvailable ? .black : .white)
                         .cornerRadius(10)
                 }
-                Text("*With create with AI, tasks will be automatically created based on the goal you’ve set.")
-                    .font(.footnote)
-                    .foregroundColor(.gray)
-                    .frame(maxWidth: .infinity, alignment: .center)
+                if isAIAvailable {
+                    Text("*With create with AI, tasks will be automatically created based on the goal you’ve set.")
+                        .font(.footnote)
+                        .foregroundColor(.gray)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                } else {
+                    Text("*AI task creation isn’t supported on your device right now.")
+                        .font(.footnote)
+                        .foregroundColor(.red)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
                 
             }
             .padding()
