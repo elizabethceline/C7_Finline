@@ -20,10 +20,12 @@ struct CreateTaskManuallyView: View {
     @State private var isShowingDatePicker: Bool = false
     @State private var isShowingTimePicker: Bool = false
     @State private var isShowingDurationPicker = false
+    @State private var isShowingDeleteAlert = false
+    
     @State private var durationHours = 0
     @State private var durationMinutes = 1
     @State private var durationSeconds = 0
-
+    
     
     private var existingTask: AIGoalTask?
     private var goalId: String?
@@ -33,7 +35,7 @@ struct CreateTaskManuallyView: View {
         taskVM: TaskViewModel,
         taskDeadline: Date = Date(),
         existingTask: AIGoalTask? = nil,
-        goalId: String? = nil,  
+        goalId: String? = nil,
         onTaskCreated: (() -> Void)? = nil
     ) {
         self.taskVM = taskVM
@@ -69,7 +71,7 @@ struct CreateTaskManuallyView: View {
                     Text("Task")
                         .font(.headline)
                 }
-
+                
                 Section {
                     Button {
                         isShowingDatePicker = true
@@ -89,7 +91,7 @@ struct CreateTaskManuallyView: View {
                         }
                         .foregroundStyle(.black)
                     }
-
+                    
                     Button {
                         isShowingTimePicker = true
                     } label: {
@@ -140,19 +142,48 @@ struct CreateTaskManuallyView: View {
                             hours: $durationHours,
                             minutes: $durationMinutes
                         ) { totalMinutes in
-                            focusDuration = totalMinutes 
+                            focusDuration = totalMinutes
                         }
                     }
-
+                    
                 } header: {
                     Text("Schedule")
                         .font(.headline)
+                }
+                
+                
+            }
+            .safeAreaInset(edge: .bottom) {
+                //start focus
+                
+                if existingTask != nil {
+                    Button(role: .destructive) {
+                        isShowingDeleteAlert = true
+                    } label: {
+                        HStack {
+                            Image(systemName: "trash")
+                            Text("Delete Task")
+                        }
+                        .frame(maxWidth: .infinity)
+                    }
                 }
             }
             .scrollContentBackground(.hidden)
             .navigationTitle(existingTask == nil ? "Create Task" : "Edit Task")
             .navigationBarTitleDisplayMode(.inline)
             .background(Color(.systemGroupedBackground))
+            .alert("Delete Task?", isPresented: $isShowingDeleteAlert) {
+                Button("Delete", role: .destructive) {
+                    if let taskToDelete = existingTask {
+                        taskVM.deleteTask(taskToDelete)
+                    }
+                    dismiss()
+                }
+                Button("Cancel", role: .cancel) { }
+            } message: {
+                Text("Are you sure you want to delete this task? This action cannot be undone.")
+            }
+            
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button {
@@ -198,6 +229,7 @@ struct CreateTaskManuallyView: View {
                     }
                     .disabled(taskName.isEmpty)
                 }
+                
             }
             .sheet(isPresented: $isShowingDatePicker) {
                 DateTimePickerView(
