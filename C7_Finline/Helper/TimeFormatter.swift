@@ -2,15 +2,28 @@
 //  TimeFormatter.swift
 //  C7_Finline
 //
-//  Created by Gabriella Natasya Pingky Davis on 03/11/25.
+//  Created by Richie Reuben Hermanto on 10/11/25.
 //
+
 import Foundation
 
 enum TimeFormatter {
     static func format(seconds: TimeInterval) -> String {
-        let hours = Int(seconds) / 3600
-        let minutes = (Int(seconds) % 3600) / 60
-        let secs = Int(seconds) % 60
-        return String(format: "%02d:%02d:%02d", hours, minutes, secs)
+        let totalSeconds = max(0, Int(seconds))
+        let hours = totalSeconds / 3600
+        let minutes = (totalSeconds % 3600) / 60
+        let secs = totalSeconds % 60
+        
+        if hours > 0 {
+            return String(format: "%d:%02d:%02d", hours, minutes, secs)
+        } else {
+            return String(format: "%02d:%02d", minutes, secs)
+        }
+    }
+    
+    static func shortFormat(seconds: TimeInterval) -> String {
+        let totalSeconds = max(0, Int(seconds))
+        let minutes = totalSeconds / 60
+        return "\(minutes)m"
     }
 }

@@ -14,7 +14,7 @@ struct CreateTaskView: View {
     
     @Environment(\.dismiss) private var dismiss
     var dismissParent: DismissAction? = nil
-
+    
     
     @ObservedObject var mainVM: MainViewModel
     
@@ -66,7 +66,7 @@ struct CreateTaskView: View {
                 if !taskVM.tasks.isEmpty {
                     ForEach(taskVM.groupedGoalTaskAI(), id: \.date) { group in
                         Section(header:
-                            Text(group.date, format: .dateTime.day().month(.wide).year())
+                                    Text(group.date, format: .dateTime.day().month(.wide).year())
                             .font(.title3)
                             .foregroundColor(Color(.label))
                         ) {
@@ -75,12 +75,10 @@ struct CreateTaskView: View {
                                 let finalWorkingDate = workingDate ?? Date()
                                 let goalTask = taskVM.toGoalTask(from: aiTask, workingDate: finalWorkingDate, goalName: goalName, goalDeadline: goalDeadline)
                                 
-                                
                                 TaskCardView(task: goalTask)
                                     .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
                                     .listRowSeparator(.hidden)
                                     .listRowBackground(Color.clear)
-                                    // ANIMATION EFFECTS
                                     .opacity(removingTaskIds.contains(aiTask.id) ? 0 : 1)
                                     .offset(y: removingTaskIds.contains(aiTask.id) ? -10 : 0)
                                     .onTapGesture {
@@ -99,7 +97,23 @@ struct CreateTaskView: View {
                             }
                         }
                     }
+                } else {
+                    ContentUnavailableView(
+                        "No Tasks Yet",
+                        systemImage: "tray",
+                        description: Text("Create tasks manually or use AI to generate tasks automatically.")
+                    )
+                    .foregroundStyle(
+                            .primary
+                        )
+                    .font(.subheadline)
+                    .symbolVariant(.fill)
+                    .symbolRenderingMode(.hierarchical)
+                    .padding(.vertical, 40)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .listRowBackground(Color.clear)
                 }
+                
             }
             .scrollContentBackground(.hidden)
             .animation(.easeInOut(duration: 0.3), value: taskVM.tasks)
@@ -111,19 +125,20 @@ struct CreateTaskView: View {
                         .font(.headline)
                         .frame(maxWidth: .infinity)
                         .padding()
-//                        .background(
-//                            LinearGradient(
-//                                gradient: Gradient(colors: [
-//                                    Color(red: 0.15, green: 0.45, blue: 1.0),
-//                                    Color(red: 0.30, green: 0.95, blue: 1.0),
-//                                    Color(red: 0.80, green: 0.50, blue: 1.0)
-//                                ]),
-//                                startPoint: .leading,
-//                                endPoint: .trailing
-//                            )
-//                        )
+                    //                        .background(
+                    //                            LinearGradient(
+                    //                                gradient: Gradient(colors: [
+                    //                                    Color(red: 0.15, green: 0.45, blue: 1.0),
+                    //                                    Color(red: 0.30, green: 0.95, blue: 1.0),
+                    //                                    Color(red: 0.80, green: 0.50, blue: 1.0)
+                    //                                ]),
+                    //                                startPoint: .leading,
+                    //                                endPoint: .trailing
+                    //                            )
+                    //                        )
                     
                         .background(Color.primary)
+                        .clipShape(RoundedRectangle(cornerRadius: 24))
                         .foregroundColor(.white)
                         .cornerRadius(10)
                 }
@@ -135,13 +150,15 @@ struct CreateTaskView: View {
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(Color(.systemGray5))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(Color.primary, lineWidth: 3)
-                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 24))
                         .foregroundColor(Color(.label))
                         .cornerRadius(10)
                 }
+                Text("*With create with AI, tasks will be automatically created based on the goal you’ve set.")
+                    .font(.footnote)
+                    .foregroundColor(.gray)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                
             }
             .padding()
         }
