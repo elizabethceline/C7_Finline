@@ -222,7 +222,7 @@ struct DetailGoalView: View {
                     .accessibilityLabel("Done selecting")
                 } else {
                     Menu {
-                        Button("Select Tasks") {
+                        Button("Delete Task") {
                             withAnimation {
                                 isSelecting = true
                             }
@@ -237,29 +237,29 @@ struct DetailGoalView: View {
             }
         }
 
-        .toolbar {
-            ToolbarItemGroup(placement: .bottomBar) {
-                if isSelecting {
-
-                    Text("\(selectedTaskIds.count) selected")
-                        .foregroundColor(.gray)
-                        .font(.subheadline)
-                        .padding(8)
-                        .fixedSize()
-
-                    Spacer()
-
-                    Button(role: .destructive) {
-                        showBulkDeleteAlert = true
-                    } label: {
-                        Label("Delete", systemImage: "trash")
-                    }
-                    .tint(.red)
-                    .disabled(selectedTaskIds.isEmpty)
-
-                }
-            }
-        }
+//        .toolbar {
+//            ToolbarItemGroup(placement: .bottomBar) {
+//                if isSelecting {
+//
+//                    Text("\(selectedTaskIds.count) selected")
+//                        .foregroundColor(.gray)
+//                        .font(.subheadline)
+//                        .padding(8)
+//                        .fixedSize()
+//
+//                    Spacer()
+//
+//                    Button(role: .destructive) {
+//                        showBulkDeleteAlert = true
+//                    } label: {
+//                        Label("Delete", systemImage: "trash")
+//                    }
+//                    .tint(.red)
+//                    .disabled(selectedTaskIds.isEmpty)
+//
+//                }
+//            }
+//        }
     }
 
     private var taskSection: some View {
@@ -273,20 +273,18 @@ struct DetailGoalView: View {
                 ForEach(tasks) { task in
                     HStack {
                         if isSelecting {
-                            Image(
-                                systemName: selectedTaskIds.contains(task.id)
-                                ? "checkmark.circle.fill" : "circle"
-                            )
-                            .font(.title3)
-                            .foregroundColor(
-                                selectedTaskIds.contains(task.id)
-                                ? .blue : .gray
-                            )
-                            .padding(.trailing, 4)
-                            .onTapGesture {
-                                toggleSelection(for: task)
+                            Button {
+                                showDeleteAlert = true
+                                taskToDelete = task
+                            } label: {
+                                Image(systemName: "minus.circle.fill")
+                                    .font(.title3)
+                                    .foregroundColor(.red)
+                                    .padding(.trailing, 4)
                             }
+                            .buttonStyle(.plain)
                         }
+
 
                         Button {
                             if isSelecting {
