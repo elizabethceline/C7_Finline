@@ -112,29 +112,6 @@ struct ContentCardView: View {
                 }
 
             VStack(spacing: 0) {
-                // Filter indicator
-                if viewModel.taskFilter != .unfinished {
-                    HStack {
-                        Text("Showing: \(viewModel.taskFilter.rawValue)")
-                            .font(.caption)
-                            .fontWeight(.medium)
-                            .foregroundColor(Color(.label))
-                        Spacer()
-                        Button("Clear") {
-                            withAnimation {
-                                viewModel.taskFilter = .unfinished
-                            }
-                        }
-                        .font(.caption)
-                        .foregroundColor(Color.primary)
-                    }
-                    .padding(.horizontal)
-                    .padding(.vertical, 8)
-                    .background(Color(.systemBackground))
-                    .cornerRadius(8)
-                    .padding(.bottom, 8)
-                }
-
                 if filteredTasks.isEmpty {
                     ScrollView(showsIndicators: false) {
                         EmptyStateView()

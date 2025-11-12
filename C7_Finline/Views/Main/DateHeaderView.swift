@@ -17,6 +17,8 @@ struct DateHeaderView: View {
     let jumpToDate: (Date) -> Void
     let unfinishedTasks: [GoalTask]
 
+    @Environment(\.colorScheme) var colorScheme
+
     var body: some View {
         VStack(spacing: 8) {
             HStack {
@@ -32,7 +34,7 @@ struct DateHeaderView: View {
                             selectedDate.formatted(.dateTime.month(.wide)) + " "
                                 + selectedDate.formatted(.dateTime.year())
                         )
-                        .font(.title)
+                        .font(.title2)
                         .fontWeight(.bold)
                         .foregroundColor(.primary)
                     }
@@ -51,12 +53,29 @@ struct DateHeaderView: View {
                     }
                     .pickerStyle(.inline)
                 } label: {
-                    Image(systemName: "line.3.horizontal.decrease")
-                        .font(.title)
-                        .foregroundColor(Color(.systemGray))
+                    HStack(spacing: 4) {
+                        Image(systemName: "line.3.horizontal.decrease")
+                            .font(.subheadline)
+                            .foregroundColor(
+                                colorScheme == .dark
+                                    ? Color.white.opacity(0.8)
+                                    : Color(.darkGray)
+                            )
+                            .fontWeight(.bold)
+                        Text("\(taskFilter.rawValue)")
+                            .font(.caption)
+                            .foregroundColor(Color(.systemGray))
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .frame(width: 110, alignment: .leading)
+                    .background(Color.gray.opacity(0.1))
+                    .cornerRadius(50)
                 }
+                .menuStyle(.button)
+                .fixedSize()
             }
-            .padding(.trailing, 4)
 
             DateWeekPagerView(
                 selectedDate: $selectedDate,
