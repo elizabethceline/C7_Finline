@@ -61,6 +61,7 @@ final class FocusSessionViewModel: ObservableObject {
     private var restTimer: Timer?
     private var lastTickDate: Date?
     private var currentRestStart: Date?
+    private var endTime: Date?
     
     // Live Activity
     @Published var activity: Activity<FocusActivityAttributes>?
@@ -82,6 +83,13 @@ final class FocusSessionViewModel: ObservableObject {
             self.sessionDuration = TimeInterval(task.focusDuration * 60)
             self.remainingTime = self.sessionDuration
         }
+        
+        NotificationCenter.default.addObserver(
+                self,
+                selector: #selector(appDidBecomeActive),
+                name: UIApplication.didBecomeActiveNotification,
+                object: nil
+            )
     }
     
     // Focus Session
@@ -97,6 +105,7 @@ final class FocusSessionViewModel: ObservableObject {
         remainingTime = sessionDuration
         lastTickDate = Date()
         shouldReturnToStart = false
+        endTime = Date().addingTimeInterval(sessionDuration)
         bonusPointsFromNudge = 0
         
         isResting = false
@@ -218,12 +227,12 @@ final class FocusSessionViewModel: ObservableObject {
         
         timer?.invalidate()
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
-            Task { @MainActor in
-                guard let self = self else { return }
-                
-                if self.remainingTime > 1 {
-                    self.remainingTime -= 1
-                    self.lastTickDate = Date()
+            Task { @MainActor [weak self] in
+                guard let self = self, let endTime = self.endTime else { return }
+
+                let remaining = endTime.timeIntervalSinceNow
+                if remaining > 0 {
+                    self.remainingTime = remaining
                     self.checkNudgeAlerts()
                     
                     // Update Live Activity setiap detik
@@ -458,6 +467,12 @@ final class FocusSessionViewModel: ObservableObject {
         print("Live Activity ended")
     }
     
+    @objc private func appDidBecomeActive() {
+        guard let endTime else { return }
+        remainingTime = max(0, endTime.timeIntervalSinceNow)
+        Task { await updateLiveActivity() }
+    }
+
     //    private func updateLiveActivity() async {
     //        guard let activity else { return }
     //
