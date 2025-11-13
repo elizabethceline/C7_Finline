@@ -164,7 +164,7 @@ struct FocusModeView: View {
     // MARK: - Subviews split for compiler friendliness
     
     private var backgroundView: some View {
-        Image(viewModel.isResting ? "restmode" : "focusmode")
+        Image(viewModel.isResting ? "restBackground" : "focusBackground")
             .resizable()
             .frame(height: 910)
     }
