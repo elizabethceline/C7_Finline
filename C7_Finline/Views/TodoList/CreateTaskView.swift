@@ -101,7 +101,7 @@ struct CreateTaskView: View {
                             }
                         }
                     }
-                } else {
+                } else if !taskVM.isLoading {
                     ContentUnavailableView(
                         "No Tasks Yet",
                         systemImage: "tray",
@@ -147,7 +147,7 @@ struct CreateTaskView: View {
                         .font(.headline)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(isAIAvailable ? Color.primary : Color.primary)
+                        .background(isAIAvailable ? Color.gray.opacity(0.4) : Color.primary)
                         .clipShape(RoundedRectangle(cornerRadius: 24))
                         .foregroundColor(isAIAvailable ? .black : .white)
                         .cornerRadius(10)
