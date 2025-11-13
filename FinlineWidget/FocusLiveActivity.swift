@@ -14,37 +14,62 @@ struct FocusLiveActivity: Widget {
         ActivityConfiguration(for: FocusActivityAttributes.self) { context in
             VStack(spacing: 8) {
                 HStack{
-                    VStack(alignment: .leading){
-                        Text(TimeFormatter.format(seconds: (context.state.isResting ? context.state.restRemainingTime : context.state.remainingTime) ?? 0))
-                            .font(.system(size: 48))
-                            .fontWeight(.bold)
-                            .monospacedDigit()
-                            .foregroundColor(.gray)
-                            .offset(x:-5)
-                        
-                        Text(context.state.taskTitle)
-                            .font(.headline)
-                            .foregroundColor(.gray)
+                    if context.state.isResting {
+                        VStack(alignment: .leading){
+                            Text("Resting...")
+                                .font(.system(size: 42))
+                                .fontWeight(.bold)
+                                .monospacedDigit()
+                                .foregroundColor(.gray)
+                                .offset(x:-5)
+                            
+                            
+                            Text(TimeFormatter.format(seconds: (context.state.isResting ? context.state.restRemainingTime : context.state.remainingTime) ?? 0))
+                                .font(.title2)
+                                .foregroundColor(.gray)
+                        }
+                        .padding(.bottom,40)
+                    }else{
+                        VStack(alignment: .leading){
+                            Text(TimeFormatter.format(seconds: (context.state.isResting ? context.state.restRemainingTime : context.state.remainingTime) ?? 0))
+                                .font(.system(size: 48))
+                                .fontWeight(.bold)
+                                .monospacedDigit()
+                                .foregroundColor(.gray)
+                                .offset(x:-5)
+                            
+                            Text(context.state.taskTitle)
+                                .font(.title2)
+                                .foregroundColor(.gray)
+                        }
+                        .padding(.bottom,40)
                     }
-                    .padding(.bottom,40)
+                    
                     Spacer()
-                    Image("lockScreenTimer")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 150, height:150)
-                        .offset(x:20)
-                        .padding(.leading, 1)
+                    if context.state.isResting {
+                        Image("lockScreenResting")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 150, height:150)
+                            .offset(x:20)
+                            .padding(.leading, 1)
+                    }else{
+                        Image("lockScreenTimer")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 150, height:150)
+                            .offset(x:20)
+                            .padding(.leading, 1)
+                    }
+                    
                     
                 }
                 ProgressView(value: progress(for: context), total: 1.0)
                     .progressViewStyle(.linear)
-                    .tint(context.state.isResting
-                          ? .green
-                          : Color(red: 161/255, green: 210/255, blue: 241/255))
-                    .frame(height: 6)
+                    .tint(context.state.isResting ? .clear : Color(red: 161/255, green: 210/255, blue: 241/255))
+                    .frame(height: context.state.isResting ? 0 : 4)
                     .clipShape(Capsule())
                     .animation(.easeInOut(duration: 0.5), value: progress(for: context))
-                    .offset(y:-20)
             }
             .padding()
             .activityBackgroundTint(Color.secondary)
@@ -120,7 +145,7 @@ struct FocusLiveActivity: Widget {
                                 ProgressView(value: progress(for: context), total: 1.0)
                                     .progressViewStyle(.linear)
                                     .tint(context.state.isResting ? .clear : Color(red: 161/255, green: 210/255, blue: 241/255))
-                                    .frame(height: context.state.isResting ? 0 : 4) // <-- tinggi 0 saat resting
+                                    .frame(height: context.state.isResting ? 0 : 4)
                                     .clipShape(Capsule())
                                     .animation(.easeInOut(duration: 0.5), value: progress(for: context))
 
