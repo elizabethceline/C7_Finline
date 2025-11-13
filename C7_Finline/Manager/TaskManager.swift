@@ -13,6 +13,7 @@ class TaskManager {
     private let cloudKit = CloudKitManager.shared
     private let networkMonitor: NetworkMonitor
     private let pendingDeletionKey = "pendingTaskDeletionIDs"
+    private let notificationManager = NotificationManager.shared
 
     init(networkMonitor: NetworkMonitor) {
         self.networkMonitor = networkMonitor
@@ -108,6 +109,13 @@ class TaskManager {
 
         Task {
             await syncTask(newTask)
+
+            if let username = await fetchCurrentUsername() {
+                await notificationManager.scheduleNotificationsForTasks(
+                    [newTask],
+                    username: username
+                )
+            }
         }
 
         return newTask
@@ -128,11 +136,28 @@ class TaskManager {
 
         Task {
             await syncTask(task)
+
+            if let username = await fetchCurrentUsername() {
+                if isCompleted {
+                    // Remove notification if task is completed
+                    notificationManager.removeNotification(for: task.id)
+                } else {
+                    // Remove old notification and schedule new one
+                    notificationManager.removeNotification(for: task.id)
+                    await notificationManager.scheduleNotificationsForTasks(
+                        [task],
+                        username: username
+                    )
+                }
+            }
         }
     }
 
     func deleteTask(task: GoalTask, modelContext: ModelContext) {
         let taskIDToDelete = task.id
+
+        // Remove notification
+        notificationManager.removeNotification(for: taskIDToDelete)
 
         modelContext.delete(task)
         addPendingDeletionID(taskIDToDelete)
@@ -259,6 +284,18 @@ class TaskManager {
         var currentIDs = getPendingDeletionIDs()
         if currentIDs.remove(id) != nil {
             savePendingDeletionIDs(currentIDs)
+        }
+    }
+
+    private func fetchCurrentUsername() async -> String? {
+        do {
+            let userRecordID = try await CKContainer.default().userRecordID()
+            let profileRecordID = CKRecord.ID(recordName: "UserProfile_\(userRecordID.recordName)")
+            let record = try await CloudKitManager.shared.fetchRecord(recordID: profileRecordID)
+            return record["username"] as? String
+        } catch {
+            print("Failed to fetch current username: \(error.localizedDescription)")
+            return nil
         }
     }
 }

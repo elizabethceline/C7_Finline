@@ -51,21 +51,21 @@ struct ContentCardView: View {
             }
         }
     }
-    
+
     private var displayTasks: [GoalTask] {
         if let snapshot = taskListSnapshot {
             return snapshot
         }
         return filteredTasks
     }
-    
+
     private var displayGoals: [Goal] {
         if let snapshot = goalListSnapshot {
             return snapshot
         }
         return filteredGoals
     }
-    
+
     private var shouldShowEmptyState: Bool {
         return filteredTasks.isEmpty && taskListSnapshot == nil
     }
@@ -134,32 +134,6 @@ struct ContentCardView: View {
                 }
 
             VStack(spacing: 0) {
-//<<<<<<< HEAD
-//                if filteredTasks.isEmpty {
-//=======
-//                // Filter indicator
-                if viewModel.taskFilter != .unfinished {
-                    HStack {
-                        Text("Showing: \(viewModel.taskFilter.rawValue)")
-                            .font(.caption)
-                            .fontWeight(.medium)
-                            .foregroundColor(Color(.label))
-                        Spacer()
-                        Button("Clear") {
-                            withAnimation {
-                                viewModel.taskFilter = .unfinished
-                            }
-                        }
-                        .font(.caption)
-                        .foregroundColor(Color.primary)
-                    }
-                    .padding(.horizontal)
-                    .padding(.vertical, 8)
-                    .background(Color(.systemBackground))
-                    .cornerRadius(8)
-                    .padding(.bottom, 8)
-                }
-
                 if shouldShowEmptyState {
                     ScrollView(showsIndicators: false) {
                         EmptyStateView()
