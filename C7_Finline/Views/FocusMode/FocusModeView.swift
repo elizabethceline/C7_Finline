@@ -8,11 +8,11 @@ struct FocusModeView: View {
     
     var onGiveUp: (GoalTask) -> Void
     var onSessionEnd: (() -> Void)? = nil
+    
+    @State private var isShowingEndSessionAlert = false
 
     @State private var isGivingUp = false
     @State private var resultVM: FocusResultViewModel?
-    @State private var isShowingGiveUpAlert = false
-    @State private var isShowingEarlyFinishAlert = false
 
     @State private var isShowingTimesUpAlert = false
     @State private var isShowingAddTimeModal = false
@@ -27,22 +27,6 @@ struct FocusModeView: View {
         return blocksOf30Min * (5 * 60)
     }
 
-    private var isEarlyFinishAllowed: Bool {
-        guard viewModel.sessionDuration > 0 else { return false }
-        if !hasExtendedTime {
-            let fifteenPercentMark = viewModel.sessionDuration * 0.15
-            return viewModel.remainingTime <= fifteenPercentMark
-        } else {
-            return true
-        }
-    }
-
-    private var buttonLabel: String {
-        if resultVM != nil { return "Done" }
-        if hasExtendedTime || isEarlyFinishAllowed { return "I'm Done!" }
-        return "Give Up"
-    }
-
     var body: some View {
         ZStack {
             backgroundView
@@ -54,13 +38,7 @@ struct FocusModeView: View {
                     .animation(.easeInOut(duration: 0.5), value: viewModel.isResting)
             }
 
-//            VStack { // decorative character
-//                Image("charaSementara")
-//                    .resizable()
-//                    .scaledToFit()
-//            }
-
-            content // <-- broken out into a computed property
+            content
                 .padding()
         }
         // lifecycle + tasks
@@ -103,13 +81,18 @@ struct FocusModeView: View {
         .onDisappear {
             viewModel.resetSession()
         }
+        .alert("End Focus Session?", isPresented: $isShowingEndSessionAlert) {
+            Button("I'm Done", role: .none) {
+                Task {
+                    resultVM = viewModel.createResult(using: modelContext, didComplete: true)
+                    viewModel.finishEarly() // mark complete early
+                }
+            }
 
-        
-        .alert("Do you want to give up?", isPresented: $isShowingGiveUpAlert) {
-            Button("Yes", role: .destructive) {
+            Button("Abort Task", role: .destructive) {
                 Task {
                     isGivingUp = true
-                    await viewModel.giveUp()
+                    await viewModel.giveUp() // mark incomplete
                     if let task = viewModel.task {
                         onGiveUp(task)
                     } else {
@@ -117,23 +100,14 @@ struct FocusModeView: View {
                     }
                 }
             }
-            Button("No", role: .cancel) { }
-        } message: {
-            Text("You haven't finished \"\(viewModel.taskTitle)\" yet. Is it worth giving up? You won't receive any rewards if you stop now.")
-        }
-        .alert("Are you really done?", isPresented: $isShowingEarlyFinishAlert) {
-            Button("Yes I'm done") {
-                Task {
-                    resultVM = viewModel.createResult(using: modelContext, didComplete: true)
-                    viewModel.finishEarly()
-                }
-            }
-            Button("Nevermind", role: .cancel) { }
+            
+            Button("Cancel", role: .cancel) { }
         } message: {
             let formattedTime = TimeFormatter.format(seconds: viewModel.remainingTime)
             
-            Text("You still have \(formattedTime) left for this task. Will proceed to reward immediately.")
+            Text("You still have \(formattedTime) to go. Wrap up now to finish the task, or abort if you’re calling it quits early.")
         }
+        
         .alert("Time's Up!", isPresented: $isShowingTimesUpAlert) {
             Button("Yes, I'm finished") {
                 Task { @MainActor in
@@ -263,15 +237,9 @@ struct FocusModeView: View {
 
             HStack {
                 Button {
-                    Task {
-                        if isEarlyFinishAllowed {
-                            isShowingEarlyFinishAlert = true
-                        } else {
-                            isShowingGiveUpAlert = true
-                        }
-                    }
+                    isShowingEndSessionAlert = true
                 } label: {
-                    Text(buttonLabel)
+                    Text("End")
                         .font(.headline)
                         .frame(maxWidth: .infinity)
                         .padding()
@@ -280,19 +248,19 @@ struct FocusModeView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 24))
                 }
                 
-                if viewModel.canRest && viewModel.isFocusing {
-                    Button {
-                        isShowingRestModal = true
-                    } label: {
-                        Text("Rest")
-                            .font(.headline)
-//                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.primary)
-                            .foregroundColor(.white)
-                            .clipShape(RoundedRectangle(cornerRadius: 24))
-                    }
+                Button {
+                    isShowingRestModal = true
+                } label: {
+                    Text("Rest")
+                        .font(.headline)
+                        //.frame(maxWidth: .infinity)
+                        .padding()
+                        .background(viewModel.canRest && viewModel.isFocusing ? Color.primary : Color.gray.opacity(0.5))
+                        .foregroundColor(.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 24))
                 }
+                .disabled(!(viewModel.canRest && viewModel.isFocusing))
+                .animation(.easeInOut(duration: 0.2), value: viewModel.canRest && viewModel.isFocusing)
             }
         }
         .padding(.horizontal)
