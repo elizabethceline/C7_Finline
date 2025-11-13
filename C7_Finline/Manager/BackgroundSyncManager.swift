@@ -26,6 +26,7 @@ class BackgroundSyncManager: NSObject, ObservableObject {
     private let taskManager: TaskManager
     private let userProfileManager: UserProfileManager
     private let shopManager: ShopManager
+    private let notificationManager = NotificationManager.shared
 
     @Published var lastSyncDate: Date?
     @Published var isSyncing = false
@@ -293,6 +294,9 @@ class BackgroundSyncManager: NSObject, ObservableObject {
                 )
             }
 
+            // 5. Schedule notifications after sync
+            await scheduleNotificationsAfterSync(modelContext: context)
+
             print("Sync completed successfully")
 
         } catch {
@@ -316,6 +320,32 @@ class BackgroundSyncManager: NSObject, ObservableObject {
         }
 
         return success
+    }
+
+    private func scheduleNotificationsAfterSync(modelContext: ModelContext) async {
+        do {
+            // Fetch user profile to get username
+            guard let userRecordID = try? await cloudKit.fetchUserRecordID() else {
+                print("Failed to fetch user record ID for notifications")
+                return
+            }
+            
+            let profile = try await userProfileManager.fetchProfile(
+                userRecordID: userRecordID,
+                modelContext: modelContext
+            )
+            
+            let username = profile.username.isEmpty ? "there" : profile.username
+            
+            // Schedule notifications for all tasks
+            await notificationManager.handleSyncCompletion(
+                modelContext: modelContext,
+                username: username
+            )
+            
+        } catch {
+            print("Failed to schedule notifications after sync: \(error.localizedDescription)")
+        }
     }
 
     func triggerManualSync(modelContext: ModelContext) async {
