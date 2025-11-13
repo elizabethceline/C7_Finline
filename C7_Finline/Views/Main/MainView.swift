@@ -186,4 +186,5 @@ struct MainView: View {
     MainView()
         .modelContainer(for: [Goal.self, GoalTask.self, UserProfile.self])
         .environmentObject(NetworkMonitor())
+        .environmentObject(FocusSessionViewModel())
 }
