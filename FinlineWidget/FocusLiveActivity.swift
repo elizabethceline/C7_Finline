@@ -66,7 +66,7 @@ struct FocusLiveActivity: Widget {
                 }
                 ProgressView(value: progress(for: context), total: 1.0)
                     .progressViewStyle(.linear)
-                    .tint(context.state.isResting ? .clear : Color(red: 161/255, green: 210/255, blue: 241/255))
+                    .tint(Color(red: 161/255, green: 210/255, blue: 241/255))
                     .frame(height: context.state.isResting ? 0 : 4)
                     .clipShape(Capsule())
                     .animation(.easeInOut(duration: 0.5), value: progress(for: context))
@@ -171,9 +171,7 @@ struct FocusLiveActivity: Widget {
                 }
             } compactTrailing: {
                 Text(TimeFormatter.format(seconds: (context.state.isResting ? context.state.restRemainingTime : context.state.remainingTime) ?? 0))
-                    .foregroundColor(context.state.isResting
-                                     ? Color.primary
-                                     : Color(red: 161/255, green: 210/255, blue: 241/255))
+                    .foregroundColor(Color(red: 161/255, green: 210/255, blue: 241/255))
             } minimal: {
                 if context.state.isResting {
                     Image("compactResting")
