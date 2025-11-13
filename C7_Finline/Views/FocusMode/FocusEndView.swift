@@ -19,41 +19,21 @@ struct FocusEndView: View {
             if viewModel.fishCaught.isEmpty {
                 Text("No fish caught this time! Try focusing a bit longer next round.")
                     //.foregroundColor(.white.opacity(0.7))
-                    .padding(.top, 20)
+                    .padding()
+                    .background(Color.white.opacity(0.8))
+                    .clipShape(RoundedRectangle(cornerRadius: 20))
             } else {
                 FishSummaryCard(viewModel: viewModel)
             }
             
             Spacer()
             
-            // Total points display
-            VStack(spacing: 16) {
-                Text("+\(viewModel.grandTotal) pts")
-                    .font(.system(size: 60, weight: .bold))
-                
-                Button("Back to main Menu") {
-                    onDismiss()
-                }
-                .font(.headline)
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(Color.primary)
-                .foregroundColor(.white)
-                .clipShape(RoundedRectangle(cornerRadius: 24))
-            }
-            .padding(.horizontal)
-            .padding(.vertical)
-            .background {
-                if #available(iOS 26.0, *) {
-                    Color.clear
-                        .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 24))
-                } else {
-                    RoundedRectangle(cornerRadius: 24)
-                        .fill(.ultraThinMaterial)
-                }
-            }
-            .clipShape(RoundedRectangle(cornerRadius: 24))
-            .padding(.vertical)
+            FocusTimerCard(
+                mode: .focus,
+                timeText: "+\(viewModel.grandTotal.formatted(.number)) pts",
+                primaryLabel: "Back to Main Menu",
+                onPrimaryTap: onDismiss
+            )
             .padding(.bottom, 40)
         }
     }
@@ -85,6 +65,27 @@ struct FocusEndView: View {
             .ignoresSafeArea()
         FocusEndView(viewModel: mockVM) {
             print("Dismiss called in preview")
+        }
+    }
+}
+
+#Preview("No Fish Caught") {
+    // Create a mock result with *no fish*
+    let emptyResult = FocusSessionResult(
+        caughtFish: [],
+        duration: 1800,
+        task: nil
+    )
+
+    let mockVM = FocusResultViewModel(context: nil, networkMonitor: NetworkMonitor())
+    mockVM.currentResult = emptyResult
+    mockVM.bonusPoints = 0  // optional, just to make it clean
+
+    return ZStack {
+        Color.gray
+            .ignoresSafeArea()
+        FocusEndView(viewModel: mockVM) {
+            print("Dismiss called in preview (no fish)")
         }
     }
 }

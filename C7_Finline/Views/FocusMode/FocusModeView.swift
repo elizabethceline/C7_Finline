@@ -7,37 +7,37 @@ struct FocusModeView: View {
     @Environment(\.modelContext) private var modelContext
     
     var onGiveUp: (GoalTask) -> Void
-    var onSessionEnd: (() -> Void)? = nil
+    var onSessionEnd: () -> Void
     
     @State private var isShowingEndSessionAlert = false
-
+    
     @State private var isGivingUp = false
     @State private var resultVM: FocusResultViewModel?
-
+    
     @State private var isShowingTimesUpAlert = false
     @State private var isShowingAddTimeModal = false
     @State private var extraTimeInMinutes: Int = 5
     @State private var hasExtendedTime = false
-
+    
     @State private var isShowingRestModal = false
     @State private var selectedRestMinutes = 5
-
+    
     private var totalAllowedRestTime: TimeInterval {
         let blocksOf30Min = viewModel.sessionDuration / (30 * 60)
         return blocksOf30Min * (5 * 60)
     }
-
+    
     var body: some View {
         ZStack {
             backgroundView
-
+            
             if viewModel.isResting {
                 Color.blue.opacity(0.3)
                     .frame(height: 910)
                     .transition(.opacity)
                     .animation(.easeInOut(duration: 0.5), value: viewModel.isResting)
             }
-
+            
             content
                 .padding()
         }
@@ -85,10 +85,12 @@ struct FocusModeView: View {
             Button("I'm Done", role: .none) {
                 Task {
                     resultVM = viewModel.createResult(using: modelContext, didComplete: true)
-                    viewModel.finishEarly() // mark complete early
+                    viewModel.finishEarly()
+                    await viewModel.endSession()
+
                 }
             }
-
+            
             Button("Abort Task", role: .destructive) {
                 Task {
                     isGivingUp = true
@@ -158,19 +160,19 @@ struct FocusModeView: View {
             print("isInRestView changed from \(oldValue) to \(newValue)")
         }
     }
-
+    
     // MARK: - Subviews split for compiler friendliness
-
+    
     private var backgroundView: some View {
         Image(viewModel.isResting ? "restmode" : "focusmode")
             .resizable()
             .frame(height: 910)
     }
-
+    
     private var content: some View {
         VStack(spacing: 24) {
             Spacer().frame(height: 40)
-
+            
             VStack(alignment: .leading) {
                 if let vm = resultVM {
                     endView(vm: vm)
@@ -182,21 +184,21 @@ struct FocusModeView: View {
             }
         }
     }
-
+    
     private func endView(vm: FocusResultViewModel) -> some View {
-        FocusEndView(viewModel: vm) {
-            onSessionEnd?()
-        }
+        FocusEndView(viewModel: vm, onDismiss: {
+            onSessionEnd() // ✅ call parent
+        })
     }
-
+    
     private var restView: some View {
         FocusRestView(
             goalName: viewModel.goalName,
             restDuration: viewModel.restRemainingTime
         )
     }
-
-
+    
+    
     private var activeView: some View {
         Group {
             // Header
@@ -205,77 +207,35 @@ struct FocusModeView: View {
                 .bold()
                 .padding(.horizontal)
                 .padding(.vertical, 8)
-                //.background(Color.secondary)
-                //.clipShape(RoundedRectangle(cornerRadius: 20))
-               // .shadow(radius: 2)
-                //.padding()
-
+            //.background(Color.secondary)
+            //.clipShape(RoundedRectangle(cornerRadius: 20))
+            // .shadow(radius: 2)
+            //.padding()
+            
             // Task title
             Text(viewModel.taskTitle.isEmpty ? "Focus Session" : viewModel.taskTitle)
                 .font(.largeTitle)
                 .bold()
-                //.foregroundColor(.white)
+            //.foregroundColor(.white)
                 .multilineTextAlignment(.leading)
-                //.shadow(radius: 6)
+            //.shadow(radius: 6)
                 .padding(.horizontal)
                 .padding(.bottom)
-
+            
             Spacer()
-
+            
             // Timer display + buttons
-            timerCard
-                //.padding(.vertical)
-                .padding(.bottom, 40)
+            FocusTimerCard(
+                mode: .focus,
+                timeText: TimeFormatter.format(seconds: viewModel.remainingTime),
+                primaryLabel: "End",
+                onPrimaryTap: { isShowingEndSessionAlert = true },
+                secondaryLabel: "Rest",
+                onSecondaryTap: { isShowingRestModal = true },
+                secondaryEnabled: viewModel.canRest && viewModel.isFocusing
+            )
+            .padding(.bottom, 40)
         }
-    }
-
-    private var timerCard: some View {
-        VStack(spacing: 16) {
-            Text(TimeFormatter.format(seconds: viewModel.remainingTime))
-                .font(.system(size: 60, weight: .bold, design: .rounded))
-                .monospacedDigit()
-
-            HStack {
-                Button {
-                    isShowingEndSessionAlert = true
-                } label: {
-                    Text("End")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.primary)
-                        .foregroundColor(.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 24))
-                }
-                
-                Button {
-                    isShowingRestModal = true
-                } label: {
-                    Text("Rest")
-                        .font(.headline)
-                        //.frame(maxWidth: .infinity)
-                        .padding()
-                        .background(viewModel.canRest && viewModel.isFocusing ? Color.primary : Color.gray.opacity(0.5))
-                        .foregroundColor(.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 24))
-                }
-                .disabled(!(viewModel.canRest && viewModel.isFocusing))
-                .animation(.easeInOut(duration: 0.2), value: viewModel.canRest && viewModel.isFocusing)
-            }
-        }
-        .padding(.horizontal)
-        .padding(.vertical)
-        .background {
-            if #available(iOS 26.0, *) {
-                Color.clear
-                    .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 24))
-            } else {
-                RoundedRectangle(cornerRadius: 24)
-                    .fill(.ultraThinMaterial)
-            }
-        }
-        .clipShape(RoundedRectangle(cornerRadius: 24))
-        .padding(.vertical)
     }
 }
 
@@ -286,7 +246,10 @@ struct FocusModeView: View {
     mockSessionVM.remainingTime = 120
 
     return FocusModeView(
-        onGiveUp: { task in print("Preview Give Up Tapped") }
+        onGiveUp: { task in print("Preview Give Up Tapped") },
+        onSessionEnd: {
+            print("Preview Session Ended Tapped")
+                }
     )
         .environmentObject(mockSessionVM)
         .modelContainer(for: [Goal.self, GoalTask.self], inMemory: true)
