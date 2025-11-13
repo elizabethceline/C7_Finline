@@ -12,79 +12,176 @@ import SwiftUI
 struct FocusLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: FocusActivityAttributes.self) { context in
-            // Lock Screen / Banner UI
             VStack(spacing: 8) {
-                Text(context.attributes.goalName)
-                    .font(.headline)
-                Text(context.state.taskTitle)
-                    .font(.subheadline)
-                Text(TimeFormatter.format(seconds: context.state.remainingTime))
-                    .font(.largeTitle)
-                    .bold()
-                if context.state.isResting {
-                    Text("Resting...")
-                        .foregroundColor(.blue)
-                        .font(.subheadline)
+                HStack{
+                    VStack(alignment: .leading){
+                        Text(TimeFormatter.format(seconds: (context.state.isResting ? context.state.restRemainingTime : context.state.remainingTime) ?? 0))
+                            .font(.system(size: 48))
+                            .fontWeight(.bold)
+                            .monospacedDigit()
+                            .foregroundColor(.gray)
+                            .offset(x:-5)
+                        
+                        Text(context.state.taskTitle)
+                            .font(.headline)
+                            .foregroundColor(.gray)
+                    }
+                    .padding(.bottom,40)
+                    Spacer()
+                    Image("lockScreenTimer")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 150, height:150)
+                        .offset(x:20)
+                        .padding(.leading, 1)
+                    
                 }
+                ProgressView(value: progress(for: context), total: 1.0)
+                    .progressViewStyle(.linear)
+                    .tint(context.state.isResting
+                          ? .green
+                          : Color(red: 161/255, green: 210/255, blue: 241/255))
+                    .frame(height: 6)
+                    .clipShape(Capsule())
+                    .animation(.easeInOut(duration: 0.5), value: progress(for: context))
+                    .offset(y:-20)
             }
             .padding()
-            .activityBackgroundTint(Color.cyan)
-            .activitySystemActionForegroundColor(Color.black)
+            .activityBackgroundTint(Color.secondary)
+            .activitySystemActionForegroundColor(Color.secondary)
+            
         } dynamicIsland: { context in
             DynamicIsland {
-                // Expanded
-                DynamicIslandExpandedRegion(.leading) {
-                    Image(systemName: "timer")
-                        .foregroundColor(.white)
-                        .padding(.leading, 5)
-                }
                 DynamicIslandExpandedRegion(.center) {
-                    VStack(spacing: 2) {
-                        Text(context.attributes.goalName)
-                            .font(.headline)
-                            .foregroundColor(.white)
-                        Text(context.state.taskTitle)
-                            .font(.subheadline)
-                            .foregroundColor(.yellow)
-                        Text(TimeFormatter.format(seconds: context.state.remainingTime))
-                            .font(.title2)
-                            .bold()
-                            .monospacedDigit()
-                            .foregroundColor(.white)
-                        if context.state.isResting {
-                            Text("Resting...")
-                                .font(.caption)
-                                .foregroundColor(.blue)
+                    VStack(spacing: 8) {
+                        HStack(spacing: 10) {
+                            if context.state.isResting {
+                                ZStack {
+                                    Image("compactResting")
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(width: 1, height: 1)
+                                    Image("expandResting")
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(width: 130, height: 130)
+                                }
+                            }else{
+                                ZStack {
+                                    Image("compactTimer")
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(width: 1, height: 1)
+                                    Image("timerExpand")
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(width: 100, height: 100)
+                                }
+                            }
+                            
+                            if context.state.isResting{
+                                Spacer()
+                                    .frame(width: 10)
+                            }
+                            VStack(alignment: .leading) {
+                                if context.state.isResting{
+                                    Text("Resting...")
+                                        .font(.system(size: 35))
+                                        .fontWeight(.bold)
+                                        .foregroundColor(.gray)
+                                    
+                                    Text(TimeFormatter.format(seconds: (context.state.isResting ? context.state.restRemainingTime : context.state.remainingTime) ?? 0))
+                                        .font(.subheadline)
+                                        .foregroundColor(.gray)
+                                        .monospacedDigit()
+                                }else{
+                                    Text(TimeFormatter.format(seconds: (context.state.isResting ? context.state.restRemainingTime : context.state.remainingTime) ?? 0))
+                                        .font(.system(size: 35))
+                                        .fontWeight(.bold)
+                                        .monospacedDigit()
+                                        .foregroundColor(.gray)
+                                        .offset(x:-5)
+                                    
+                                    
+                                    
+                                    Spacer()
+                                        .frame(height: 7)
+                                    
+                                    
+                                    Text(context.state.taskTitle)
+                                        .font(.subheadline)
+                                        .foregroundColor(.gray)
+                                }
+                                
+                                
+                                Spacer()
+                                    .frame(height: 14)
+                                
+                                ProgressView(value: progress(for: context), total: 1.0)
+                                    .progressViewStyle(.linear)
+                                    .tint(context.state.isResting ? .clear : Color(red: 161/255, green: 210/255, blue: 241/255))
+                                    .frame(height: context.state.isResting ? 0 : 4) // <-- tinggi 0 saat resting
+                                    .clipShape(Capsule())
+                                    .animation(.easeInOut(duration: 0.5), value: progress(for: context))
+
+
+                            }
                         }
+                        
                     }
-                    .padding(8)
-                    .background(Color.black.opacity(0.6))
-                    .cornerRadius(10)
+                    .offset(y: context.state.isResting ? -15 : -5)
                 }
+                
+                
             } compactLeading: {
-                Image(systemName: "timer")
-                    .foregroundColor(.white)
+                if context.state.isResting {
+                    Image("compactResting")
+                        .resizable()
+                        .scaledToFit()
+                    
+                }else{
+                    Image("compactTimer")
+                        .resizable()
+                        .scaledToFit()
+                }
             } compactTrailing: {
-                Text(TimeFormatter.shortFormat(seconds: context.state.remainingTime))
-                    .foregroundColor(.white)
+                Text(TimeFormatter.format(seconds: (context.state.isResting ? context.state.restRemainingTime : context.state.remainingTime) ?? 0))
+                    .foregroundColor(context.state.isResting
+                                     ? Color.primary
+                                     : Color(red: 161/255, green: 210/255, blue: 241/255))
             } minimal: {
-                Text(TimeFormatter.shortFormat(seconds: context.state.remainingTime))
-                    .foregroundColor(.white)
+                if context.state.isResting {
+                    Image("compactResting")
+                        .resizable()
+                        .scaledToFit()
+                    
+                }else{
+                    Image("compactTimer")
+                        .resizable()
+                        .scaledToFit()
+                }
             }
-            .widgetURL(URL(string: "http://www.apple.com"))
+            .widgetURL(URL(string: "finline://endSession"))
             .keylineTint(Color.red)
         }
     }
+    
+    private func progress(for context: ActivityViewContext<FocusActivityAttributes>) -> Double {
+        let remaining = max(context.state.remainingTime, 0)
+        let total = max(context.attributes.totalDuration, remaining)
+        
+        let progress = (total - remaining) / total
+        return min(max(progress, 0), 1)
+    }
 }
 
-// MARK: - Preview
 #Preview("Dynamic Island Preview", as: .content, using: FocusActivityAttributes.preview) {
     FocusLiveActivity()
 } contentStates: {
     FocusActivityAttributes.ContentState.previewValue(
         taskTitle: "Focus Session",
-        remainingTime: 25 * 60,
-        isResting: false
+        remainingTime: 60 * 60,
+        isResting: true
     )
     FocusActivityAttributes.ContentState.previewValue(
         taskTitle: "Short Break",
@@ -92,21 +189,15 @@ struct FocusLiveActivity: Widget {
         isResting: true
     )
     FocusActivityAttributes.ContentState.previewValue(
-        taskTitle: "Focus Session",
-        remainingTime: 10 * 60,
-        isResting: false
-    )
-    FocusActivityAttributes.ContentState.previewValue(
         taskTitle: "Session Complete",
         remainingTime: 0,
-        isResting: false
+        isResting: true
     )
 }
 
-// MARK: - Preview Helpers
 extension FocusActivityAttributes {
     static var preview: FocusActivityAttributes {
-        FocusActivityAttributes(goalName: "Deep Work")
+        FocusActivityAttributes(goalName: "Deep Work", totalDuration: 60)
     }
 }
 
@@ -115,3 +206,4 @@ extension FocusActivityAttributes.ContentState {
         .init(remainingTime: remainingTime, taskTitle: taskTitle, isResting: isResting)
     }
 }
+

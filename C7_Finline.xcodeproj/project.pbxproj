@@ -70,6 +70,7 @@
 		A57CCF002EC1997600013DA3 /* Exceptions for "FinlineWidget" folder in "C7_Finline" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Assets.xcassets,
 				FocusActivityAttributes.swift,
 				FocusLiveActivity.swift,
 			);
@@ -78,6 +79,8 @@
 		A57CD0D72EC2300700013DA3 /* Exceptions for "C7_Finline" folder in "FinlineWidgetExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Assets.xcassets,
+				Helper/Color.swift,
 				Helper/TimeFormatter.swift,
 			);
 			target = A57CCEDE2EC1960C00013DA3 /* FinlineWidgetExtension */;
