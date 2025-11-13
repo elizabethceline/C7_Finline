@@ -49,6 +49,13 @@ struct C7_FinlineApp: App {
                 .environmentObject(focusVM)
                 .environmentObject(networkMonitor)
                 .environmentObject(syncManager)
+                .onOpenURL { url in
+                    if url.host == "endSession" {
+                        Task {
+                            await focusVM.giveUp()
+                        }
+                    }
+                }
         }
         .modelContainer(sharedModelContainer)
         .onChange(of: scenePhase) { oldPhase, newPhase in

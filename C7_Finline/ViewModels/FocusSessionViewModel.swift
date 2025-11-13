@@ -68,6 +68,10 @@ final class FocusSessionViewModel: ObservableObject {
     
     // Live Activity
     @Published var activity: Activity<FocusActivityAttributes>?
+    var displayRemainingTime: TimeInterval {
+        isResting ? restRemainingTime : remainingTime
+    }
+
     
     init(
         goal: Goal? = nil,
@@ -441,7 +445,7 @@ final class FocusSessionViewModel: ObservableObject {
             return
         }
         
-        let attributes = FocusActivityAttributes(goalName: goalName ?? "Focus Mode")
+        let attributes = FocusActivityAttributes(goalName: goalName ?? "Focus Mode", totalDuration: sessionDuration)
         
         let content = ActivityContent(
             state: FocusActivityAttributes.ContentState(
@@ -470,12 +474,14 @@ final class FocusSessionViewModel: ObservableObject {
         
         let updatedState = FocusActivityAttributes.ContentState(
             remainingTime: remainingTime,
+            restRemainingTime: restRemainingTime,
             taskTitle: taskTitle,
             isResting: isResting
         )
         
         await activity.update(using: updatedState)
     }
+
     
     private func endLiveActivity() async {
         guard let activity else { return }
