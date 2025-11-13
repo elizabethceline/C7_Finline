@@ -39,7 +39,7 @@ struct TimeSlotListView: View {
                             Spacer()
                             Image(
                                 systemName: selected
-                                    ? "checkmark.circle.fill" : "circle"
+                                    ? "checkmark.square.fill" : "square"
                             )
                             .foregroundColor(
                                 .primary.opacity(selected ? 1 : 0.6)
