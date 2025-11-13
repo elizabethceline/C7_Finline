@@ -21,6 +21,9 @@ final class FocusSessionViewModel: ObservableObject {
     @Published var taskTitle: String = ""
     @Published var goalName: String?
     @Published var errorMessage: String?
+    @Published var isSessionEnded: Bool = false
+    @Published var didTimeRunOut: Bool = false
+    @Published var didFinishEarly: Bool = false
     
     // Rest Mode
     @Published var isResting: Bool = false
@@ -106,7 +109,11 @@ final class FocusSessionViewModel: ObservableObject {
         lastTickDate = Date()
         shouldReturnToStart = false
         endTime = Date().addingTimeInterval(sessionDuration)
+        didTimeRunOut = false
+        isSessionEnded = false
+        didFinishEarly = false
         bonusPointsFromNudge = 0
+        errorMessage = nil
         
         isResting = false
         totalRestSeconds = 0
@@ -159,14 +166,17 @@ final class FocusSessionViewModel: ObservableObject {
         fishingVM.stopFishing()
         authManager.clearShield()
         
-        //        if let task = task {
-        //            task.isCompleted = true
-        //        }
-        
-        shouldReturnToStart = true
-        
+        //shouldReturnToStart = true
+        do {
+            try await Task.sleep(nanoseconds: 200_000_000)
+        } catch {
+            print("Sleep was cancelled or failed: \(error)")
+        }
+
         // End Live Activity
         await endLiveActivity()
+        
+        isSessionEnded = true
     }
     
     func giveUp() async {
@@ -185,6 +195,10 @@ final class FocusSessionViewModel: ObservableObject {
         await endLiveActivity()
     }
     
+    func finishEarly() {
+        didFinishEarly = true
+    }
+
     func addMoreTime(hours: Int = 0, minutes: Int = 0, seconds: Int = 0) async {
         let extraTime = TimeInterval((hours * 3600) + (minutes * 60) + seconds)
         
@@ -240,7 +254,7 @@ final class FocusSessionViewModel: ObservableObject {
                     
                 } else {
                     self.remainingTime = 0
-                    await self.endSession()
+                    self.didTimeRunOut = true
                 }
             }
         }
@@ -368,8 +382,12 @@ final class FocusSessionViewModel: ObservableObject {
         isFocusing = false
         isResting = false
         shouldReturnToStart = false
+        isSessionEnded = false
         remainingTime = 0
         taskTitle = ""
+        if activity != nil {
+                Task { await endLiveActivity() }
+            }
         
         isShowingNudgeAlert = false
         bonusPointsFromNudge = 0

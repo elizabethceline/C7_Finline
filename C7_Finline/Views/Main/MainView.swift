@@ -12,6 +12,7 @@ struct MainView: View {
     @StateObject private var viewModel = MainViewModel()
     @Environment(\.modelContext) private var modelContext
     @EnvironmentObject var networkMonitor: NetworkMonitor
+    @EnvironmentObject var focusVM: FocusSessionViewModel
 
     @State private var showCreateGoalModal = false
     @State private var showDatePicker = false
@@ -57,6 +58,7 @@ struct MainView: View {
                     selectedDate: $selectedDate,
                     networkMonitor: networkMonitor
                 )
+                .environmentObject(focusVM)
             }
             .background(Color(uiColor: .systemGray6).ignoresSafeArea())
             .onAppear {

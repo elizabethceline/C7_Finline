@@ -29,7 +29,6 @@ struct TaskListView: View {
     @State private var showIncompleteAlert = false
     @State private var showDeleteAlert = false
     @State private var selectedTask: GoalTask?
-    //@State private var navigateToDetail = false
 
     @State private var selectedGoal: Goal?
     @State private var goToGoalDetail = false
@@ -191,15 +190,6 @@ struct TaskListView: View {
                     .listRowBackground(Color.clear)
             }
         }
-        //        .navigationDestination(isPresented: $navigateToDetail) {
-        //            if let task = selectedTask {
-        //                DetailTaskView(
-        //                    task: task,
-        //                    taskManager: TaskManager(networkMonitor: NetworkMonitor()),
-        //                    viewModel: taskVM
-        //                )
-        //            }
-        //        }
         .navigationDestination(isPresented: $goToGoalDetail) {
             if let goal = selectedGoal {
                 DetailGoalView(
@@ -210,6 +200,10 @@ struct TaskListView: View {
             }
         }
         .fullScreenCover(isPresented: isCoverPresented) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                focusVM.resetSession()
+            }
+        } content: {
             Group {
                 if let mode = coverMode {
                     switch mode {
@@ -226,9 +220,16 @@ struct TaskListView: View {
                             }
                         )
                     case .focus:
-                        FocusModeView(onGiveUp: { task in
-                            coverMode = .detail(task)
-                        })
+                        FocusModeView(
+                            onGiveUp: { task in
+                                coverMode = .detail(task)
+                            },
+                            onSessionEnd: {
+                                coverMode = nil
+                            }
+                        )
+                        .environmentObject(focusVM)
+                        .environment(\.modelContext, modelContext)
                     }
                 }
             }
