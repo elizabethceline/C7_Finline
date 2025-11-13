@@ -12,14 +12,15 @@ struct GenerateTaskWithAIView: View {
     let goalName: String
     let goalDeadline: Date
     @State private var goalDescription: String = ""
-    var onGenerate: ((String) -> Void)? 
+    @State private var isShowingAlert = false
+    var onGenerate: ((String) -> Void)?
     
     var body: some View {
         NavigationStack {
             Form {
                 Section(header:
-                    Text("Goal Info")
-                        .font(.headline)
+                            Text("Goal Info")
+                    .font(.headline)
                 ) {
                     HStack {
                         Text("Goal")
@@ -39,7 +40,7 @@ struct GenerateTaskWithAIView: View {
                     
                     ZStack(alignment: .topLeading) {
                         if goalDescription.isEmpty {
-                            Text("Tulis detail mengenai task kamu di sini...")
+                            Text("Describe details or context about your goal.")
                                 .foregroundColor(.gray)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 12)
@@ -67,13 +68,26 @@ struct GenerateTaskWithAIView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button {
-                        onGenerate?(goalDescription) 
-                        dismiss()
+                        if goalDescription.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                            isShowingAlert = true
+                        } else {
+                            onGenerate?(goalDescription)
+                            dismiss()
+                        }
                     } label: {
-                        Image(systemName: "sparkles")
+                        Image(systemName: "checkmark")
                     }
                 }
                 
+            }
+            .alert("No Description Provided", isPresented: $isShowingAlert) {
+                Button("Continue") {
+                    onGenerate?("")
+                    dismiss()
+                }
+                Button("Cancel", role: .cancel) { }
+            } message: {
+                Text("Without giving context, we will only generate the tasks based on your title.")
             }
         }
     }

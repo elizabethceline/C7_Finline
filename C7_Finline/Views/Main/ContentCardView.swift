@@ -9,8 +9,14 @@ import SwiftUI
 
 struct ContentCardView: View {
     @ObservedObject var viewModel: MainViewModel
+    let goals: [Goal]
+    let tasks: [GoalTask]
     @Binding var selectedDate: Date
     let networkMonitor: NetworkMonitor
+
+    @EnvironmentObject var focusVM: FocusSessionViewModel
+    @State private var taskListSnapshot: [GoalTask]?
+    @State private var goalListSnapshot: [Goal]?
 
     @GestureState private var dragOffset: CGFloat = 0
     @State private var contentOffset: CGFloat = 0
@@ -20,12 +26,48 @@ struct ContentCardView: View {
 
     private let calendar = Calendar.current
 
-    var tasks: [GoalTask] {
-        viewModel.filterTasksByDate(for: selectedDate)
+    var filteredTasks: [GoalTask] {
+        let dateTasks = tasks.filter { task in
+            Calendar.current.isDate(task.workingTime, inSameDayAs: selectedDate)
+        }
+
+        switch viewModel.taskFilter {
+        case .all:
+            return dateTasks
+        case .unfinished:
+            return dateTasks.filter { !$0.isCompleted }
+        case .finished:
+            return dateTasks.filter { $0.isCompleted }
+        }
     }
 
-    var goals: [Goal] {
-        viewModel.filterGoalsByDate(for: selectedDate)
+    var filteredGoals: [Goal] {
+        goals.filter { goal in
+            goal.tasks.contains { task in
+                Calendar.current.isDate(
+                    task.workingTime,
+                    inSameDayAs: selectedDate
+                )
+            }
+        }
+    }
+    
+    private var displayTasks: [GoalTask] {
+        if let snapshot = taskListSnapshot {
+            return snapshot
+        }
+        return filteredTasks
+    }
+    
+    private var displayGoals: [Goal] {
+        if let snapshot = goalListSnapshot {
+            return snapshot
+        }
+        return filteredGoals
+    }
+    
+    private var shouldShowEmptyState: Bool {
+        return filteredTasks.isEmpty && taskListSnapshot == nil
     }
 
     private func changeDay(delta: Int, width: CGFloat) {
@@ -92,7 +134,10 @@ struct ContentCardView: View {
                 }
 
             VStack(spacing: 0) {
-                // Filter indicator
+//<<<<<<< HEAD
+//                if filteredTasks.isEmpty {
+//=======
+//                // Filter indicator
                 if viewModel.taskFilter != .unfinished {
                     HStack {
                         Text("Showing: \(viewModel.taskFilter.rawValue)")
@@ -115,7 +160,7 @@ struct ContentCardView: View {
                     .padding(.bottom, 8)
                 }
 
-                if tasks.isEmpty {
+                if shouldShowEmptyState {
                     ScrollView(showsIndicators: false) {
                         EmptyStateView()
                             .padding(.top, 24)
@@ -124,8 +169,8 @@ struct ContentCardView: View {
                 } else {
                     TaskListView(
                         viewModel: viewModel,
-                        tasks: tasks,
-                        goals: goals,
+                        tasks: displayTasks,
+                        goals: displayGoals,
                         selectedDate: selectedDate,
                         networkMonitor: networkMonitor
                     )
@@ -147,14 +192,36 @@ struct ContentCardView: View {
         .refreshable {
             await viewModel.fetchGoals()
         }
-    }
 
+        .onChange(of: focusVM.isFocusing) { oldValue, newValue in
+            if newValue && !oldValue {
+                // Focus started - take snapshot
+                print("Taking snapshot of tasks/goals")
+                taskListSnapshot = filteredTasks
+                goalListSnapshot = filteredGoals
+            }
+        }
+
+        .onChange(of: focusVM.isSessionEnded) { oldValue, newValue in
+            if !newValue && oldValue {
+                // Session was reset - clear snapshot after delay
+                print("Clearing snapshot")
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    taskListSnapshot = nil
+                    goalListSnapshot = nil
+                }
+            }
+        }
+    }
 }
 
 #Preview {
     ContentCardView(
         viewModel: MainViewModel(),
+        goals: [],
+        tasks: [],
         selectedDate: .constant(Date()),
         networkMonitor: NetworkMonitor()
     )
+    .environmentObject(FocusSessionViewModel())
 }

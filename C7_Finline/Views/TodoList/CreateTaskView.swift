@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import FoundationModels
 
 struct CreateTaskView: View {
     let goalName: String
@@ -14,7 +15,7 @@ struct CreateTaskView: View {
     
     @Environment(\.dismiss) private var dismiss
     var dismissParent: DismissAction? = nil
-
+    
     
     @ObservedObject var mainVM: MainViewModel
     
@@ -28,6 +29,9 @@ struct CreateTaskView: View {
     @StateObject private var taskVM = TaskViewModel()
     @StateObject private var goalVM = GoalViewModel()
     @Environment(\.modelContext) private var modelContext
+    private var isAIAvailable: Bool {
+        SystemLanguageModel.default.isAvailable
+    }
     
     var body: some View {
         VStack(spacing: 0) {
@@ -66,7 +70,7 @@ struct CreateTaskView: View {
                 if !taskVM.tasks.isEmpty {
                     ForEach(taskVM.groupedGoalTaskAI(), id: \.date) { group in
                         Section(header:
-                            Text(group.date, format: .dateTime.day().month(.wide).year())
+                                    Text(group.date, format: .dateTime.day().month(.wide).year())
                             .font(.title3)
                             .foregroundColor(Color(.label))
                         ) {
@@ -75,12 +79,10 @@ struct CreateTaskView: View {
                                 let finalWorkingDate = workingDate ?? Date()
                                 let goalTask = taskVM.toGoalTask(from: aiTask, workingDate: finalWorkingDate, goalName: goalName, goalDeadline: goalDeadline)
                                 
-                                
                                 TaskCardView(task: goalTask)
                                     .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
                                     .listRowSeparator(.hidden)
                                     .listRowBackground(Color.clear)
-                                    // ANIMATION EFFECTS
                                     .opacity(removingTaskIds.contains(aiTask.id) ? 0 : 1)
                                     .offset(y: removingTaskIds.contains(aiTask.id) ? -10 : 0)
                                     .onTapGesture {
@@ -99,34 +101,45 @@ struct CreateTaskView: View {
                             }
                         }
                     }
+                } else if !taskVM.isLoading {
+                    ContentUnavailableView(
+                        "No Tasks Yet",
+                        systemImage: "tray",
+                        description: Text("Create tasks manually or use AI to generate tasks automatically.")
+                    )
+                    .foregroundStyle(
+                        .primary
+                    )
+                    .font(.subheadline)
+                    .symbolVariant(.fill)
+                    .symbolRenderingMode(.hierarchical)
+                    .padding(.vertical, 40)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .listRowBackground(Color.clear)
                 }
+                
             }
             .scrollContentBackground(.hidden)
             .animation(.easeInOut(duration: 0.3), value: taskVM.tasks)
             .animation(.easeInOut(duration: 0.3), value: removingTaskIds)
             
             VStack(spacing: 16) {
-                Button(action: { isShowingModalCreateWithAI = true }) {
+                Button(action: {
+                    if isAIAvailable {
+                        isShowingModalCreateWithAI = true
+                    }
+                }) {
                     Text("Create with AI")
                         .font(.headline)
                         .frame(maxWidth: .infinity)
                         .padding()
-//                        .background(
-//                            LinearGradient(
-//                                gradient: Gradient(colors: [
-//                                    Color(red: 0.15, green: 0.45, blue: 1.0),
-//                                    Color(red: 0.30, green: 0.95, blue: 1.0),
-//                                    Color(red: 0.80, green: 0.50, blue: 1.0)
-//                                ]),
-//                                startPoint: .leading,
-//                                endPoint: .trailing
-//                            )
-//                        )
-                    
-                        .background(Color.primary)
+                        .background(isAIAvailable ? Color.primary : Color.gray.opacity(0.4))
+                        .clipShape(RoundedRectangle(cornerRadius: 24))
                         .foregroundColor(.white)
                         .cornerRadius(10)
                 }
+                .disabled(!isAIAvailable)
+                
                 
                 
                 Button(action: { isShowingModalCreateManually = true }) {
@@ -134,14 +147,23 @@ struct CreateTaskView: View {
                         .font(.headline)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color(.systemGray5))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(Color.primary, lineWidth: 3)
-                        )
-                        .foregroundColor(Color(.label))
+                        .background(isAIAvailable ? Color.gray.opacity(0.4) : Color.primary)
+                        .clipShape(RoundedRectangle(cornerRadius: 24))
+                        .foregroundColor(isAIAvailable ? .black : .white)
                         .cornerRadius(10)
                 }
+                if isAIAvailable {
+                    Text("*With create with AI, tasks will be automatically created based on the goal you’ve set.")
+                        .font(.footnote)
+                        .foregroundColor(.gray)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                } else {
+                    Text("*AI task creation isn’t supported on your device right now.")
+                        .font(.footnote)
+                        .foregroundColor(.red)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                
             }
             .padding()
         }

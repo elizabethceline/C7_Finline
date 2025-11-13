@@ -12,6 +12,7 @@ struct MainView: View {
     @StateObject private var viewModel = MainViewModel()
     @Environment(\.modelContext) private var modelContext
     @EnvironmentObject var networkMonitor: NetworkMonitor
+    @EnvironmentObject var focusVM: FocusSessionViewModel
 
     @State private var showCreateGoalModal = false
     @State private var showDatePicker = false
@@ -26,6 +27,9 @@ struct MainView: View {
     var calendar: Calendar { .current }
 
     private var unfinishedTasks: [GoalTask] { viewModel.unfinishedTasks }
+
+    @Query(sort: \Goal.due, order: .forward) private var goals: [Goal]
+    @Query private var tasks: [GoalTask]
 
     var body: some View {
         NavigationStack {
@@ -49,9 +53,12 @@ struct MainView: View {
 
                 ContentCardView(
                     viewModel: viewModel,
+                    goals: goals,
+                    tasks: tasks,
                     selectedDate: $selectedDate,
                     networkMonitor: networkMonitor
                 )
+                .environmentObject(focusVM)
             }
             .background(Color(uiColor: .systemGray6).ignoresSafeArea())
             .onAppear {
@@ -60,12 +67,20 @@ struct MainView: View {
                     jumpToToday()
                     hasAppeared = true
                 }
+                viewModel.goals = goals
+                viewModel.tasks = tasks
             }
             .onChange(of: currentWeekIndex) { oldValue, newValue in
                 updateSelectedDateFromWeekChange(
                     oldValue: oldValue,
                     newValue: newValue
                 )
+            }
+            .onChange(of: goals) { _, newGoals in
+                viewModel.goals = newGoals
+            }
+            .onChange(of: tasks) { _, newTasks in
+                viewModel.tasks = newTasks
             }
             .toolbar {
                 ToolbarItemGroup(placement: .bottomBar) {
@@ -171,4 +186,5 @@ struct MainView: View {
     MainView()
         .modelContainer(for: [Goal.self, GoalTask.self, UserProfile.self])
         .environmentObject(NetworkMonitor())
+        .environmentObject(FocusSessionViewModel())
 }

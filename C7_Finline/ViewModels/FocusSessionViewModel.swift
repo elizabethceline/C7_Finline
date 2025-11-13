@@ -2,6 +2,7 @@ import Foundation
 import SwiftData
 import SwiftUI
 import Combine
+import ActivityKit
 
 #if os(iOS)
 import ManagedSettings
@@ -20,6 +21,9 @@ final class FocusSessionViewModel: ObservableObject {
     @Published var taskTitle: String = ""
     @Published var goalName: String?
     @Published var errorMessage: String?
+    @Published var isSessionEnded: Bool = false
+    @Published var didTimeRunOut: Bool = false
+    @Published var didFinishEarly: Bool = false
     
     // Rest Mode
     @Published var isResting: Bool = false
@@ -60,6 +64,10 @@ final class FocusSessionViewModel: ObservableObject {
     private var restTimer: Timer?
     private var lastTickDate: Date?
     private var currentRestStart: Date?
+    private var endTime: Date?
+    
+    // Live Activity
+    @Published var activity: Activity<FocusActivityAttributes>?
     
     init(
         goal: Goal? = nil,
@@ -78,6 +86,13 @@ final class FocusSessionViewModel: ObservableObject {
             self.sessionDuration = TimeInterval(task.focusDuration * 60)
             self.remainingTime = self.sessionDuration
         }
+        
+        NotificationCenter.default.addObserver(
+                self,
+                selector: #selector(appDidBecomeActive),
+                name: UIApplication.didBecomeActiveNotification,
+                object: nil
+            )
     }
     
     // Focus Session
@@ -93,7 +108,12 @@ final class FocusSessionViewModel: ObservableObject {
         remainingTime = sessionDuration
         lastTickDate = Date()
         shouldReturnToStart = false
+        endTime = Date().addingTimeInterval(sessionDuration)
+        didTimeRunOut = false
+        isSessionEnded = false
+        didFinishEarly = false
         bonusPointsFromNudge = 0
+        errorMessage = nil
         
         isResting = false
         totalRestSeconds = 0
@@ -109,25 +129,28 @@ final class FocusSessionViewModel: ObservableObject {
         }
         
         Task {
-                if authManager.isEnabled {
-                    if !authManager.isAuthorized {
-                        print("Deep Focus is ON but not authorized. Requesting authorization...")
-                        await authManager.requestAuthorization()
-                    }
-                    
-                    if authManager.isAuthorized {
-                        authManager.applyShield()
-                        print(" Deep Focus shield applied successfully.")
-                    } else {
-                        print("Deep Focus not applied — user denied or authorization failed.")
-                    }
+            if authManager.isEnabled {
+                if !authManager.isAuthorized {
+                    print("Deep Focus is ON but not authorized. Requesting authorization...")
+                    await authManager.requestAuthorization()
                 }
                 
-                await fishingVM.startFishing(
-                    for: sessionDuration,
-                    deepFocusEnabled: authManager.isEnabled
-                )
+                if authManager.isAuthorized {
+                    authManager.applyShield()
+                    print(" Deep Focus shield applied successfully.")
+                } else {
+                    print("Deep Focus not applied — user denied or authorization failed.")
+                }
             }
+            
+            await fishingVM.startFishing(
+                for: sessionDuration,
+                deepFocusEnabled: authManager.isEnabled
+            )
+        }
+        
+        // Start Live Activity
+        startLiveActivity()
         
         startTimer()
     }
@@ -143,11 +166,17 @@ final class FocusSessionViewModel: ObservableObject {
         fishingVM.stopFishing()
         authManager.clearShield()
         
-//        if let task = task {
-//            task.isCompleted = true
-//        }
+        //shouldReturnToStart = true
+        do {
+            try await Task.sleep(nanoseconds: 200_000_000)
+        } catch {
+            print("Sleep was cancelled or failed: \(error)")
+        }
+
+        // End Live Activity
+        await endLiveActivity()
         
-        shouldReturnToStart = true
+        isSessionEnded = true
     }
     
     func giveUp() async {
@@ -161,8 +190,15 @@ final class FocusSessionViewModel: ObservableObject {
         
         isFocusing = false
         shouldReturnToStart = true
+        
+        // End Live Activity
+        await endLiveActivity()
     }
     
+    func finishEarly() {
+        didFinishEarly = true
+    }
+
     func addMoreTime(hours: Int = 0, minutes: Int = 0, seconds: Int = 0) async {
         let extraTime = TimeInterval((hours * 3600) + (minutes * 60) + seconds)
         
@@ -192,6 +228,9 @@ final class FocusSessionViewModel: ObservableObject {
         if timer == nil {
             startTimer()
         }
+        
+        // Update Live Activity
+        await updateLiveActivity()
     }
     
     // Timer
@@ -202,16 +241,20 @@ final class FocusSessionViewModel: ObservableObject {
         
         timer?.invalidate()
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
-            Task { @MainActor in
-                guard let self = self else { return }
-                
-                if self.remainingTime > 1 {
-                    self.remainingTime -= 1
-                    self.lastTickDate = Date()
+            Task { @MainActor [weak self] in
+                guard let self = self, let endTime = self.endTime else { return }
+
+                let remaining = endTime.timeIntervalSinceNow
+                if remaining > 0 {
+                    self.remainingTime = remaining
                     self.checkNudgeAlerts()
+                    
+                    // Update Live Activity setiap detik
+                    await self.updateLiveActivity()
+                    
                 } else {
                     self.remainingTime = 0
-                    await self.endSession()
+                    self.didTimeRunOut = true
                 }
             }
         }
@@ -229,6 +272,8 @@ final class FocusSessionViewModel: ObservableObject {
         
         pauseSession()
         startRestTimer()
+        
+        Task { await updateLiveActivity() }
     }
     
     func endRest() {
@@ -238,6 +283,8 @@ final class FocusSessionViewModel: ObservableObject {
         isResting = false
         stopRestTimer()
         resumeSession()
+        
+        Task { await updateLiveActivity() }
     }
     
     private func pauseSession() {
@@ -274,6 +321,7 @@ final class FocusSessionViewModel: ObservableObject {
                 guard let self else { return }
                 if self.restRemainingTime > 0 {
                     self.restRemainingTime -= 1
+                    await self.updateLiveActivity()
                 } else {
                     self.endRest()
                 }
@@ -281,7 +329,7 @@ final class FocusSessionViewModel: ObservableObject {
         }
         RunLoop.current.add(restTimer!, forMode: .common)
     }
-
+    
     
     private func stopRestTimer() {
         restTimer?.invalidate()
@@ -334,12 +382,19 @@ final class FocusSessionViewModel: ObservableObject {
         isFocusing = false
         isResting = false
         shouldReturnToStart = false
+        isSessionEnded = false
         remainingTime = 0
         taskTitle = ""
+        if activity != nil {
+                Task { await endLiveActivity() }
+            }
         
         isShowingNudgeAlert = false
         bonusPointsFromNudge = 0
         nudgesTriggered.removeAll()
+        
+        // End Live Activity
+        Task { await endLiveActivity() }
     }
     
     // Set task
@@ -378,4 +433,93 @@ final class FocusSessionViewModel: ObservableObject {
         
         return resultVM
     }
+    
+    // Live Activity Management
+    private func startLiveActivity() {
+        guard ActivityAuthorizationInfo().areActivitiesEnabled else {
+            print("Live Activities not enabled")
+            return
+        }
+        
+        let attributes = FocusActivityAttributes(goalName: goalName ?? "Focus Mode")
+        
+        let content = ActivityContent(
+            state: FocusActivityAttributes.ContentState(
+                remainingTime: remainingTime,
+                taskTitle: taskTitle,
+                isResting: false
+            ),
+            staleDate: nil
+        )
+        
+        do {
+            let activity = try Activity.request(
+                attributes: attributes,
+                content: content,
+                pushType: nil
+            )
+            self.activity = activity
+            print("Live Activity started successfully")
+        } catch {
+            print("Failed to start Live Activity: \(error)")
+        }
+    }
+    
+    private func updateLiveActivity() async {
+        guard let activity else { return }
+        
+        let updatedState = FocusActivityAttributes.ContentState(
+            remainingTime: remainingTime,
+            taskTitle: taskTitle,
+            isResting: isResting
+        )
+        
+        await activity.update(using: updatedState)
+    }
+    
+    private func endLiveActivity() async {
+        guard let activity else { return }
+        
+        await activity.end(dismissalPolicy: .immediate)
+        self.activity = nil
+        print("Live Activity ended")
+    }
+    
+    @objc private func appDidBecomeActive() {
+        guard let endTime else { return }
+        remainingTime = max(0, endTime.timeIntervalSinceNow)
+        Task { await updateLiveActivity() }
+    }
+
+    //    private func updateLiveActivity() async {
+    //        guard let activity else { return }
+    //
+    //        let updatedContent = ActivityContent(
+    //            state: FocusActivityAttributes.ContentState(
+    //                remainingTime: remainingTime,
+    //                taskTitle: taskTitle,
+    //                isResting: isResting
+    //            ),
+    //            staleDate: nil
+    //        )
+    //
+    //        await activity.update(updatedContent)
+    //    }
+    //
+    //    private func endLiveActivity() async {
+    //        guard let activity else { return }
+    //
+    //        let finalContent = ActivityContent(
+    //            state: FocusActivityAttributes.ContentState(
+    //                remainingTime: 0,
+    //                taskTitle: taskTitle,
+    //                isResting: false
+    //            ),
+    //            staleDate: nil
+    //        )
+    //
+    //        await activity.end(finalContent, dismissalPolicy: .immediate)
+    //        self.activity = nil
+    //        print("Live Activity ended")
+    //    }
 }

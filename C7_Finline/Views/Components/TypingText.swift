@@ -9,8 +9,10 @@ import SwiftUI
 
 struct TypingText: View {
     let text: String
+    let shouldCompleteImmediately: Bool
     @State private var displayedText = ""
     @State private var typingTimer: Timer?
+    @State private var isTypingComplete = false
     
     var body: some View {
         Text(displayedText)
@@ -25,7 +27,13 @@ struct TypingText: View {
             )
             .onChange(of: text) { oldValue, newValue in
                 displayedText = ""
+                isTypingComplete = false
                 startTyping(newValue)
+            }
+            .onChange(of: shouldCompleteImmediately) { oldValue, newValue in
+                if newValue && !isTypingComplete {
+                    completeTyping()
+                }
             }
             .onAppear {
                 startTyping(text)
@@ -34,6 +42,13 @@ struct TypingText: View {
                 typingTimer?.invalidate()
                 typingTimer = nil
             }
+    }
+    
+    private func completeTyping() {
+        typingTimer?.invalidate()
+        typingTimer = nil
+        displayedText = text
+        isTypingComplete = true
     }
     
     private func startTyping(_ fullText: String) {
@@ -48,12 +63,13 @@ struct TypingText: View {
             } else {
                 timer.invalidate()
                 typingTimer = nil
+                isTypingComplete = true
             }
         }
     }
 }
 
 #Preview {
-    TypingText(text: "Hi there! I'm Finley!")
+    TypingText(text: "Hi there! I'm Finley!", shouldCompleteImmediately: false)
         .padding()
 }
