@@ -8,7 +8,7 @@
 import Foundation
 import SwiftData
 
-enum FocusCoverMode: Identifiable {
+enum FocusCoverMode: Identifiable, Equatable {
     case detail(GoalTask)
     case focus
         

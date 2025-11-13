@@ -14,6 +14,10 @@ struct ContentCardView: View {
     @Binding var selectedDate: Date
     let networkMonitor: NetworkMonitor
 
+    @EnvironmentObject var focusVM: FocusSessionViewModel
+    @State private var taskListSnapshot: [GoalTask]?
+    @State private var goalListSnapshot: [Goal]?
+
     @GestureState private var dragOffset: CGFloat = 0
     @State private var contentOffset: CGFloat = 0
     @State private var isAnimating: Bool = false
@@ -46,6 +50,24 @@ struct ContentCardView: View {
                 )
             }
         }
+    }
+    
+    private var displayTasks: [GoalTask] {
+        if let snapshot = taskListSnapshot {
+            return snapshot
+        }
+        return filteredTasks
+    }
+    
+    private var displayGoals: [Goal] {
+        if let snapshot = goalListSnapshot {
+            return snapshot
+        }
+        return filteredGoals
+    }
+    
+    private var shouldShowEmptyState: Bool {
+        return filteredTasks.isEmpty && taskListSnapshot == nil
     }
 
     private func changeDay(delta: Int, width: CGFloat) {
@@ -112,7 +134,33 @@ struct ContentCardView: View {
                 }
 
             VStack(spacing: 0) {
-                if filteredTasks.isEmpty {
+//<<<<<<< HEAD
+//                if filteredTasks.isEmpty {
+//=======
+//                // Filter indicator
+                if viewModel.taskFilter != .unfinished {
+                    HStack {
+                        Text("Showing: \(viewModel.taskFilter.rawValue)")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                            .foregroundColor(Color(.label))
+                        Spacer()
+                        Button("Clear") {
+                            withAnimation {
+                                viewModel.taskFilter = .unfinished
+                            }
+                        }
+                        .font(.caption)
+                        .foregroundColor(Color.primary)
+                    }
+                    .padding(.horizontal)
+                    .padding(.vertical, 8)
+                    .background(Color(.systemBackground))
+                    .cornerRadius(8)
+                    .padding(.bottom, 8)
+                }
+
+                if shouldShowEmptyState {
                     ScrollView(showsIndicators: false) {
                         EmptyStateView()
                             .padding(.top, 24)
@@ -121,8 +169,8 @@ struct ContentCardView: View {
                 } else {
                     TaskListView(
                         viewModel: viewModel,
-                        tasks: filteredTasks,
-                        goals: filteredGoals,
+                        tasks: displayTasks,
+                        goals: displayGoals,
                         selectedDate: selectedDate,
                         networkMonitor: networkMonitor
                     )
@@ -144,8 +192,27 @@ struct ContentCardView: View {
         .refreshable {
             await viewModel.fetchGoals()
         }
-    }
 
+        .onChange(of: focusVM.isFocusing) { oldValue, newValue in
+            if newValue && !oldValue {
+                // Focus started - take snapshot
+                print("Taking snapshot of tasks/goals")
+                taskListSnapshot = filteredTasks
+                goalListSnapshot = filteredGoals
+            }
+        }
+
+        .onChange(of: focusVM.isSessionEnded) { oldValue, newValue in
+            if !newValue && oldValue {
+                // Session was reset - clear snapshot after delay
+                print("Clearing snapshot")
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    taskListSnapshot = nil
+                    goalListSnapshot = nil
+                }
+            }
+        }
+    }
 }
 
 #Preview {
@@ -156,4 +223,5 @@ struct ContentCardView: View {
         selectedDate: .constant(Date()),
         networkMonitor: NetworkMonitor()
     )
+    .environmentObject(FocusSessionViewModel())
 }

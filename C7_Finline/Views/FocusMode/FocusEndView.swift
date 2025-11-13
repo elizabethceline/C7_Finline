@@ -2,25 +2,24 @@ import SwiftUI
 import SwiftData
 
 struct FocusEndView: View {
-//    @ObservedObject var viewModel: FishResultViewModel
     @ObservedObject var viewModel: FocusResultViewModel
-    @Environment(\.dismiss) private var dismiss
+    var onDismiss: () -> Void
     
     var body: some View {
         VStack(spacing: 24) {
             //Spacer()
                // .frame(height: 40)
             
-            Text("Focushing Session\nComplete")
+            Text("Focusing Session\nComplete")
                 .font(.largeTitle.bold())
-                .foregroundColor(.white)
+                //.foregroundColor(.white)
                 .multilineTextAlignment(.center)
                 .shadow(radius: 6)
                 .padding(.top, 40)
             
             if viewModel.fishCaught.isEmpty {
                 Text("No fish caught this time!")
-                    .foregroundColor(.white.opacity(0.7))
+                    //.foregroundColor(.white.opacity(0.7))
                     .padding(.top, 20)
             } else {
                 // Single card with all fish
@@ -46,14 +45,9 @@ struct FocusEndView: View {
                            let _ = fishes.first {
                             let totalPoints =  fishes.reduce(0) { $0 + $1.points }
                             HStack(spacing: 16) {
-                                // Fish emoji
-//                                Text(firstFish.emoji ?? "🐟")
-//                                    .font(.system(size: 40))
-                                
                                 // Fish name
                                 Text(name)
                                     .font(.title3)
-                                    //.foregroundColor(.primary)
                                 Text("+\(totalPoints)")
                                     .font(.title3)
 
@@ -64,9 +58,6 @@ struct FocusEndView: View {
                                 Text("\(fishes.count)x")
                                     .font(.title.bold())
                                     .foregroundColor(.primary)
-//                                Text("+\(totalPoints)")
-//                                    .font(.title.bold())
-                                
                             }
                             
                             if name != sortedNames.last {
@@ -80,12 +71,11 @@ struct FocusEndView: View {
                         HStack(spacing: 16) {
                             Text("Bonus Points")
                                 .font(.title3)
-                                //.foregroundColor(.primary)
                             Spacer()
                             Text("+\(viewModel.bonusPoints)")
                                 .font(.title.bold())
                                 .foregroundColor(.primary)
-                        } // Match points style
+                        }
                     }
                 }
                 .padding(.horizontal, 24)
@@ -102,7 +92,6 @@ struct FocusEndView: View {
 //                    }
 //                }
                 .clipShape(RoundedRectangle(cornerRadius: 20))
-                //.padding(.horizontal)
                 
                 Spacer()
                 
@@ -110,10 +99,9 @@ struct FocusEndView: View {
                 VStack(spacing: 16) {
                     Text("+\(viewModel.grandTotal) pts")
                         .font(.system(size: 60, weight: .bold))
-                        //.foregroundColor(.primary)
                     
                     Button("Back to main Menu") {
-                        dismiss()
+                        onDismiss()
                     }
                     .font(.headline)
                     .frame(maxWidth: .infinity)
@@ -134,15 +122,12 @@ struct FocusEndView: View {
                     }
                 }
                 .clipShape(RoundedRectangle(cornerRadius: 24))
-                //.padding(.horizontal)
-                //.padding()
                 .padding(.vertical)
                 .padding(.bottom, 40)
             }
         }
     }
 }
-
 
 #Preview {
     let mockFish = [
@@ -168,6 +153,8 @@ struct FocusEndView: View {
     return ZStack {
         Color.gray
             .ignoresSafeArea()
-        FocusEndView(viewModel: mockVM)
+        FocusEndView(viewModel: mockVM) {
+            print("Dismiss called in preview")
+        }
     }
 }

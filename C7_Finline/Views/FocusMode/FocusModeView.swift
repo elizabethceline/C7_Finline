@@ -7,6 +7,7 @@ struct FocusModeView: View {
     @Environment(\.modelContext) private var modelContext
     
     var onGiveUp: (GoalTask) -> Void
+    var onSessionEnd: (() -> Void)? = nil
 
     @State private var isGivingUp = false
     @State private var resultVM: FocusResultViewModel?
@@ -63,13 +64,21 @@ struct FocusModeView: View {
                 .padding()
         }
         // lifecycle + tasks
-        .onChange(of: viewModel.shouldReturnToStart) { oldValue, newValue in
+        .onChange(of: viewModel.isSessionEnded) { oldValue, newValue in
             if newValue && !isGivingUp && resultVM == nil {
                 isShowingTimesUpAlert = true
             }
-//            if newValue && isGivingUp {
-//                dismiss()
-//            }
+            if newValue && resultVM == nil {
+                Task { @MainActor in
+                    resultVM = viewModel.createResult(using: modelContext, didComplete: true)
+                }
+            }
+        }
+        .onChange(of: viewModel.didTimeRunOut) {
+            oldValue, newValue in
+            if newValue {
+                isShowingTimesUpAlert = true
+            }
         }
         .task(id: viewModel.isShowingNudgeAlert) {
             if viewModel.isShowingNudgeAlert {
@@ -84,7 +93,18 @@ struct FocusModeView: View {
         .onAppear {
             isGivingUp = false
             resultVM = nil
+            isShowingTimesUpAlert = false
+            hasExtendedTime = false
+            viewModel.didTimeRunOut = false
+            viewModel.didFinishEarly = false
+            viewModel.isSessionEnded = false
+            viewModel.errorMessage = nil
         }
+        .onDisappear {
+            viewModel.resetSession()
+        }
+
+        
         .alert("Do you want to give up?", isPresented: $isShowingGiveUpAlert) {
             Button("Yes", role: .destructive) {
                 Task {
@@ -104,8 +124,8 @@ struct FocusModeView: View {
         .alert("Are you really done?", isPresented: $isShowingEarlyFinishAlert) {
             Button("Yes I'm done") {
                 Task {
-                    await viewModel.endSession()
                     resultVM = viewModel.createResult(using: modelContext, didComplete: true)
+                    viewModel.finishEarly()
                 }
             }
             Button("Nevermind", role: .cancel) { }
@@ -116,9 +136,10 @@ struct FocusModeView: View {
         }
         .alert("Time's Up!", isPresented: $isShowingTimesUpAlert) {
             Button("Yes, I'm finished") {
-                Task {
-                    await viewModel.endSession()
+                Task { @MainActor in
                     resultVM = viewModel.createResult(using: modelContext, didComplete: true)
+                    
+                    await viewModel.endSession()
                 }
             }
             Button("I need more time") {
@@ -189,7 +210,9 @@ struct FocusModeView: View {
     }
 
     private func endView(vm: FocusResultViewModel) -> some View {
-        FocusEndView(viewModel: vm)
+        FocusEndView(viewModel: vm) {
+            onSessionEnd?()
+        }
     }
 
     private var restView: some View {
