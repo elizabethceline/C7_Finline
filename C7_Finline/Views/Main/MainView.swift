@@ -7,6 +7,7 @@
 
 import SwiftData
 import SwiftUI
+import TipKit
 
 struct MainView: View {
     @StateObject private var viewModel = MainViewModel()
@@ -138,11 +139,13 @@ struct MainView: View {
 
                     Button {
                         showCreateGoalModal.toggle()
+                        CreateTaskTip.hasCreatedTask = true
                     } label: {
                         Image(systemName: "plus")
                             .font(.callout)
                             .fontWeight(.medium)
                     }
+                    .popoverTip(CreateTaskTip(), arrowEdge: .bottom)
                 }
             }
 

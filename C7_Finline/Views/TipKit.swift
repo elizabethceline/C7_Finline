@@ -1,0 +1,209 @@
+//
+//  TipKit.swift
+//  C7_Finline
+//
+//  Created by Elizabeth Celine Liong on 15/11/25.
+//
+
+import SwiftUI
+import TipKit
+
+struct CreateTaskTip: Tip {
+    var title: Text {
+        Text("Create your first task")
+    }
+
+    var message: Text? {
+        Text("Tap the + button to get started.")
+    }
+
+    var rules: [Rule] {
+        #Rule(Self.$hasCreatedTask) { $0 == false }
+    }
+
+    @Parameter
+    static var hasCreatedTask: Bool = false
+
+    var options: [TipOption] {
+        [
+            Tips.MaxDisplayCount(1)
+        ]
+    }
+}
+
+struct GoalNameTip: Tip {
+    var title: Text {
+        Text("What's your goal?")
+    }
+
+    var message: Text? {
+        Text("Describe it in one short sentence.")
+    }
+
+    var rules: [Rule] {
+        [
+            #Rule(CreateTaskTip.$hasCreatedTask) { $0 == true },
+            #Rule(Self.$hasEnteredGoalName) { $0 == false },
+        ]
+    }
+
+    @Parameter
+    static var hasEnteredGoalName: Bool = false
+
+    var options: [TipOption] {
+        [
+            Tips.MaxDisplayCount(1)
+        ]
+    }
+}
+
+struct DeadlineTip: Tip {
+    var title: Text {
+        Text("Set your deadline")
+    }
+
+    var message: Text? {
+        Text("Choose when you want to achieve this goal.")
+    }
+
+    var rules: [Rule] {
+        [
+            #Rule(GoalNameTip.$hasEnteredGoalName) { $0 == true },
+            #Rule(Self.$hasSetDeadline) { $0 == false },
+        ]
+    }
+
+    @Parameter
+    static var hasSetDeadline: Bool = false
+
+    var options: [TipOption] {
+        [
+            Tips.MaxDisplayCount(1)
+        ]
+    }
+}
+
+struct CreateWithAITip: Tip {
+    var title: Text {
+        Text("Let AI help you")
+    }
+
+    var message: Text? {
+        Text("AI automatically breaks down your goal into actionable tasks.")
+    }
+
+    var rules: [Rule] {
+        [
+            #Rule(DeadlineTip.$hasSetDeadline) { $0 == true },
+            #Rule(Self.$hasClickedCreateWithAI) { $0 == false },
+        ]
+    }
+
+    @Parameter
+    static var hasClickedCreateWithAI: Bool = false
+
+    var options: [TipOption] {
+        [
+            Tips.MaxDisplayCount(1)
+        ]
+    }
+}
+
+struct AIPromptTip: Tip {
+    var title: Text {
+        Text("Describe your goal")
+    }
+
+    var message: Text? {
+        Text("The more details you give, the better the plan.")
+    }
+
+    var rules: [Rule] {
+        [
+            #Rule(CreateWithAITip.$hasClickedCreateWithAI) { $0 == true },
+            #Rule(Self.$hasEnteredPrompt) { $0 == false },
+        ]
+    }
+
+    @Parameter
+    static var hasEnteredPrompt: Bool = false
+
+    var options: [TipOption] {
+        [
+            Tips.MaxDisplayCount(1)
+        ]
+    }
+}
+
+struct TaskCardTip: Tip {
+    var title: Text {
+        Text("Ready to focus?")
+    }
+
+    var message: Text? {
+        Text("Tap a task to begin.")
+    }
+
+    var rules: [Rule] {
+        [
+            #Rule(AIPromptTip.$hasEnteredPrompt) { $0 == true },
+            #Rule(Self.$hasClickedTaskCard) { $0 == false },
+        ]
+    }
+
+    @Parameter
+    static var hasClickedTaskCard: Bool = false
+
+    var options: [TipOption] {
+        [
+            Tips.MaxDisplayCount(1)
+        ]
+    }
+}
+
+struct StartFocusTip: Tip {
+    var title: Text {
+        Text("Start your focus session")
+    }
+
+    var message: Text? {
+        Text("Press the button below to begin.")
+    }
+
+    var rules: [Rule] {
+        [
+            #Rule(TaskCardTip.$hasClickedTaskCard) { $0 == true },
+            #Rule(Self.$hasStartedFocus) { $0 == false },
+        ]
+    }
+
+    @Parameter
+    static var hasStartedFocus: Bool = false
+
+    var options: [TipOption] {
+        [
+            Tips.MaxDisplayCount(1)
+        ]
+    }
+}
+
+struct TipKitConfiguration {
+    static func configure() {
+        try? Tips.configure([
+            .displayFrequency(.immediate),
+            .datastoreLocation(.applicationDefault),
+        ])
+    }
+
+    static func resetAllTips() {
+        try? Tips.resetDatastore()
+
+        CreateTaskTip.hasCreatedTask = false
+        GoalNameTip.hasEnteredGoalName = false
+        DeadlineTip.hasSetDeadline = false
+        CreateWithAITip.hasClickedCreateWithAI = false
+        AIPromptTip.hasEnteredPrompt = false
+        TaskCardTip.hasClickedTaskCard = false
+        StartFocusTip.hasStartedFocus = false
+    }
+}
