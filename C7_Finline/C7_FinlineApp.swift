@@ -70,6 +70,10 @@ struct C7_FinlineApp: App {
         switch newPhase {
         case .active:
             print("App became active")
+            // Reset badge
+            Task {
+                await NotificationManager.shared.resetBadge()
+            }
 
         case .inactive:
             print("App became inactive")

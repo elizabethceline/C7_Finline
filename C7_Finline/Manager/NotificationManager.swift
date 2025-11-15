@@ -17,7 +17,27 @@ class NotificationManager: ObservableObject {
     private let taskReminderPrefix = "task_reminder_"
     private let taskCompletionPrefix = "task_completion_"
 
-    private init() {}
+    private init() {
+        Task {
+            await resetBadge()
+        }
+    }
+
+    // Reset badge count
+    func resetBadge() async {
+        await withCheckedContinuation { continuation in
+            UNUserNotificationCenter.current().setBadgeCount(0) { error in
+                if let error = error {
+                    print(
+                        "Failed to reset badge count: \(error.localizedDescription)"
+                    )
+                } else {
+                    print("Badge count reset to 0")
+                }
+                continuation.resume()
+            }
+        }
+    }
 
     func scheduleNotificationsForTasks(_ tasks: [GoalTask], username: String)
         async
