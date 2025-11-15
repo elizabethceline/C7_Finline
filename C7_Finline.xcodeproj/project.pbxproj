@@ -603,7 +603,7 @@
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "C7-Finline-Info.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = "Finline: Plan, Focus, Finish";
+				INFOPLIST_KEY_CFBundleDisplayName = Finline;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
@@ -653,7 +653,7 @@
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "C7-Finline-Info.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = "Finline: Plan, Focus, Finish";
+				INFOPLIST_KEY_CFBundleDisplayName = Finline;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
