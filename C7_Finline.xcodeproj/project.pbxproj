@@ -51,6 +51,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		921A45E22EC9D3F300CAA6FE /* FinlineWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = FinlineWidgetExtension.entitlements; sourceTree = "<group>"; };
 		A57CCEDF2EC1960C00013DA3 /* FinlineWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = FinlineWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		A57CCEE12EC1960C00013DA3 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		A57CCEE32EC1960C00013DA3 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
@@ -82,12 +83,19 @@
 				Assets.xcassets,
 				Helper/Color.swift,
 				Helper/TimeFormatter.swift,
+				Models/Goal.swift,
+				Models/GoalTask.swift,
 			);
 			target = A57CCEDE2EC1960C00013DA3 /* FinlineWidgetExtension */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		921A45E42EC9D9A700CAA6FE /* Shared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Shared;
+			sourceTree = "<group>";
+		};
 		A57CCEE52EC1960C00013DA3 /* FinlineWidget */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -163,12 +171,14 @@
 		A5E3A6AC2EA7673A0035E192 = {
 			isa = PBXGroup;
 			children = (
+				921A45E22EC9D3F300CAA6FE /* FinlineWidgetExtension.entitlements */,
 				A5E3A6B72EA7673A0035E192 /* C7_Finline */,
 				A5E3A6C52EA7673B0035E192 /* C7_FinlineTests */,
 				A5E3A6CF2EA7673B0035E192 /* C7_FinlineUITests */,
 				A57CCEE52EC1960C00013DA3 /* FinlineWidget */,
 				A57CCEE02EC1960C00013DA3 /* Frameworks */,
 				A5E3A6B62EA7673A0035E192 /* Products */,
+				921A45E42EC9D9A700CAA6FE /* Shared */,
 			);
 			sourceTree = "<group>";
 		};
@@ -223,6 +233,7 @@
 				A57CCEF42EC1960C00013DA3 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
+				921A45E42EC9D9A700CAA6FE /* Shared */,
 				A5E3A6B72EA7673A0035E192 /* C7_Finline */,
 			);
 			name = C7_Finline;
@@ -412,6 +423,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = FinlineWidgetExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 96MF25N4D7;
@@ -444,6 +456,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = FinlineWidgetExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 96MF25N4D7;
