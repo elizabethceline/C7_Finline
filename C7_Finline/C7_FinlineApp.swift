@@ -7,6 +7,7 @@
 
 import SwiftData
 import SwiftUI
+import WidgetKit
 
 @main
 struct C7_FinlineApp: App {
@@ -26,13 +27,20 @@ struct C7_FinlineApp: App {
             PurchasedItem.self,
             FocusSessionResult.self,
         ])
-
+        
+        let sharedURL = FileManager.default
+            .containerURL(forSecurityApplicationGroupIdentifier: "group.c7.finline")!
+            .appendingPathComponent("swiftdata.store")
+        
+        
         let modelConfiguration = ModelConfiguration(
-            schema: schema,
-            isStoredInMemoryOnly: false,
-            cloudKitDatabase: .none
-        )
-
+                schema: schema,
+                isStoredInMemoryOnly: false,
+                allowsSave: true,
+                groupContainer: .identifier("group.c7.finline"),
+                cloudKitDatabase: .none
+            )
+        
         do {
             return try ModelContainer(
                 for: schema,

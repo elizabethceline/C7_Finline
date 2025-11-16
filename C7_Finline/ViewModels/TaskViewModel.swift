@@ -9,6 +9,7 @@ import Combine
 import FoundationModels
 import SwiftData
 import SwiftUI
+import WidgetKit
 
 @MainActor
 final class TaskViewModel: ObservableObject {
@@ -54,6 +55,9 @@ final class TaskViewModel: ObservableObject {
         do {
             try modelContext.save()
             print("Saved \(tasks.count) AI tasks for goal \(goal.name)")
+            
+            WidgetCenter.shared.reloadTimelines(ofKind: "FinlineWidget")
+            
         } catch {
             print("Failed to save AI tasks: \(error.localizedDescription)")
         }
@@ -114,6 +118,9 @@ final class TaskViewModel: ObservableObject {
         do {
             try modelContext.save()
             print("Task '\(name)' updated successfully.")
+            
+            WidgetCenter.shared.reloadTimelines(ofKind: "FinlineWidget")
+            
         } catch {
             print("Failed to save updated task: \(error.localizedDescription)")
         }
@@ -129,6 +136,9 @@ final class TaskViewModel: ObservableObject {
             taskManager.deleteTask(task: task, modelContext: modelContext)
 
             try modelContext.save()
+            
+            WidgetCenter.shared.reloadTimelines(ofKind: "FinlineWidget")
+            
             await MainActor.run {
                 self.goalTasks.removeAll { $0.id == task.id }
                 print("Deleted task: \(task.name)")
@@ -255,6 +265,9 @@ final class TaskViewModel: ObservableObject {
         do {
             try modelContext.save()
             print("Context saved successfully")
+            
+            WidgetCenter.shared.reloadTimelines(ofKind: "FinlineWidget")
+            
         } catch {
             print("Failed to save context: \(error)")
         }

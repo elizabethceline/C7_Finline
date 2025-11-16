@@ -8,6 +8,7 @@ import SwiftUI
 import Foundation
 import Combine
 import SwiftData
+import WidgetKit
 
 @MainActor
 class FocusResultViewModel: ObservableObject {
@@ -157,6 +158,9 @@ class FocusResultViewModel: ObservableObject {
             
             try context.save()
             print("Context saved successfully")
+            
+            WidgetCenter.shared.reloadTimelines(ofKind: "FinlineWidget")
+            
             history.append(result)
             
             try await userProfileManager.saveProfile(profile)
