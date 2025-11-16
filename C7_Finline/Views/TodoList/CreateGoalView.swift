@@ -119,7 +119,11 @@ struct CreateGoalView: View {
                             .fontWeight(.semibold)
                     }
                     .disabled(goalName.isEmpty)
-
+                    .simultaneousGesture(
+                        TapGesture().onEnded {
+                            DeadlineTip.hasSetDeadline = true
+                        }
+                    )
                 }
             }
             .sheet(isPresented: $isShowingDatePicker) {

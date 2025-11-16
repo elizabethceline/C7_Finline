@@ -8,6 +8,27 @@
 import SwiftUI
 import TipKit
 
+struct TipKit {
+    static func configure() {
+        try? Tips.configure([
+            .displayFrequency(.immediate),
+            .datastoreLocation(.applicationDefault),
+        ])
+    }
+
+    static func resetAllTips() {
+        try? Tips.resetDatastore()
+
+        CreateTaskTip.hasCreatedTask = false
+        GoalNameTip.hasEnteredGoalName = false
+        DeadlineTip.hasSetDeadline = false
+        CreateWithAITip.hasClickedCreateWithAI = false
+        AIPromptTip.hasEnteredPrompt = false
+        TaskCardTip.hasClickedTaskCard = false
+        StartFocusTip.hasStartedFocus = false
+    }
+}
+
 struct CreateTaskTip: Tip {
     var title: Text {
         Text("Create your first task")
@@ -15,6 +36,10 @@ struct CreateTaskTip: Tip {
 
     var message: Text? {
         Text("Tap the + button to get started.")
+    }
+
+    var image: Image? {
+        Image(systemName: "plus.circle.fill")
     }
 
     var rules: [Rule] {
@@ -38,6 +63,10 @@ struct GoalNameTip: Tip {
 
     var message: Text? {
         Text("Describe it in one short sentence.")
+    }
+
+    var image: Image? {
+        Image(systemName: "target")
     }
 
     var rules: [Rule] {
@@ -66,6 +95,10 @@ struct DeadlineTip: Tip {
         Text("Choose when you want to achieve this goal.")
     }
 
+    var image: Image? {
+        Image(systemName: "calendar.badge.clock")
+    }
+
     var rules: [Rule] {
         [
             #Rule(GoalNameTip.$hasEnteredGoalName) { $0 == true },
@@ -90,6 +123,10 @@ struct CreateWithAITip: Tip {
 
     var message: Text? {
         Text("AI automatically breaks down your goal into actionable tasks.")
+    }
+
+    var image: Image? {
+        Image(systemName: "sparkles")
     }
 
     var rules: [Rule] {
@@ -118,6 +155,10 @@ struct AIPromptTip: Tip {
         Text("The more details you give, the better the plan.")
     }
 
+    var image: Image? {
+        Image(systemName: "text.bubble.fill")
+    }
+
     var rules: [Rule] {
         [
             #Rule(CreateWithAITip.$hasClickedCreateWithAI) { $0 == true },
@@ -144,10 +185,13 @@ struct TaskCardTip: Tip {
         Text("Tap a task to begin.")
     }
 
+    var image: Image? {
+        Image(systemName: "hand.tap.fill")
+    }
+
     var rules: [Rule] {
         [
-            #Rule(AIPromptTip.$hasEnteredPrompt) { $0 == true },
-            #Rule(Self.$hasClickedTaskCard) { $0 == false },
+            #Rule(Self.$hasClickedTaskCard) { $0 == false }
         ]
     }
 
@@ -170,6 +214,10 @@ struct StartFocusTip: Tip {
         Text("Press the button below to begin.")
     }
 
+    var image: Image? {
+        Image(systemName: "play.circle.fill")
+    }
+
     var rules: [Rule] {
         [
             #Rule(TaskCardTip.$hasClickedTaskCard) { $0 == true },
@@ -184,26 +232,5 @@ struct StartFocusTip: Tip {
         [
             Tips.MaxDisplayCount(1)
         ]
-    }
-}
-
-struct TipKitConfiguration {
-    static func configure() {
-        try? Tips.configure([
-            .displayFrequency(.immediate),
-            .datastoreLocation(.applicationDefault),
-        ])
-    }
-
-    static func resetAllTips() {
-        try? Tips.resetDatastore()
-
-        CreateTaskTip.hasCreatedTask = false
-        GoalNameTip.hasEnteredGoalName = false
-        DeadlineTip.hasSetDeadline = false
-        CreateWithAITip.hasClickedCreateWithAI = false
-        AIPromptTip.hasEnteredPrompt = false
-        TaskCardTip.hasClickedTaskCard = false
-        StartFocusTip.hasStartedFocus = false
     }
 }

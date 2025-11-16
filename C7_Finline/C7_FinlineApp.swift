@@ -19,7 +19,7 @@ struct C7_FinlineApp: App {
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
-        TipKitConfiguration.configure()
+        TipKit.configure()
     }
 
     var sharedModelContainer: ModelContainer = {
