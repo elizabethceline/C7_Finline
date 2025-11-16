@@ -56,6 +56,7 @@ struct FocusModeView: View {
             oldValue, newValue in
             if newValue {
                 isShowingTimesUpAlert = true
+                HapticManager.shared.playSessionEndHaptic()
             }
         }
         .task(id: viewModel.isShowingNudgeAlert) {
@@ -77,12 +78,17 @@ struct FocusModeView: View {
             viewModel.didFinishEarly = false
             viewModel.isSessionEnded = false
             viewModel.errorMessage = nil
+            
+            if viewModel.remainingTime == viewModel.sessionDuration {
+                   HapticManager.shared.playStartSessionHaptic()
+               }
         }
         .onDisappear {
             viewModel.resetSession()
         }
         .alert("End Focus Session?", isPresented: $isShowingEndSessionAlert) {
             Button("I'm Done", role: .none) {
+                HapticManager.shared.playConfirmationHaptic()
                 Task {
                     resultVM = viewModel.createResult(using: modelContext, didComplete: true)
                     viewModel.finishEarly()
@@ -92,6 +98,7 @@ struct FocusModeView: View {
             }
             
             Button("Abort Task", role: .destructive) {
+                HapticManager.shared.playDestructiveHaptic()
                 Task {
                     isGivingUp = true
                     await viewModel.giveUp() // mark incomplete
@@ -229,9 +236,13 @@ struct FocusModeView: View {
                 mode: .focus,
                 timeText: TimeFormatter.format(seconds: viewModel.remainingTime),
                 primaryLabel: "End",
-                onPrimaryTap: { isShowingEndSessionAlert = true },
+                onPrimaryTap: {
+                    HapticManager.shared.playSessionEndHaptic()
+                    isShowingEndSessionAlert = true },
                 secondaryLabel: "Rest",
-                onSecondaryTap: { isShowingRestModal = true },
+                onSecondaryTap: {
+                    HapticManager.shared.playConfirmationHaptic()
+                    isShowingRestModal = true },
                 secondaryEnabled: viewModel.canRest && viewModel.isFocusing
             )
             .padding(.bottom, 40)

@@ -405,6 +405,9 @@ struct DetailGoalView: View {
     }
 
     private func deleteSelectedTasks() {
+        
+        HapticManager.shared.playDestructiveHaptic()
+        
         Task {
             for id in selectedTaskIds {
                 if let task = taskVM.goalTasks.first(where: { $0.id == id }) {
@@ -424,6 +427,9 @@ struct DetailGoalView: View {
     }
 
     private func deleteTaskWithAnimation(_ task: GoalTask) {
+        
+        HapticManager.shared.playDestructiveHaptic()
+        
         withAnimation(.easeInOut(duration: 0.3)) {
             removingTaskIds.insert(task.id)
         }
