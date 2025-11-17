@@ -6,17 +6,17 @@
 //
 
 import SwiftUI
+import TipKit
 
 struct CreateGoalView: View {
     @Environment(\.dismiss) private var dismiss
-    
+
     @ObservedObject var mainVM: MainViewModel
 
     @State private var goalName: String = ""
     @State private var goalDeadline: Date = Date()
     @State private var isShowingDatePicker: Bool = false
     @State private var isShowingTimePicker: Bool = false
-    
 
     var body: some View {
         NavigationStack {
@@ -26,20 +26,32 @@ struct CreateGoalView: View {
                         .font(.body)
                         .textInputAutocapitalization(.words)
                         .disableAutocorrection(true)
-                    } header: {
-                        Text("Goal")
-                            .font(.headline)
+                        .onChange(of: goalName) { _, newValue in
+                            if !newValue.isEmpty {
+                                GoalNameTip.hasEnteredGoalName = true
+                            }
+                        }
+                        .popoverTip(GoalNameTip(), arrowEdge: .top)
+                } header: {
+                    Text("Goal")
+                        .font(.headline)
                 }
 
                 Section {
                     Button {
                         isShowingDatePicker = true
+                        DeadlineTip.hasSetDeadline = true
                     } label: {
                         HStack {
                             Label {
-                                Text(goalDeadline.formatted(date: .long, time: .omitted))
-                                    .font(.body)
-                                    .foregroundColor(Color(.label))
+                                Text(
+                                    goalDeadline.formatted(
+                                        date: .long,
+                                        time: .omitted
+                                    )
+                                )
+                                .font(.body)
+                                .foregroundColor(Color(.label))
                             } icon: {
                                 Image(systemName: "calendar")
                                     .foregroundColor(.primary)
@@ -51,15 +63,21 @@ struct CreateGoalView: View {
                         }
                         .foregroundStyle(.black)
                     }
+                    .popoverTip(DeadlineTip(), arrowEdge: .top)
 
                     Button {
                         isShowingTimePicker = true
                     } label: {
                         HStack {
                             Label {
-                                Text(goalDeadline.formatted(date: .omitted, time: .shortened))
-                                    .font(.body)
-                                    .foregroundColor(Color(.label))
+                                Text(
+                                    goalDeadline.formatted(
+                                        date: .omitted,
+                                        time: .shortened
+                                    )
+                                )
+                                .font(.body)
+                                .foregroundColor(Color(.label))
                             } icon: {
                                 Image(systemName: "clock")
                                     .foregroundColor(.primary)
@@ -74,8 +92,6 @@ struct CreateGoalView: View {
                     Text("Deadline")
                         .font(.headline)
                 }
-                
-                
 
             }
             .scrollContentBackground(.hidden)
@@ -91,12 +107,23 @@ struct CreateGoalView: View {
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    NavigationLink(destination: CreateTaskView(goalName: goalName, goalDeadline: goalDeadline,dismissParent: dismiss, mainVM: mainVM)) {
+                    NavigationLink(
+                        destination: CreateTaskView(
+                            goalName: goalName,
+                            goalDeadline: goalDeadline,
+                            dismissParent: dismiss,
+                            mainVM: mainVM
+                        )
+                    ) {
                         Image(systemName: "checkmark")
                             .fontWeight(.semibold)
                     }
                     .disabled(goalName.isEmpty)
-
+                    .simultaneousGesture(
+                        TapGesture().onEnded {
+                            DeadlineTip.hasSetDeadline = true
+                        }
+                    )
                 }
             }
             .sheet(isPresented: $isShowingDatePicker) {
@@ -111,7 +138,8 @@ struct CreateGoalView: View {
                     title: "Select Time",
                     selection: $goalDeadline,
                     displayedComponents: [.hourAndMinute]
-                )            }
+                )
+            }
         }
     }
 }

@@ -7,6 +7,7 @@
 
 import SwiftData
 import SwiftUI
+import TipKit
 
 struct MainView: View {
     @StateObject private var viewModel = MainViewModel()
@@ -82,6 +83,11 @@ struct MainView: View {
             .onChange(of: tasks) { _, newTasks in
                 viewModel.tasks = newTasks
             }
+            .onChange(of: viewModel.selectedDate) { _, newDate in
+                if newDate != selectedDate {
+                    jumpToDate(newDate)
+                }
+            }
             .toolbar {
                 ToolbarItemGroup(placement: .bottomBar) {
                     HStack(spacing: 12) {
@@ -138,11 +144,13 @@ struct MainView: View {
 
                     Button {
                         showCreateGoalModal.toggle()
+                        CreateTaskTip.hasCreatedTask = true
                     } label: {
                         Image(systemName: "plus")
                             .font(.callout)
                             .fontWeight(.medium)
                     }
+                    .popoverTip(CreateTaskTip(), arrowEdge: .bottom)
                 }
             }
 

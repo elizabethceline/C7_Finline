@@ -19,6 +19,10 @@ struct C7_FinlineApp: App {
 
     @Environment(\.scenePhase) private var scenePhase
 
+    init() {
+        TipKit.configure()
+    }
+
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             UserProfile.self,
