@@ -89,7 +89,7 @@ struct FocusModeView: View {
         }
         .alert("End Focus Session?", isPresented: $isShowingEndSessionAlert) {
             Button("I'm Done", role: .none) {
-                HapticManager.shared.playConfirmationHaptic()
+                HapticManager.shared.playSuccessHaptic()
                 Task {
                     resultVM = viewModel.createResult(using: modelContext, didComplete: true)
                     viewModel.finishEarly()

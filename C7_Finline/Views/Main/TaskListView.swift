@@ -281,6 +281,9 @@ struct TaskListView: View {
     }
 
     private func completeTask(_ task: GoalTask) {
+        
+        HapticManager.shared.playSuccessHaptic()
+        
         withAnimation(.easeInOut(duration: 0.3)) {
             removingTaskIds.insert(task.id)
         }
@@ -292,6 +295,9 @@ struct TaskListView: View {
     }
 
     private func deleteTask(_ task: GoalTask) {
+        
+        HapticManager.shared.playDestructiveHaptic()
+        
         withAnimation(.easeInOut(duration: 0.3)) {
             removingTaskIds.insert(task.id)
         }
