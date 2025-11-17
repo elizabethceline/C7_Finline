@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import TipKit
 
 struct HeaderView: View {
     @ObservedObject var viewModel: MainViewModel
@@ -52,12 +53,14 @@ struct HeaderView: View {
 
             Button {
                 navigateToProfile = true
+                ProfileButtonTip.hasClickedProfile = true
             } label: {
                 Image("finley")
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 52)
             }
+            .popoverTip(ProfileButtonTip(), arrowEdge: .top)
         }
         .padding(.horizontal)
         .padding(.top, 4)

@@ -1,38 +1,43 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 struct FocusEndView: View {
     @ObservedObject var viewModel: FocusResultViewModel
     var onDismiss: () -> Void
-    
+
     var body: some View {
         VStack(spacing: 24) {
             //Spacer()
-               // .frame(height: 40)
-            
+            // .frame(height: 40)
+
             Text("Focusing Session\nComplete")
                 .font(.largeTitle.bold())
                 //.foregroundColor(.white)
                 .multilineTextAlignment(.center)
                 .padding(.top, 40)
-            
+
             if viewModel.fishCaught.isEmpty {
-                Text("No fish caught this time! Try focusing a bit longer next round.")
-                    //.foregroundColor(.white.opacity(0.7))
-                    .padding()
-                    .background(Color.white.opacity(0.8))
-                    .clipShape(RoundedRectangle(cornerRadius: 20))
+                Text(
+                    "No fish caught this time! Try focusing a bit longer next round."
+                )
+                //.foregroundColor(.white.opacity(0.7))
+                .padding()
+                .background(Color.white.opacity(0.8))
+                .clipShape(RoundedRectangle(cornerRadius: 20))
             } else {
                 FishSummaryCard(viewModel: viewModel)
             }
-            
+
             Spacer()
-            
+
             FocusTimerCard(
                 mode: .focus,
                 timeText: "+\(viewModel.grandTotal.formatted(.number)) pts",
                 primaryLabel: "Back to Main Menu",
-                onPrimaryTap: onDismiss
+                onPrimaryTap: {
+                    onDismiss()
+                    StartFocusTip.hasEndedFocus = true
+                }
             )
             .padding(.bottom, 40)
         }
@@ -47,19 +52,22 @@ struct FocusEndView: View {
         Fish.sample(of: .uncommon),
         Fish.sample(of: .uncommon),
         Fish.sample(of: .rare),
-        Fish.sample(of: .legendary)
+        Fish.sample(of: .legendary),
     ]
-    
+
     let mockResult = FocusSessionResult(
         caughtFish: mockFish,
         duration: 1800,
         task: nil
     )
-    
-    let mockVM = FocusResultViewModel(context: nil, networkMonitor: NetworkMonitor())
+
+    let mockVM = FocusResultViewModel(
+        context: nil,
+        networkMonitor: NetworkMonitor()
+    )
     mockVM.currentResult = mockResult
     mockVM.bonusPoints = 20
-    
+
     return ZStack {
         Color.gray
             .ignoresSafeArea()
@@ -77,7 +85,10 @@ struct FocusEndView: View {
         task: nil
     )
 
-    let mockVM = FocusResultViewModel(context: nil, networkMonitor: NetworkMonitor())
+    let mockVM = FocusResultViewModel(
+        context: nil,
+        networkMonitor: NetworkMonitor()
+    )
     mockVM.currentResult = emptyResult
     mockVM.bonusPoints = 0  // optional, just to make it clean
 

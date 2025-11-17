@@ -8,6 +8,7 @@
 import CloudKit
 import SwiftData
 import SwiftUI
+import TipKit
 
 struct ProfileView: View {
     @ObservedObject var viewModel: ProfileViewModel
@@ -53,6 +54,7 @@ struct ProfileView: View {
 
                         Button {
                             showShopModal = true
+                            ShopButtonTip.hasClickedShop = true
                         } label: {
                             Image(systemName: "hanger")
                                 .font(.body)
@@ -61,6 +63,7 @@ struct ProfileView: View {
                                 .padding(12)
                                 .background(Circle().fill(Color.primary))
                         }
+                        .popoverTip(ShopButtonTip(), arrowEdge: .bottom)
                         .sheet(isPresented: $showShopModal) {
                             if let id = userRecordID {
                                 ShopView(viewModel: shopVM, userRecordID: id)

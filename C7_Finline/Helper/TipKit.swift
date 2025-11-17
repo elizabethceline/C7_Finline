@@ -26,6 +26,9 @@ struct TipKit {
         AIPromptTip.hasEnteredPrompt = false
         TaskCardTip.hasClickedTaskCard = false
         StartFocusTip.hasStartedFocus = false
+        StartFocusTip.hasEndedFocus = false
+        ProfileButtonTip.hasClickedProfile = false
+        ShopButtonTip.hasClickedShop = false
     }
 }
 
@@ -222,11 +225,74 @@ struct StartFocusTip: Tip {
         [
             #Rule(TaskCardTip.$hasClickedTaskCard) { $0 == true },
             #Rule(Self.$hasStartedFocus) { $0 == false },
+            #Rule(Self.$hasEndedFocus) { $0 == false },
         ]
     }
 
     @Parameter
     static var hasStartedFocus: Bool = false
+    @Parameter
+    static var hasEndedFocus: Bool = false
+
+    var options: [TipOption] {
+        [
+            Tips.MaxDisplayCount(1)
+        ]
+    }
+}
+
+struct ProfileButtonTip: Tip {
+    var title: Text {
+        Text("Check out your profile")
+    }
+
+    var message: Text? {
+        Text("Tap your profile icon to see your progress and unlock rewards.")
+    }
+
+    var image: Image? {
+        Image(systemName: "person.circle.fill")
+    }
+
+    var rules: [Rule] {
+        [
+            #Rule(StartFocusTip.$hasEndedFocus) { $0 == true },
+            #Rule(Self.$hasClickedProfile) { $0 == false },
+        ]
+    }
+
+    @Parameter
+    static var hasClickedProfile: Bool = false
+
+    var options: [TipOption] {
+        [
+            Tips.MaxDisplayCount(1)
+        ]
+    }
+}
+
+struct ShopButtonTip: Tip {
+    var title: Text {
+        Text("Visit the shop")
+    }
+
+    var message: Text? {
+        Text("Discover adorable characters to accompany you on your journey!")
+    }
+
+    var image: Image? {
+        Image(systemName: "hanger")
+    }
+
+    var rules: [Rule] {
+        [
+            #Rule(ProfileButtonTip.$hasClickedProfile) { $0 == true },
+            #Rule(Self.$hasClickedShop) { $0 == false },
+        ]
+    }
+
+    @Parameter
+    static var hasClickedShop: Bool = false
 
     var options: [TipOption] {
         [
