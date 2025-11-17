@@ -247,7 +247,7 @@ struct MediumWidgetView: View {
                             if firstGroup.tasks.count > 2 {
                                 Text("+\(firstGroup.tasks.count - 2) more")
                                     .font(.system(size: 11, weight: .medium))
-                                    .foregroundColor(.blue)
+//                                    .foregroundColor(.blue)
                             }
                         }
                     }
@@ -383,7 +383,7 @@ struct GroupedTaskList: View {
                             
                             Image(systemName: "chevron.right")
                                 .font(.caption)
-                                .foregroundColor(.secondary)
+//                                .foregroundColor(.secondary)
                         }
                         .padding(.leading, 4)
                     } else {
@@ -407,7 +407,7 @@ struct GroupedTaskList: View {
             if totalRemaining > 0 {
                 Text("+\(totalRemaining) more tasks")
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.secondary)
+//                    .foregroundColor(.secondary)
                     .padding(.leading, 4)
             }
         }
