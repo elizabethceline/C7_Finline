@@ -37,6 +37,8 @@ struct FocusLiveActivity: Widget {
                                 .monospacedDigit()
                                 .foregroundColor(.gray)
                                 .offset(x:-5)
+                                .minimumScaleFactor(0.5)
+                                .layoutPriority(10)
                             
                             Text(context.state.taskTitle)
                                 .font(.title2)
