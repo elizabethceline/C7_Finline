@@ -186,7 +186,7 @@ struct FocusLiveActivity: Widget {
                         .scaledToFit()
                 }
             }
-            .widgetURL(URL(string: "finline://endSession"))
+            .widgetURL(URL(string: "finline://"))
             .keylineTint(Color.red)
         }
     }
