@@ -180,9 +180,13 @@ struct DetailTaskView: View {
 
                                 if hasUnsavedChanges {
                                     isShowingUnsavedChangesAlert = true
+                                    HapticManager.shared.playUnsavedChangesHaptic()
                                 } else {
                                     focusVM.setTask(task, goal: task.goal)
                                     isShowingFocusSettings = true
+                                    
+                                    HapticManager.shared.playConfirmationHaptic()
+                                       
                                 }
                             }) {
                                 Text("Start Focus")
@@ -207,6 +211,7 @@ struct DetailTaskView: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button {
                         if hasUnsavedChanges {
+                            HapticManager.shared.playUnsavedChangesHaptic()
                             isShowingDismissAlert = true
                         } else {
                             dismiss()
@@ -306,6 +311,7 @@ struct DetailTaskView: View {
                         )
                         focusVM.setTask(task, goal: task.goal)
                         isShowingFocusSettings = true
+                        HapticManager.shared.playConfirmationHaptic()
                     }
                 }
                 Button("No", role: .cancel) {}

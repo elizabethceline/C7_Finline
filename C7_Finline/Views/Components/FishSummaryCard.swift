@@ -35,8 +35,10 @@ struct FishSummaryCard: View {
                         // Fish name
                         Text(name)
                             .font(.title3)
+                            .foregroundColor(.black)
                         Text("+\(totalPoints)")
                             .font(.title3)
+                            .foregroundColor(.black)
 
                         
                         Spacer()
@@ -58,6 +60,7 @@ struct FishSummaryCard: View {
                 HStack(spacing: 16) {
                     Text("Bonus Points")
                         .font(.title3)
+                        .foregroundColor(.black)
                     Spacer()
                     Text("+\(viewModel.bonusPoints)")
                         .font(.title.bold())

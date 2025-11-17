@@ -28,7 +28,7 @@ struct FocusLiveActivity: Widget {
                                 .font(.title2)
                                 .foregroundColor(.gray)
                         }
-                        .padding(.bottom,40)
+                        .padding(.bottom,13)
                     }else{
                         VStack(alignment: .leading){
                             Text(TimeFormatter.format(seconds: (context.state.isResting ? context.state.restRemainingTime : context.state.remainingTime) ?? 0))
@@ -42,7 +42,7 @@ struct FocusLiveActivity: Widget {
                                 .font(.title2)
                                 .foregroundColor(.gray)
                         }
-                        .padding(.bottom,40)
+                        .padding(.bottom,13)
                     }
                     
                     Spacer()
@@ -67,9 +67,11 @@ struct FocusLiveActivity: Widget {
                 ProgressView(value: progress(for: context), total: 1.0)
                     .progressViewStyle(.linear)
                     .tint(Color(red: 161/255, green: 210/255, blue: 241/255))
-                    .frame(height: context.state.isResting ? 0 : 4)
+                    .frame(height: context.state.isResting ? 0 : 10)
                     .clipShape(Capsule())
                     .animation(.easeInOut(duration: 0.5), value: progress(for: context))
+                    .offset(y: -20)
+                
             }
             .padding()
             .activityBackgroundTint(Color.secondary)
@@ -204,7 +206,7 @@ struct FocusLiveActivity: Widget {
     FocusActivityAttributes.ContentState.previewValue(
         taskTitle: "Focus Session",
         remainingTime: 60 * 60,
-        isResting: true
+        isResting: false
     )
     FocusActivityAttributes.ContentState.previewValue(
         taskTitle: "Short Break",

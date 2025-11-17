@@ -5,6 +5,7 @@ struct FocusModeView: View {
     @EnvironmentObject var viewModel: FocusSessionViewModel
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.colorScheme) var colorScheme
     
     var onGiveUp: (GoalTask) -> Void
     var onSessionEnd: () -> Void
@@ -56,6 +57,7 @@ struct FocusModeView: View {
             oldValue, newValue in
             if newValue {
                 isShowingTimesUpAlert = true
+                HapticManager.shared.playSessionEndHaptic()
             }
         }
         .task(id: viewModel.isShowingNudgeAlert) {
@@ -77,12 +79,17 @@ struct FocusModeView: View {
             viewModel.didFinishEarly = false
             viewModel.isSessionEnded = false
             viewModel.errorMessage = nil
+            
+            if viewModel.remainingTime == viewModel.sessionDuration {
+                   HapticManager.shared.playStartSessionHaptic()
+               }
         }
         .onDisappear {
             viewModel.resetSession()
         }
         .alert("End Focus Session?", isPresented: $isShowingEndSessionAlert) {
             Button("I'm Done", role: .none) {
+                HapticManager.shared.playSuccessHaptic()
                 Task {
                     resultVM = viewModel.createResult(using: modelContext, didComplete: true)
                     viewModel.finishEarly()
@@ -92,6 +99,7 @@ struct FocusModeView: View {
             }
             
             Button("Abort Task", role: .destructive) {
+                HapticManager.shared.playDestructiveHaptic()
                 Task {
                     isGivingUp = true
                     await viewModel.giveUp() // mark incomplete
@@ -164,7 +172,20 @@ struct FocusModeView: View {
     // MARK: - Subviews split for compiler friendliness
     
     private var backgroundView: some View {
-        Image(viewModel.isResting ? "restBackground" : "focusBackground")
+        //        Image(viewModel.isResting ? "restBackground" : "focusBackground")
+        //            .resizable()
+        //            .frame(height: 910)
+        let focusImageName: String = {
+            guard !viewModel.isResting else {
+                return "focusBackground"
+            }
+            
+            return colorScheme == .dark ? "focusBackgroundDark" : "focusBackground"
+        }()
+        
+        let imageName = viewModel.isResting ? "restBackground" : focusImageName
+        
+        return Image(imageName)
             .resizable()
             .frame(height: 910)
     }
@@ -229,9 +250,13 @@ struct FocusModeView: View {
                 mode: .focus,
                 timeText: TimeFormatter.format(seconds: viewModel.remainingTime),
                 primaryLabel: "End",
-                onPrimaryTap: { isShowingEndSessionAlert = true },
+                onPrimaryTap: {
+                    HapticManager.shared.playSessionEndHaptic()
+                    isShowingEndSessionAlert = true },
                 secondaryLabel: "Rest",
-                onSecondaryTap: { isShowingRestModal = true },
+                onSecondaryTap: {
+                    HapticManager.shared.playConfirmationHaptic()
+                    isShowingRestModal = true },
                 secondaryEnabled: viewModel.canRest && viewModel.isFocusing
             )
             .padding(.bottom, 40)

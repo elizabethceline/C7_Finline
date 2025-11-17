@@ -26,6 +26,8 @@ struct CreateTaskView: View {
     @State private var showDeleteAlert = false
     @State private var taskToDelete: AIGoalTask?
 
+    @State private var animate: Bool = false
+    
     @StateObject private var taskVM = TaskViewModel()
     @StateObject private var goalVM = GoalViewModel()
     @Environment(\.modelContext) private var modelContext
@@ -58,13 +60,32 @@ struct CreateTaskView: View {
 
                 if taskVM.isLoading {
                     Section {
-                        ProgressView("Generating AI tasks...")
-                            .padding(.vertical)
-                            .listRowBackground(Color.clear)
-                            .frame(maxWidth: .infinity, alignment: .center)
+                        VStack {
+                            Image("finley")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 40, height: 40)
+                                .padding(.bottom, 8)
+                                .offset(y: animate ? -10 : 10)
+                                .animation(.easeInOut(duration: 0.6).repeatForever(autoreverses: true), value: animate)
+
+                            Text("Generating AI tasks...")
+                                .font(.subheadline)
+                                .foregroundColor(.black)
+                                .offset(y: animate ? -10 : 10)
+                                .animation(.easeInOut(duration: 0.6).repeatForever(autoreverses: true), value: animate)
+                        }
+                        .padding(.vertical)
+                        .listRowBackground(Color.clear)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .onAppear {
+                            animate = true
+                        }
                     }
                 }
 
+
+                
                 if let error = taskVM.errorMessage {
                     Section {
                         Text("Error: \(error)")

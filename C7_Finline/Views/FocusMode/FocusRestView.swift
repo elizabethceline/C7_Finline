@@ -34,8 +34,10 @@ struct FocusRestView: View {
                 primaryLabel: viewModel.restRemainingTime > 0 ? "I'm done resting" : "Back to Work",
                 onPrimaryTap: {
                     if viewModel.restRemainingTime > 0 {
+                        HapticManager.shared.playConfirmationHaptic()
                         showEarlyFinishAlert = true
                     } else {
+                        HapticManager.shared.playSessionEndHaptic()
                         viewModel.endRest()
                     }
                 }
@@ -46,11 +48,12 @@ struct FocusRestView: View {
         .onDisappear{ viewModel.endRest()}
         .alert("Done Resting?", isPresented: $showEarlyFinishAlert) {
             Button("Yes", role: .destructive) {
+                HapticManager.shared.playConfirmationHaptic()
                 viewModel.endRest()
                     }
                     Button("No", role: .cancel) { }
                 } message: {
-                    Text("Your focus timer will resume, and this rest period will still be counted as used.")
+                    Text("Your focus timer will resume, and this rest period will still be acounted as used.")
                 }
     }
 }
