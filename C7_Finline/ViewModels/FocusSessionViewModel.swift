@@ -97,7 +97,16 @@ final class FocusSessionViewModel: ObservableObject {
                 name: UIApplication.didBecomeActiveNotification,
                 object: nil
             )
+        NotificationCenter.default.addObserver(
+              self,
+              selector: #selector(appWillTerminate),
+              name: UIApplication.willTerminateNotification,
+              object: nil
+          )
     }
+    deinit {
+            NotificationCenter.default.removeObserver(self)
+        }
     
     // Focus Session
     func startSession() {
@@ -496,6 +505,34 @@ final class FocusSessionViewModel: ObservableObject {
         remainingTime = max(0, endTime.timeIntervalSinceNow)
         Task { await updateLiveActivity() }
     }
+    
+    @objc private func appWillTerminate() {
+            print("App will terminate - cleaning up resources")
+            
+            timer?.invalidate()
+            timer = nil
+            restTimer?.invalidate()
+            restTimer = nil
+            
+            authManager.clearShield()
+            
+            fishingVM.stopFishing()
+            
+            if let activity = activity {
+                let semaphore = DispatchSemaphore(value: 0)
+                Task {
+                    await activity.end(dismissalPolicy: .immediate)
+                    self.activity = nil
+                    print("Live Activity ended due to app termination")
+                    semaphore.signal()
+                }
+                _ = semaphore.wait(timeout: .now() + 1.0)
+            }
+            
+            // Reset state
+            isFocusing = false
+            isResting = false
+        }
 
     //    private func updateLiveActivity() async {
     //        guard let activity else { return }
