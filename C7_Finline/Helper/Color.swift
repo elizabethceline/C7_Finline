@@ -11,6 +11,7 @@ extension Color {
     static let primary = Color(hex: "34A8D3")
     static let secondary = Color(hex: "DBF3FC")
     static let darkGray = Color(hex: "424242")
+    static let darkModeWidget = Color(hex: "253946")
 }
 
 extension Color {

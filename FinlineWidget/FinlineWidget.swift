@@ -28,6 +28,7 @@ struct TaskEntry: TimelineEntry {
 struct FinlineWidgetEntryView: View {
     let entry: TaskEntry
     @Environment(\.widgetFamily) var family
+    @Environment(\.colorScheme) var colorScheme
 
     var body: some View {
         Group {
@@ -49,7 +50,7 @@ struct FinlineWidgetEntryView: View {
 //                startPoint: .topLeading,
 //                endPoint: .bottomTrailing
 //            )
-            Color.secondary
+            colorScheme == .dark ? Color.darkModeWidget : Color.secondary
         }
     }
 }
@@ -114,15 +115,15 @@ struct SmallWidgetView: View {
             VStack(spacing: 2) {
                 Text("today")
                     .font(.system(size: 10))
-                    .foregroundColor(.black.opacity(0.6))
+//                    .foregroundColor(.black.opacity(0.6))
                 
                 Text("\(activeTasks.count)")
                     .font(.system(size: 40, weight: .bold))
-                    .foregroundColor(.black)
+//                    .foregroundColor(.black)
                 
                 Text("Tasks")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.black)
+//                    .foregroundColor(.black)
             }
             
             Image("penguinWidget")
@@ -201,11 +202,11 @@ struct MediumWidgetView: View {
                     Text("today you got")
                         .font(.system(size: 12, weight: .medium))
                         .italic()
-                        .foregroundColor(.black.opacity(0.6))
+                        
                     
                     Text("\(activeTasks.count) Tasks")
                         .font(.system(size: 32, weight: .bold))
-                        .foregroundColor(.black)
+                        
                     Spacer()
                 }
 //                .padding(.bottom,92)
@@ -219,10 +220,10 @@ struct MediumWidgetView: View {
                     VStack(spacing: 4) {
                         Text("No More Task")
                             .font(.system(.headline, weight: .semibold))
-                            .foregroundColor(.gray)
+                           
                         Text("Do you have task? add it!")
                             .font(.caption)
-                            .foregroundColor(.gray.opacity(0.8))
+                           
                     }
                     //Spacer()
                 } else {
@@ -274,6 +275,35 @@ struct LargeWidgetView: View {
     private var activeTasks: [GoalTask] {
         todayTasks.filter { !$0.isCompleted }
     }
+    
+    private var groupedTasks: [(goal: Goal?, tasks: [GoalTask])] {
+            var groups: [(goal: Goal?, tasks: [GoalTask])] = []
+            
+            for task in activeTasks {
+                if let index = groups.firstIndex(where: { $0.goal?.id == task.goal?.id }) {
+                    groups[index].tasks.append(task)
+                } else {
+                    groups.append((goal: task.goal, tasks: [task]))
+                }
+            }
+            
+            // Sort tasks within each group by working time
+            for i in groups.indices {
+                groups[i].tasks.sort { t1, t2 in
+                    t1.workingTime < t2.workingTime
+                }
+            }
+            
+            // Sort groups by Goal Name
+            var sortedGroups = groups
+            sortedGroups.sort { g1, g2 in
+                let name1 = g1.goal?.name ?? ""
+                let name2 = g2.goal?.name ?? ""
+                return name1 < name2
+            }
+            
+            return sortedGroups
+        }
 
     var body: some View {
         VStack(spacing: 16) {
@@ -288,11 +318,9 @@ struct LargeWidgetView: View {
                     Text("today you got")
                         .font(.system(size: 12, weight: .medium))
                         .italic()
-                        .foregroundColor(.black.opacity(0.6))
                     
                     Text("\(activeTasks.count) Tasks")
                         .font(.system(size: 32, weight: .bold))
-                        .foregroundColor(.black)
                 }
                 Spacer()
             }
@@ -302,23 +330,89 @@ struct LargeWidgetView: View {
                 VStack(spacing: 4) {
                     Text("No More Task")
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.gray)
                     Text("Do you have task? add it!")
                         .font(.system(size: 14))
-                        .foregroundColor(.gray.opacity(0.8))
                 }
                 Spacer()
             } else {
-                ForEach(activeTasks.prefix(5)) { task in
-                    TaskRowView(task: task)
-                }
-                Spacer()
+                GroupedTaskList(groupedTasks: groupedTasks, activeTasksCount: activeTasks.count)
             }
         }
-        .padding(16)
+//        .padding(16)
     }
 }
 
+struct GroupedTaskList: View {
+    let groupedTasks: [(goal: Goal?, tasks: [GoalTask])]
+    let activeTasksCount: Int
+    
+    private let limit = 3
+    
+    private var limitedGroups: [(goal: Goal?, tasks: [GoalTask])] {
+        var result: [(goal: Goal?, tasks: [GoalTask])] = []
+        var totalTasksAdded = 0
+        
+        for group in groupedTasks {
+            let remainingSlots = limit - totalTasksAdded
+            guard remainingSlots > 0 else { break }
+            
+            let tasksToTake = min(group.tasks.count, remainingSlots)
+            
+            if tasksToTake > 0 {
+                let newGroup = (goal: group.goal, tasks: Array(group.tasks.prefix(tasksToTake)))
+                result.append(newGroup)
+                totalTasksAdded += tasksToTake
+            }
+        }
+        
+        return result
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+          
+            ForEach(Array(limitedGroups.enumerated()), id: \.offset) { _, group in
+                
+                VStack(alignment: .leading, spacing: 4) {
+                   
+                    if let goal = group.goal {
+                        HStack {
+                            Text(goal.name)
+                                .font(.subheadline)
+    
+                            
+                            Image(systemName: "chevron.right")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(.leading, 4)
+                    } else {
+                        Text("Other Tasks")
+                            .font(.subheadline)
+                            .fontWeight(.bold)
+                            .foregroundColor(.primary)
+                            .padding(.leading, 4)
+                    }
+                    
+                    ForEach(group.tasks) { task in
+                        TaskRowView(task: task)
+                    }
+                }
+                .padding(.bottom, 8)
+            }
+            
+            Spacer(minLength: 0)
+            
+            let totalRemaining = activeTasksCount - limitedGroups.reduce(0) { $0 + $1.tasks.count }
+            if totalRemaining > 0 {
+                Text("+\(totalRemaining) more tasks")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.secondary)
+                    .padding(.leading, 4)
+            }
+        }
+    }
+}
 struct TaskRowView: View {
     let task: GoalTask
     
@@ -343,17 +437,17 @@ struct TaskRowView: View {
         }
     }
     
+    @Environment(\.colorScheme) var colorScheme
+    
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
                 Text(timeString)
                     .font(.caption2)
-                    .foregroundColor(.black.opacity(0.5))
                 
                 Text(task.name)
                     .font(.body)
                     .fontWeight(.medium)
-                    .foregroundColor(.black)
                     .lineLimit(1)
             }
             .padding(.horizontal, 4)
@@ -366,7 +460,7 @@ struct TaskRowView: View {
                 .foregroundColor(.primary)
         }
        .padding(8)
-        .background(Color.white)
+       .background(colorScheme == .light ? Color.white : Color.black)
         .cornerRadius(20)
     }
 }

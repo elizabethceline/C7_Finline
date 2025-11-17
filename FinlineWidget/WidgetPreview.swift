@@ -19,3 +19,9 @@ import SwiftUI
 } timeline: {
     TaskEntry(date: .now, configuration: ConfigurationAppIntent())
 }
+
+#Preview(as: .systemLarge) {
+    FinlineWidget()
+} timeline: {
+    TaskEntry(date: .now, configuration: ConfigurationAppIntent())
+}

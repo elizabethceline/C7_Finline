@@ -444,6 +444,9 @@ struct DetailGoalView: View {
     }
 
     private func completeTaskWithAnimation(_ task: GoalTask) {
+        
+        HapticManager.shared.playSuccessHaptic()
+        
         withAnimation(.easeInOut(duration: 0.3)) {
             removingTaskIds.insert(task.id)
         }
@@ -465,6 +468,9 @@ struct DetailGoalView: View {
     }
 
     private func incompleteTaskWithAnimation(_ task: GoalTask) {
+        
+        HapticManager.shared.playUnsavedChangesHaptic()
+        
         withAnimation(.easeInOut(duration: 0.3)) {
             removingTaskIds.insert(task.id)
         }

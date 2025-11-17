@@ -1,38 +1,82 @@
 import CoreHaptics
+import UIKit
 
 class HapticManager {
     static let shared = HapticManager()
     private var engine: CHHapticEngine?
+    private var isEngineReady = false
     
     private init() {
         prepareEngine()
+        setupEngineLifecycleObservers()
+    }
+    
+    private func setupEngineLifecycleObservers() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleAppBackground),
+            name: UIApplication.didEnterBackgroundNotification,
+            object: nil
+        )
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleAppForeground),
+            name: UIApplication.willEnterForegroundNotification,
+            object: nil
+        )
     }
     
     private func prepareEngine() {
-        guard CHHapticEngine.capabilitiesForHardware().supportsHaptics else { return }
+        guard CHHapticEngine.capabilitiesForHardware().supportsHaptics else {
+            isEngineReady = false
+            return
+        }
         
         do {
             engine = try CHHapticEngine()
             
-            engine?.stoppedHandler = { reason in
+            engine?.stoppedHandler = { [weak self] reason in
                 print("Haptic engine stopped: \(reason)")
                 
+                
                 if reason != .applicationSuspended {
-                    do {
-                        try self.engine?.start()
-                    } catch {
-                        print("Failed to restart engine: \(error.localizedDescription)")
-                    }
+                    self?.isEngineReady = false
+                    print("Attempting to restart engine after non-suspension stop...")
+                    try? self?.engine?.start()
                 }
             }
             
+            engine?.resetHandler = { [weak self] in
+                print("Haptic engine reset. Attempting to restart...")
+                self?.isEngineReady = false
+                try? self?.engine?.start()
+            }
+            
             try engine?.start()
+            isEngineReady = true
+            print("Haptic Engine Started/Restarted successfully.")
             
         } catch {
             print("Haptic engine failed: \(error.localizedDescription)")
+            isEngineReady = false
         }
     }
     
+    @objc private func handleAppBackground() {
+        
+        engine?.stop { error in
+            if let error = error {
+                print("Haptic Engine Stop Error during background transition: \(error.localizedDescription)")
+            }
+        }
+        isEngineReady = false
+    }
+    
+    @objc private func handleAppForeground() {
+        
+        prepareEngine()
+    }
     
     func playSessionEndHaptic() {
         playContinuous(intensity: 1.0, sharpness: 0.8, duration: 0.3)
@@ -93,10 +137,29 @@ class HapticManager {
             parameters: [mediumIntensity, mediumSharpness],
             relativeTime: 0.12   // ~120ms later (subtle warning)
         )
-
+        
         play(events: [event1, event2])
     }
-
+    
+    func playSuccessHaptic() {
+        // A quick, light, clear double-tap to signify successful completion
+        let tap1 = CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.3)
+        let sharp1 = CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.6)
+        
+        let tap2 = CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.6)
+        let sharp2 = CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.8)
+        
+        let event1 = CHHapticEvent(eventType: .hapticTransient,
+                                   parameters: [tap1, sharp1],
+                                   relativeTime: 0)
+        
+        let event2 = CHHapticEvent(eventType: .hapticTransient,
+                                   parameters: [tap2, sharp2],
+                                   relativeTime: 0.1) // 100ms gap
+        
+        play(events: [event1, event2])
+    }
+    
     
     private func playTransient(intensity: Float, sharpness: Float) {
         let event = CHHapticEvent(

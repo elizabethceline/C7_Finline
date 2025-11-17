@@ -5,6 +5,7 @@ struct FocusModeView: View {
     @EnvironmentObject var viewModel: FocusSessionViewModel
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.colorScheme) var colorScheme
     
     var onGiveUp: (GoalTask) -> Void
     var onSessionEnd: () -> Void
@@ -88,7 +89,7 @@ struct FocusModeView: View {
         }
         .alert("End Focus Session?", isPresented: $isShowingEndSessionAlert) {
             Button("I'm Done", role: .none) {
-                HapticManager.shared.playConfirmationHaptic()
+                HapticManager.shared.playSuccessHaptic()
                 Task {
                     resultVM = viewModel.createResult(using: modelContext, didComplete: true)
                     viewModel.finishEarly()
@@ -171,7 +172,20 @@ struct FocusModeView: View {
     // MARK: - Subviews split for compiler friendliness
     
     private var backgroundView: some View {
-        Image(viewModel.isResting ? "restBackground" : "focusBackground")
+        //        Image(viewModel.isResting ? "restBackground" : "focusBackground")
+        //            .resizable()
+        //            .frame(height: 910)
+        let focusImageName: String = {
+            guard !viewModel.isResting else {
+                return "focusBackground"
+            }
+            
+            return colorScheme == .dark ? "focusBackgroundDark" : "focusBackground"
+        }()
+        
+        let imageName = viewModel.isResting ? "restBackground" : focusImageName
+        
+        return Image(imageName)
             .resizable()
             .frame(height: 910)
     }
