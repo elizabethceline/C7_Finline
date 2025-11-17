@@ -63,7 +63,7 @@ struct GenerateTaskWithAIView: View {
                                 }
                             }
                     }
-                    .popoverTip(AIPromptTip(), arrowEdge: .top)
+                    .popoverTip(AIPromptTip(), arrowEdge: .bottom)
                 }
             }
             .scrollContentBackground(.hidden)

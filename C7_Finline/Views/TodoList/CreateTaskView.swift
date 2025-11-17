@@ -27,7 +27,7 @@ struct CreateTaskView: View {
     @State private var taskToDelete: AIGoalTask?
 
     @State private var animate: Bool = false
-    
+
     @StateObject private var taskVM = TaskViewModel()
     @StateObject private var goalVM = GoalViewModel()
     @Environment(\.modelContext) private var modelContext
@@ -67,13 +67,23 @@ struct CreateTaskView: View {
                                 .frame(width: 40, height: 40)
                                 .padding(.bottom, 8)
                                 .offset(y: animate ? -10 : 10)
-                                .animation(.easeInOut(duration: 0.6).repeatForever(autoreverses: true), value: animate)
+                                .animation(
+                                    .easeInOut(duration: 0.6).repeatForever(
+                                        autoreverses: true
+                                    ),
+                                    value: animate
+                                )
 
                             Text("Generating AI tasks...")
                                 .font(.subheadline)
                                 .foregroundColor(.black)
                                 .offset(y: animate ? -10 : 10)
-                                .animation(.easeInOut(duration: 0.6).repeatForever(autoreverses: true), value: animate)
+                                .animation(
+                                    .easeInOut(duration: 0.6).repeatForever(
+                                        autoreverses: true
+                                    ),
+                                    value: animate
+                                )
                         }
                         .padding(.vertical)
                         .listRowBackground(Color.clear)
@@ -84,8 +94,6 @@ struct CreateTaskView: View {
                     }
                 }
 
-
-                
                 if let error = taskVM.errorMessage {
                     Section {
                         Text("Error: \(error)")
@@ -257,6 +265,19 @@ struct CreateTaskView: View {
                             mainVM.appendNewGoal(goal)
                             mainVM.appendNewTasks(goal.tasks)
                             dismissParent?()
+
+                            // Navigate to the first task's date after dismissal
+                            DispatchQueue.main.asyncAfter(
+                                deadline: .now() + 0.3
+                            ) {
+                                if let firstTask = goal.tasks.sorted(by: {
+                                    $0.workingTime < $1.workingTime
+                                }).first {
+                                    let firstTaskDate = Calendar.current
+                                        .startOfDay(for: firstTask.workingTime)
+                                    mainVM.updateSelectedDate(firstTaskDate)
+                                }
+                            }
                         }
                     }
                 } label: {

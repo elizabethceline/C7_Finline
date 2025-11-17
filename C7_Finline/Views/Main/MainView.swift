@@ -83,6 +83,11 @@ struct MainView: View {
             .onChange(of: tasks) { _, newTasks in
                 viewModel.tasks = newTasks
             }
+            .onChange(of: viewModel.selectedDate) { _, newDate in
+                if newDate != selectedDate {
+                    jumpToDate(newDate)
+                }
+            }
             .toolbar {
                 ToolbarItemGroup(placement: .bottomBar) {
                     HStack(spacing: 12) {
