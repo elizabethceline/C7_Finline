@@ -227,6 +227,8 @@ class ProfileViewModel: ObservableObject {
 
             updatePublishedProfile(userProfile)
 
+            try modelContext.save()
+
             Task {
                 do {
                     try await userProfileManager.saveProfile(userProfile)
