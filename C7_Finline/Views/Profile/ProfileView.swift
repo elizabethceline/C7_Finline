@@ -11,20 +11,32 @@ import SwiftUI
 import TipKit
 
 struct ProfileView: View {
-    @ObservedObject var viewModel: ProfileViewModel
+    @StateObject var viewModel: ProfileViewModel
     @Environment(\.dismiss) var dismiss
     @Environment(\.modelContext) private var modelContext
+
+    @Query private var profiles: [UserProfile]
+    @Query private var allGoals: [Goal]
+    @Query private var allTasks: [GoalTask]
+    @Query private var purchasedItems: [PurchasedItem]
+
     @FocusState private var isNameFieldFocused: Bool
     @State private var showAlert = false
     @State private var showShopModal = false
-
-    @State private var navigateToFocus = false
     @State private var userRecordID: CKRecord.ID?
 
     @StateObject private var shopVM: ShopViewModel
 
-    init(viewModel: ProfileViewModel) {
-        self.viewModel = viewModel
+    private var currentProfile: UserProfile? { profiles.first }
+    private var completedTasksCount: Int {
+        allTasks.filter { $0.isCompleted }.count
+    }
+    private var selectedShopItem: ShopItem? {
+        purchasedItems.first(where: { $0.isSelected })?.shopItem
+    }
+
+    init(viewModel: ProfileViewModel = ProfileViewModel()) {
+        _viewModel = StateObject(wrappedValue: viewModel)
         _shopVM = StateObject(
             wrappedValue: ShopViewModel(
                 userProfileManager: viewModel.userProfileManagerInstance,
@@ -40,16 +52,12 @@ struct ProfileView: View {
 
                     ZStack(alignment: .bottomTrailing) {
                         let imageToShow =
-                            shopVM.selectedImage
-                            ?? viewModel.shopVM?.purchasedItems.first(where: {
-                                $0.isSelected
-                            })?.shopItem?.image
-                            ?? Image("finley")
+                            selectedShopItem?.image ?? Image("finley")
 
                         imageToShow
                             .resizable()
                             .aspectRatio(contentMode: .fit)
-                            .frame(width: 180)
+                            .frame(height: 180)
                             .clipShape(RoundedRectangle(cornerRadius: 20))
 
                         Button {
@@ -66,7 +74,7 @@ struct ProfileView: View {
                         .popoverTip(ShopButtonTip(), arrowEdge: .bottom)
                         .sheet(isPresented: $showShopModal) {
                             if let id = userRecordID {
-                                ShopView(viewModel: shopVM, userRecordID: id)
+                                ShopView(userRecordID: id)
                                     .presentationDetents([.height(600)])
                             } else {
                                 ProgressView("Loading...")
@@ -94,8 +102,10 @@ struct ProfileView: View {
                                 }
                             } else {
                                 Text(
-                                    viewModel.username.isEmpty
-                                        ? "Your Name" : viewModel.username
+                                    currentProfile?.username.isEmpty ?? true
+                                        ? "Your Name"
+                                        : currentProfile?.username
+                                            ?? "Your Name"
                                 )
                                 .font(.headline)
                             }
@@ -135,11 +145,11 @@ struct ProfileView: View {
                     HStack(spacing: 16) {
                         StatCard(
                             title: "Task Complete",
-                            value: "\(viewModel.completedTasks)"
+                            value: "\(completedTasksCount)"
                         )
                         StatCard(
                             title: "Points Earn",
-                            value: "\(viewModel.points)"
+                            value: "\(currentProfile?.points ?? 0)"
                         )
                     }
                     .padding(.horizontal)
@@ -150,7 +160,7 @@ struct ProfileView: View {
                         Spacer()
                         Text(
                             TimeFormatter.format(
-                                seconds: viewModel.bestFocusTime
+                                seconds: currentProfile?.bestFocusTime ?? 0
                             )
                         )
                         .font(.title3)
@@ -191,28 +201,28 @@ struct ProfileView: View {
                 }
                 .onAppear {
                     viewModel.setModelContext(modelContext)
-                    shopVM.setModelContext(modelContext)
+
+                    if let profile = currentProfile {
+                        viewModel.updateFromProfile(profile)
+                    }
+
                     Task {
-                        // Ambil record ID hanya sekali
                         if userRecordID == nil {
                             userRecordID = await viewModel.userRecordID
                         }
-
-                        // Setelah ID tersedia, fetch profil dan item shop
-                        if let id = userRecordID {
-                            await shopVM.fetchUserProfile(userRecordID: id)
-                        }
                     }
                 }
-
+                .onChange(of: currentProfile) { _, newProfile in
+                    // Update viewModel when profile changes
+                    if let profile = newProfile {
+                        viewModel.updateFromProfile(profile)
+                    }
+                }
                 .padding(.vertical)
             }
             .background(Color(uiColor: .systemGray6).ignoresSafeArea())
             .refreshable {
                 viewModel.fetchUserProfile()
-                if let id = await viewModel.userRecordID {
-                    await shopVM.fetchUserProfile(userRecordID: id)
-                }
             }
             .navigationTitle("Profile")
             .navigationBarTitleDisplayMode(.inline)
@@ -253,26 +263,6 @@ struct StatCard: View {
             RoundedRectangle(cornerRadius: 16)
                 .fill(Color(uiColor: .systemBackground))
         )
-    }
-}
-
-struct AsyncShopSheet: View {
-    @ObservedObject var viewModel: ProfileViewModel
-    @Environment(\.modelContext) private var modelContext
-
-    @State private var userRecordID: CKRecord.ID? = nil
-
-    var body: some View {
-        Group {
-            if let shopVM = viewModel.shopVM,
-                let id = userRecordID
-            {
-                ShopView(viewModel: shopVM, userRecordID: id)
-            }
-        }
-        .task {
-            self.userRecordID = await viewModel.userRecordID
-        }
     }
 }
 
