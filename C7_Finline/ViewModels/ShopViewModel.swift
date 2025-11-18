@@ -19,6 +19,7 @@ class ShopViewModel: ObservableObject {
     @Published var selectedImage: Image? = nil
     @Published var isLoading: Bool = false
     @Published var alertMessage: String = ""
+    @Published var isPurchasing: Bool = false
 
     var onSelectedItemChanged: ((ShopItem?) -> Void)?
 
@@ -204,6 +205,8 @@ class ShopViewModel: ObservableObject {
     }
 
     func buyItem(_ item: ShopItem) async {
+        guard !isPurchasing else { return }
+        
         guard let profile = userProfile, let context = modelContext else {
             return
         }
@@ -217,6 +220,10 @@ class ShopViewModel: ObservableObject {
             alertMessage = "Not enough points to buy \(item.displayName)."
             return
         }
+        
+        isPurchasing = true
+        
+        defer { isPurchasing = false }
 
         profile.points -= item.price
         coins = profile.points

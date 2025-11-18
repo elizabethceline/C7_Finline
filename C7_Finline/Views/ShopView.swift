@@ -60,6 +60,9 @@ struct ShopView: View {
                                 price: item.price,
                                 onTap: { handleTap(for: item) }
                             )
+                            .disabled(
+                                viewModel.isPurchasing || viewModel.isLoading
+                            )
                         }
                     }
                     .padding(.horizontal)
@@ -129,6 +132,8 @@ struct ShopView: View {
     }
 
     private func handleTap(for item: ShopItem) {
+        if viewModel.isPurchasing { return }
+
         Task {
             if let purchased = viewModel.purchasedItems.first(where: {
                 $0.itemName == item.rawValue
