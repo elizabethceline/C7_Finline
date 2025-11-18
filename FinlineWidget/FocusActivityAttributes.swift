@@ -14,6 +14,7 @@ struct FocusActivityAttributes: ActivityAttributes {
         var restRemainingTime: TimeInterval?   // waktu istirahat opsional
         var taskTitle: String
         var isResting: Bool
+        var endTime: Date?
     }
 
 

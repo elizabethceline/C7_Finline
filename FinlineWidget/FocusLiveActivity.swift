@@ -23,20 +23,56 @@ struct FocusLiveActivity: Widget {
                                 .foregroundColor(.gray)
                                 .offset(x:-5)
                             
-                            
-                            Text(TimeFormatter.format(seconds: (context.state.isResting ? context.state.restRemainingTime : context.state.remainingTime) ?? 0))
-                                .font(.title2)
-                                .foregroundColor(.gray)
+                            if let endTime = context.state.endTime {
+                                Text(endTime, style: .timer)
+                                    .font(.title2)
+                                    .foregroundColor(.gray)
+                                    .monospacedDigit()
+//                                Text(formattedRemainingTime(from: endTime))
+//                                    .font(.title2)
+//                                    .monospacedDigit()
+//                                    .foregroundColor(.gray)
+                                    
+
+                            } else {
+                                Text(TimeFormatter.format(seconds: context.state.restRemainingTime ?? 0))
+                                    .font(.title2)
+                                    .foregroundColor(.gray)
+                            }
+//                            Text(TimeFormatter.format(seconds: (context.state.isResting ? context.state.restRemainingTime : context.state.remainingTime) ?? 0))
+//                                .font(.title2)
+//                                .foregroundColor(.gray)
                         }
                         .padding(.bottom,13)
                     }else{
                         VStack(alignment: .leading){
-                            Text(TimeFormatter.format(seconds: (context.state.isResting ? context.state.restRemainingTime : context.state.remainingTime) ?? 0))
-                                .font(.system(size: 48))
-                                .fontWeight(.bold)
-                                .monospacedDigit()
-                                .foregroundColor(.gray)
-                                .offset(x:-5)
+//                            Text(TimeFormatter.format(seconds: (context.state.isResting ? context.state.restRemainingTime : context.state.remainingTime) ?? 0))
+//                                .font(.system(size: 48))
+//                                .fontWeight(.bold)
+//                                .monospacedDigit()
+//                                .foregroundColor(.gray)
+//                                .offset(x:-5)
+//                                .minimumScaleFactor(0.5)
+//                                .layoutPriority(10)
+                            if let endTime = context.state.endTime {
+                                Text(endTime, style: .timer)
+                                    .font(.system(size: 48))
+                                    .fontWeight(.bold)
+                                    .monospacedDigit()
+                                    .foregroundColor(.gray)
+                                    .offset(x:-5)
+                                    .minimumScaleFactor(0.5)
+                                    .layoutPriority(10)
+                            } else {
+                                Text(TimeFormatter.format(seconds: context.state.remainingTime))
+                                    .font(.system(size: 48))
+                                    .fontWeight(.bold)
+                                    .monospacedDigit()
+                                    .foregroundColor(.gray)
+                                    .offset(x:-5)
+                                    .minimumScaleFactor(0.5)
+                                    .layoutPriority(10)
+                            }
                             
                             Text(context.state.taskTitle)
                                 .font(.title2)
@@ -117,17 +153,43 @@ struct FocusLiveActivity: Widget {
                                         .fontWeight(.bold)
                                         .foregroundColor(.gray)
                                     
-                                    Text(TimeFormatter.format(seconds: (context.state.isResting ? context.state.restRemainingTime : context.state.remainingTime) ?? 0))
-                                        .font(.subheadline)
-                                        .foregroundColor(.gray)
-                                        .monospacedDigit()
+//                                    Text(TimeFormatter.format(seconds: (context.state.isResting ? context.state.restRemainingTime : context.state.remainingTime) ?? 0))
+//                                        .font(.subheadline)
+//                                        .foregroundColor(.gray)
+//                                        .monospacedDigit()
+                                    if let endTime = context.state.endTime {
+                                        Text(endTime, style: .timer)
+                                            .font(.subheadline)
+                                            .foregroundColor(.gray)
+                                            .monospacedDigit()
+                                    } else {
+                                        Text(TimeFormatter.format(seconds: context.state.restRemainingTime ?? 0))
+                                            .font(.subheadline)
+                                            .foregroundColor(.gray)
+                                            .monospacedDigit()
+                                    }
                                 }else{
-                                    Text(TimeFormatter.format(seconds: (context.state.isResting ? context.state.restRemainingTime : context.state.remainingTime) ?? 0))
-                                        .font(.system(size: 35))
-                                        .fontWeight(.bold)
-                                        .monospacedDigit()
-                                        .foregroundColor(.gray)
-                                        .offset(x:-5)
+//                                    Text(TimeFormatter.format(seconds: (context.state.isResting ? context.state.restRemainingTime : context.state.remainingTime) ?? 0))
+//                                        .font(.system(size: 35))
+//                                        .fontWeight(.bold)
+//                                        .monospacedDigit()
+//                                        .foregroundColor(.gray)
+//                                        .offset(x:-5)
+                                    if let endTime = context.state.endTime {
+                                        Text(endTime, style: .timer)
+                                            .font(.system(size: 35))
+                                            .fontWeight(.bold)
+                                            .monospacedDigit()
+                                            .foregroundColor(.gray)
+                                            .offset(x:-5)
+                                    } else {
+                                        Text(TimeFormatter.format(seconds: context.state.remainingTime))
+                                            .font(.system(size: 35))
+                                            .fontWeight(.bold)
+                                            .monospacedDigit()
+                                            .foregroundColor(.gray)
+                                            .offset(x:-5)
+                                    }
                                     
                                     
                                     
@@ -172,8 +234,16 @@ struct FocusLiveActivity: Widget {
                         .scaledToFit()
                 }
             } compactTrailing: {
-                Text(TimeFormatter.format(seconds: (context.state.isResting ? context.state.restRemainingTime : context.state.remainingTime) ?? 0))
-                    .foregroundColor(Color(red: 161/255, green: 210/255, blue: 241/255))
+//                Text(TimeFormatter.format(seconds: (context.state.isResting ? context.state.restRemainingTime : context.state.remainingTime) ?? 0))
+//                    .foregroundColor(Color(red: 161/255, green: 210/255, blue: 241/255))
+                if let endTime = context.state.endTime {
+                    Text(endTime, style: .timer)
+                        .foregroundColor(Color(red: 161/255, green: 210/255, blue: 241/255))
+                        .monospacedDigit()
+                } else {
+                    Text(TimeFormatter.format(seconds: context.state.isResting ? (context.state.restRemainingTime ?? 0) : context.state.remainingTime))
+                        .foregroundColor(Color(red: 161/255, green: 210/255, blue: 241/255))
+                }
             } minimal: {
                 if context.state.isResting {
                     Image("compactResting")
@@ -186,10 +256,16 @@ struct FocusLiveActivity: Widget {
                         .scaledToFit()
                 }
             }
-            .widgetURL(URL(string: "finline://endSession"))
+            .widgetURL(URL(string: "finline://"))
             .keylineTint(Color.red)
         }
     }
+    
+    private func formattedRemainingTime(from endTime: Date) -> String {
+        let remaining = max(0, endTime.timeIntervalSince(Date()))
+        return TimeFormatter.format(seconds: remaining)
+    }
+
     
     private func progress(for context: ActivityViewContext<FocusActivityAttributes>) -> Double {
         let remaining = max(context.state.remainingTime, 0)
