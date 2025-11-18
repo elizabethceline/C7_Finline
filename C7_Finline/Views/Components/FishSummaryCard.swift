@@ -37,7 +37,7 @@ struct FishSummaryCard: View {
                             Image(fish.imageName)
                                 .resizable()
                                 .scaledToFit()
-                                .frame(width: 32, height: 32)
+                                .frame(width: 60, height: 40)
                         }
                         Text(name)
                             .font(.title3)

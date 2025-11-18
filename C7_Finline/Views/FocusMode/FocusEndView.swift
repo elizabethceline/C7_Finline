@@ -1,45 +1,61 @@
 import SwiftData
 import SwiftUI
+import ConfettiSwiftUI
 
 struct FocusEndView: View {
     @ObservedObject var viewModel: FocusResultViewModel
     var onDismiss: () -> Void
-
+    @State private var confettiTrigger = 0
+    
     var body: some View {
-        VStack(spacing: 24) {
-            //Spacer()
-            // .frame(height: 40)
-
-            Text("Focusing Session\nComplete")
-                .font(.largeTitle.bold())
-                //.foregroundColor(.white)
-                .multilineTextAlignment(.center)
-                .padding(.top, 40)
-
-            if viewModel.fishCaught.isEmpty {
-                Text(
-                    "No fish caught this time! Try focusing a bit longer next round."
-                )
-                //.foregroundColor(.white.opacity(0.7))
-                .padding()
-                .background(Color.white.opacity(0.8))
-                .clipShape(RoundedRectangle(cornerRadius: 20))
-            } else {
-                FishSummaryCard(viewModel: viewModel)
-            }
-
-            Spacer()
-
-            FocusTimerCard(
-                mode: .focus,
-                timeText: "+\(viewModel.grandTotal.formatted(.number)) pts",
-                primaryLabel: "Back to Main Menu",
-                onPrimaryTap: {
-                    onDismiss()
-                    StartFocusTip.hasEndedFocus = true
+        ZStack {
+            VStack(spacing: 24) {
+                Text("Focusing Session\nComplete")
+                    .font(.largeTitle.bold())
+                    .multilineTextAlignment(.center)
+                    .padding(.top, 40)
+                
+                if viewModel.fishCaught.isEmpty {
+                    Text("No fish caught this time! Try focusing a bit longer next round.")
+                        .padding()
+                        .background(Color.white.opacity(0.8))
+                        .clipShape(RoundedRectangle(cornerRadius: 20))
+                } else {
+                    FishSummaryCard(viewModel: viewModel)
                 }
-            )
-            .padding(.bottom, 40)
+                
+                Spacer()
+                
+                FocusTimerCard(
+                    mode: .focus,
+                    timeText: "+\(viewModel.grandTotal.formatted(.number)) pts",
+                    primaryLabel: "Back to Main Menu",
+                    onPrimaryTap: {
+                        onDismiss()
+                        StartFocusTip.hasEndedFocus = true
+                    }
+                )
+                .padding(.bottom, 40)
+            }
+        }
+        .confettiCannon(
+            trigger: $confettiTrigger,
+            num: 40,
+            colors: [.yellow, .green, .blue, .pink],
+            confettiSize: 12,
+            rainHeight: 900,
+            fadesOut: true,
+            radius: 600,
+            repetitions: 3,
+            repetitionInterval: 0.1,
+            hapticFeedback: true
+        )
+        .onAppear {
+            if !viewModel.fishCaught.isEmpty {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                    confettiTrigger += 1
+                }
+            }
         }
     }
 }
@@ -55,20 +71,20 @@ struct FocusEndView: View {
         Fish.sample(of: .superRare),
         Fish.sample(of: .legendary),
     ]
-
+    
     let mockResult = FocusSessionResult(
         caughtFish: mockFish,
         duration: 1800,
         task: nil
     )
-
+    
     let mockVM = FocusResultViewModel(
         context: nil,
         networkMonitor: NetworkMonitor()
     )
     mockVM.currentResult = mockResult
     mockVM.bonusPoints = 20
-
+    
     return ZStack {
         Color.gray
             .ignoresSafeArea()
@@ -85,14 +101,14 @@ struct FocusEndView: View {
         duration: 1800,
         task: nil
     )
-
+    
     let mockVM = FocusResultViewModel(
         context: nil,
         networkMonitor: NetworkMonitor()
     )
     mockVM.currentResult = emptyResult
     mockVM.bonusPoints = 0  // optional, just to make it clean
-
+    
     return ZStack {
         Color.gray
             .ignoresSafeArea()

@@ -1,0 +1,15 @@
+{
+  "originHash" : "2243c0f9ef1f23d431c998884f7b0a4d5204ad08092b4e8098ce0053cc284b0a",
+  "pins" : [
+    {
+      "identity" : "confettiswiftui?tab=readme-ov-file",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/simibac/ConfettiSwiftUI?tab=readme-ov-file",
+      "state" : {
+        "revision" : "79666d42b882bf7921b1941fa7c636d681d77980",
+        "version" : "2.0.3"
+      }
+    }
+  ],
+  "version" : 3
+}
