@@ -33,6 +33,12 @@ struct FishSummaryCard: View {
                     let totalPoints =  fishes.reduce(0) { $0 + $1.points }
                     HStack(spacing: 16) {
                         // Fish name
+                        if let fish = fishes.first {
+                            Image(fish.imageName)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 32, height: 32)
+                        }
                         Text(name)
                             .font(.title3)
                             .foregroundColor(.black)

@@ -52,6 +52,7 @@ struct FocusEndView: View {
         Fish.sample(of: .uncommon),
         Fish.sample(of: .uncommon),
         Fish.sample(of: .rare),
+        Fish.sample(of: .superRare),
         Fish.sample(of: .legendary),
     ]
 
