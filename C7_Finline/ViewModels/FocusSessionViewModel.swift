@@ -71,6 +71,8 @@ final class FocusSessionViewModel: ObservableObject {
     var displayRemainingTime: TimeInterval {
         isResting ? restRemainingTime : remainingTime
     }
+    private var lastLiveActivityUpdate: Date?
+    private let liveActivityUpdateInterval: TimeInterval = 60.0
 
     
     init(
@@ -136,6 +138,8 @@ final class FocusSessionViewModel: ObservableObject {
         
         nudgesTriggered.removeAll()
         isShowingNudgeAlert = false
+        
+        lastLiveActivityUpdate = nil
         
         if authManager.isEnabled && authManager.isAuthorized {
             authManager.applyShield()
@@ -219,6 +223,7 @@ final class FocusSessionViewModel: ObservableObject {
         
         self.remainingTime += extraTime
         self.sessionDuration += extraTime
+        self.endTime = Date().addingTimeInterval(self.remainingTime)
         self.shouldReturnToStart = false
         self.isFocusing = true
         
@@ -243,6 +248,7 @@ final class FocusSessionViewModel: ObservableObject {
         }
         
         // Update Live Activity
+        lastLiveActivityUpdate = nil
         await updateLiveActivity()
     }
     
@@ -262,12 +268,20 @@ final class FocusSessionViewModel: ObservableObject {
                     self.remainingTime = remaining
                     self.checkNudgeAlerts()
                     
+                    let now = Date()
+                    if self.lastLiveActivityUpdate == nil ||
+                        now.timeIntervalSince(self.lastLiveActivityUpdate!) >= self.liveActivityUpdateInterval {
+                        await self.updateLiveActivity()
+                        self.lastLiveActivityUpdate = now
+                    }
+                    
                     // Update Live Activity setiap detik
-                    await self.updateLiveActivity()
+//                    await self.updateLiveActivity()
                     
                 } else {
                     self.remainingTime = 0
                     self.didTimeRunOut = true
+                    await self.updateLiveActivity()
                 }
             }
         }
@@ -285,7 +299,7 @@ final class FocusSessionViewModel: ObservableObject {
         
         pauseSession()
         startRestTimer()
-        
+        lastLiveActivityUpdate = nil
         Task { await updateLiveActivity() }
     }
     
@@ -296,7 +310,7 @@ final class FocusSessionViewModel: ObservableObject {
         isResting = false
         stopRestTimer()
         resumeSession()
-        
+        lastLiveActivityUpdate = nil
         Task { await updateLiveActivity() }
     }
     
@@ -316,6 +330,7 @@ final class FocusSessionViewModel: ObservableObject {
         
         isFocusing = true
         lastTickDate = Date()
+        endTime = Date().addingTimeInterval(remainingTime)
         startTimer(isResuming: true)
         isResting = false
         
@@ -334,9 +349,16 @@ final class FocusSessionViewModel: ObservableObject {
                 guard let self else { return }
                 if self.restRemainingTime > 0 {
                     self.restRemainingTime -= 1
-                    await self.updateLiveActivity()
+//                    await self.updateLiveActivity()
+                    let now = Date()
+                    if self.lastLiveActivityUpdate == nil ||
+                        now.timeIntervalSince(self.lastLiveActivityUpdate!) >= self.liveActivityUpdateInterval {
+                        await self.updateLiveActivity()
+                        self.lastLiveActivityUpdate = now
+                    }
                 } else {
                     self.endRest()
+                    await self.updateLiveActivity()
                 }
             }
         }
@@ -460,7 +482,8 @@ final class FocusSessionViewModel: ObservableObject {
             state: FocusActivityAttributes.ContentState(
                 remainingTime: remainingTime,
                 taskTitle: taskTitle,
-                isResting: false
+                isResting: false,
+                endTime: endTime
             ),
             staleDate: nil
         )
@@ -485,7 +508,8 @@ final class FocusSessionViewModel: ObservableObject {
             remainingTime: remainingTime,
             restRemainingTime: restRemainingTime,
             taskTitle: taskTitle,
-            isResting: isResting
+            isResting: isResting,
+            endTime: isResting ? Date().addingTimeInterval(restRemainingTime) : endTime
         )
         
         await activity.update(using: updatedState)
