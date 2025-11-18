@@ -17,6 +17,7 @@ struct FocusEndView: View {
                 
                 if viewModel.fishCaught.isEmpty {
                     Text("No fish caught this time! Try focusing a bit longer next round.")
+                        .foregroundColor(.black)
                         .padding()
                         .background(Color.white.opacity(0.8))
                         .clipShape(RoundedRectangle(cornerRadius: 20))

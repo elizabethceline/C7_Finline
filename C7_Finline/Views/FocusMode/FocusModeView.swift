@@ -32,6 +32,9 @@ struct FocusModeView: View {
         ZStack {
             backgroundView
             
+            SnowView()
+                   .allowsHitTesting(false)
+            
             if viewModel.isResting {
                 Color.blue.opacity(0.3)
                     .frame(height: 910)
