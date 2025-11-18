@@ -6,6 +6,7 @@
 //
 
 import CloudKit
+import Combine
 import SwiftData
 import SwiftUI
 
@@ -13,8 +14,34 @@ struct ShopView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
 
-    @ObservedObject var viewModel: ShopViewModel
+    @Query private var profiles: [UserProfile]
+    @Query private var purchasedItems: [PurchasedItem]
+
+    @StateObject private var viewModel: ShopViewModel
+
     let userRecordID: CKRecord.ID
+
+    private var currentProfile: UserProfile? { profiles.first }
+    private var coins: Int { currentProfile?.points ?? 0 }
+    private var selectedItem: ShopItem? {
+        purchasedItems.first(where: { $0.isSelected })?.shopItem
+    }
+
+    init(userRecordID: CKRecord.ID) {
+        self.userRecordID = userRecordID
+
+        let networkMonitor = NetworkMonitor()
+        let userProfileManager = UserProfileManager(
+            networkMonitor: networkMonitor
+        )
+
+        _viewModel = StateObject(
+            wrappedValue: ShopViewModel(
+                userProfileManager: userProfileManager,
+                networkMonitor: networkMonitor
+            )
+        )
+    }
 
     var body: some View {
         NavigationStack {
@@ -72,8 +99,13 @@ struct ShopView: View {
             }
             .task {
                 viewModel.setModelContext(modelContext)
-                viewModel.loadLocalData()
                 await viewModel.fetchUserProfile(userRecordID: userRecordID)
+            }
+            .onChange(of: purchasedItems) { _, _ in
+                viewModel.objectWillChange.send()
+            }
+            .onChange(of: currentProfile?.points) { _, _ in
+                viewModel.objectWillChange.send()
             }
             .navigationTitle("Shop")
             .navigationBarTitleDisplayMode(.inline)
@@ -103,7 +135,7 @@ struct ShopView: View {
         HStack {
             Spacer()
             HStack(spacing: 6) {
-                Text("\(viewModel.coins)")
+                Text("\(coins)")
                     .font(.system(size: 18, weight: .bold))
                     .foregroundStyle(Color.white)
                 Image(systemName: "bitcoinsign.circle.fill")
@@ -118,7 +150,7 @@ struct ShopView: View {
     }
 
     private func status(for item: ShopItem) -> ShopCardStatus {
-        if let purchased = viewModel.purchasedItems.first(where: {
+        if let purchased = purchasedItems.first(where: {
             $0.itemName == item.rawValue
         }) {
             return purchased.isSelected ? .selected : .choose
@@ -135,13 +167,15 @@ struct ShopView: View {
         if viewModel.isPurchasing { return }
 
         Task {
-            if let purchased = viewModel.purchasedItems.first(where: {
+            if let purchased = purchasedItems.first(where: {
                 $0.itemName == item.rawValue
             }) {
                 await viewModel.selectPurchasedItem(purchased)
             } else if item.isDefault {
                 await viewModel.ensureDefaultCharacterExists()
-                if let purchased = viewModel.purchasedItems.first(where: {
+
+                try? await Task.sleep(nanoseconds: 100_000_000)
+                if let purchased = purchasedItems.first(where: {
                     $0.itemName == item.rawValue
                 }) {
                     await viewModel.selectPurchasedItem(purchased)

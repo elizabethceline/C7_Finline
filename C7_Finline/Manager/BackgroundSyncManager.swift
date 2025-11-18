@@ -286,6 +286,8 @@ class BackgroundSyncManager: NSObject, ObservableObject {
             // 4. Save all changes
             try context.save()
 
+            try? await Task.sleep(nanoseconds: 100_000_000)
+
             await MainActor.run {
                 lastSyncDate = Date()
                 saveLastSyncDate()
@@ -295,12 +297,17 @@ class BackgroundSyncManager: NSObject, ObservableObject {
                     object: nil,
                     userInfo: ["modelContext": context]
                 )
-                
-                NotificationCenter.default.post(name: Notification.Name("ProfileDataDidSync"), object: nil)
-                NotificationCenter.default.post(name: Notification.Name("ShopDataDidSync"), object: nil)
+
+                NotificationCenter.default.post(
+                    name: Notification.Name("ProfileDataDidSync"),
+                    object: nil
+                )
+                NotificationCenter.default.post(
+                    name: Notification.Name("ShopDataDidSync"),
+                    object: nil
+                )
             }
 
-            // 5. Schedule notifications after sync
             await scheduleNotificationsAfterSync(modelContext: context)
 
             print("Sync completed successfully")

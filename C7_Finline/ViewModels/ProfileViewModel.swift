@@ -399,3 +399,14 @@ class ProfileViewModel: ObservableObject {
     }
 
 }
+
+extension ProfileViewModel {
+    @MainActor
+    func updateFromProfile(_ profile: UserProfile) {
+        self.userProfile = profile
+        self.username = profile.username
+        self.points = profile.points
+        self.productiveHours = profile.productiveHours
+        self.bestFocusTime = profile.bestFocusTime
+    }
+}
