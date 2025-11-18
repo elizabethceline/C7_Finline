@@ -213,22 +213,6 @@ struct ProfileView: View {
                 )
             ) { _ in
                 viewModel.fetchUserProfile()
-                Task {
-                    if let id = await viewModel.userRecordID {
-                        await shopVM.fetchUserProfile(userRecordID: id)
-                    }
-                }
-            }
-            .onReceive(
-                NotificationCenter.default.publisher(
-                    for: Notification.Name("ShopDataDidSync")
-                )
-            ) { _ in
-                Task {
-                    if let id = await viewModel.userRecordID {
-                        await shopVM.fetchUserProfile(userRecordID: id)
-                    }
-                }
             }
             .background(Color(uiColor: .systemGray6).ignoresSafeArea())
             .refreshable {

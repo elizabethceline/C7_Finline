@@ -107,11 +107,8 @@ class ProfileViewModel: ObservableObject {
         }
 
         fetchUserProfile()
-
-        if self.shopVM == nil {
-            Task {
-                await initializeShopVM()
-            }
+        Task {
+            await initializeShopVM()
         }
     }
 

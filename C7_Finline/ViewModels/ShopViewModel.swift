@@ -1,5 +1,5 @@
 //
-//  AITaskGeneratorViewModel.swift
+//  ShopViewModel.swift
 //  C7_Finline
 //
 //  Created by Richie Reuben Hermanto on 5/11/25.
@@ -38,22 +38,42 @@ class ShopViewModel: ObservableObject {
         self.shopManager = ShopManager(networkMonitor: networkMonitor)
 
         observeNetworkStatus()
+        subscribeToSyncNotifications()
     }
 
     func setModelContext(_ context: ModelContext) {
         self.modelContext = context
+        loadLocalData()
+    }
+
+    private func subscribeToSyncNotifications() {
+        NotificationCenter.default.publisher(
+            for: Notification.Name("ShopDataDidSync")
+        )
+        .receive(on: DispatchQueue.main)
+        .sink { [weak self] _ in
+            self?.loadLocalData()
+        }
+        .store(in: &cancellables)
+
+        NotificationCenter.default.publisher(
+            for: Notification.Name("ProfileDataDidSync")
+        )
+        .receive(on: DispatchQueue.main)
+        .sink { [weak self] _ in
+            self?.loadLocalData()
+        }
+        .store(in: &cancellables)
     }
 
     private func observeNetworkStatus() {
         networkMonitor.$isConnected
             .receive(on: DispatchQueue.main)
-            .debounce(for: .seconds(1), scheduler: DispatchQueue.main)  // Debounce network changes
+            .debounce(for: .seconds(1), scheduler: DispatchQueue.main)
             .sink { [weak self] isConnected in
                 guard let self = self else { return }
                 if isConnected {
                     self.syncDebounceTask?.cancel()
-
-                    // Schedule new sync with delay
                     self.syncDebounceTask = Task { @MainActor in
                         try? await Task.sleep(nanoseconds: 2_000_000_000)
                         guard !Task.isCancelled else { return }
@@ -76,7 +96,8 @@ class ShopViewModel: ObservableObject {
         }
 
         if let items = try? context.fetch(FetchDescriptor<PurchasedItem>()) {
-            self.purchasedItems = items
+            self.purchasedItems = items.sorted(by: { $0.itemName < $1.itemName }
+            )
             updateSelectedItem(from: items)
         }
     }
@@ -140,13 +161,7 @@ class ShopViewModel: ObservableObject {
                     await shopManager.syncPendingItems(modelContext: context)
                 }
 
-                // Update UI
-                self.purchasedItems = try context.fetch(
-                    FetchDescriptor<PurchasedItem>()
-                )
-                self.selectedItem = .finley
-                self.selectedImage = ShopItem.finley.image
-                self.onSelectedItemChanged?(.finley)
+                loadLocalData()
             }
         } catch {
             print("Error ensuring default character: \(error)")
@@ -181,10 +196,7 @@ class ShopViewModel: ObservableObject {
                     await shopManager.syncPendingItems(modelContext: context)
                 }
 
-                // Update UI
-                self.purchasedItems = try context.fetch(
-                    FetchDescriptor<PurchasedItem>()
-                )
+                loadLocalData()
             }
         } catch {
             print("Error ensuring default character exists: \(error)")
@@ -215,10 +227,9 @@ class ShopViewModel: ObservableObject {
                 item,
                 modelContext: context
             )
-            // Update lokal segera
-            self.purchasedItems = try await shopManager.fetchPurchasedItems(
-                modelContext: context
-            )
+
+            loadLocalData()
+
             self.selectedItem = purchased.shopItem
             self.selectedImage = purchased.shopItem?.image
             self.onSelectedItemChanged?(self.selectedItem)
@@ -240,21 +251,7 @@ class ShopViewModel: ObservableObject {
     func selectPurchasedItem(_ purchased: PurchasedItem) async {
         guard let context = modelContext else { return }
         await shopManager.selectItem(purchased, modelContext: context)
-        if let items: [PurchasedItem] = try? context.fetch(
-            FetchDescriptor<PurchasedItem>()
-        ) {
-            purchasedItems = items
-        } else {
-            purchasedItems = []
-        }
-        if let shopItem = purchased.shopItem {
-            selectedItem = shopItem
-            selectedImage = shopItem.image
-        } else {
-            selectedItem = nil
-            selectedImage = nil
-        }
-        onSelectedItemChanged?(selectedItem)
+        loadLocalData()
     }
 
     // Sync pending items (called when network reconnects)
@@ -271,19 +268,19 @@ class ShopViewModel: ObservableObject {
         // Sync pending items
         await shopManager.syncPendingItems(modelContext: context)
 
-        // Refresh local data
-        loadLocalData()
+        await MainActor.run {
+            loadLocalData()
+        }
     }
 
     private func updateSelectedItem(from items: [PurchasedItem]) {
         if let selected = items.first(where: { $0.isSelected }),
-            let shopItem = ShopItem(rawValue: selected.itemName)
-        {
+           let shopItem = ShopItem(rawValue: selected.itemName) {
             self.selectedItem = shopItem
             self.selectedImage = shopItem.image
         } else {
-            self.selectedItem = nil
-            self.selectedImage = nil
+            self.selectedItem = .finley
+            self.selectedImage = ShopItem.finley.image
         }
         self.onSelectedItemChanged?(self.selectedItem)
     }
