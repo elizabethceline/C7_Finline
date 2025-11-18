@@ -11,7 +11,7 @@ import SwiftUI
 import TipKit
 
 struct ProfileView: View {
-    @ObservedObject var viewModel: ProfileViewModel
+    @StateObject var viewModel: ProfileViewModel
     @Environment(\.dismiss) var dismiss
     @Environment(\.modelContext) private var modelContext
     @FocusState private var isNameFieldFocused: Bool
@@ -23,8 +23,8 @@ struct ProfileView: View {
 
     @StateObject private var shopVM: ShopViewModel
 
-    init(viewModel: ProfileViewModel) {
-        self.viewModel = viewModel
+    init(viewModel: ProfileViewModel = ProfileViewModel()) {
+        _viewModel = StateObject(wrappedValue: viewModel)
         _shopVM = StateObject(
             wrappedValue: ShopViewModel(
                 userProfileManager: viewModel.userProfileManagerInstance,
