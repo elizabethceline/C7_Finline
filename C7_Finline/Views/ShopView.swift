@@ -5,9 +5,9 @@
 //  Created by Elizabeth Celine Liong on 03/11/25.
 //
 
-import SwiftUI
 import CloudKit
 import SwiftData
+import SwiftUI
 
 struct ShopView: View {
     @Environment(\.dismiss) private var dismiss
@@ -20,34 +20,39 @@ struct ShopView: View {
         NavigationStack {
             VStack(spacing: 16) {
                 headerView
-//
-//                HStack(spacing: 12) {
-//                    Button {
-//                        Task { await viewModel.addCoins(100) }
-//                    } label: {
-//                        Label("Add 100 Coins", systemImage: "bitcoinsign.circle.fill")
-//                            .font(.body)
-//                            .fontWeight(.semibold)
-//                            .padding()
-//                            .frame(maxWidth: .infinity)
-//                            .background(RoundedRectangle(cornerRadius: 14).fill(Color.green.opacity(0.2)))
-//                    }
-//
-//                    Button(role: .destructive) {
-//                        Task { await viewModel.deleteAllPurchasedItems() }
-//                    } label: {
-//                        Label("Delete Purchased", systemImage: "trash")
-//                            .font(.body)
-//                            .fontWeight(.semibold)
-//                            .padding()
-//                            .frame(maxWidth: .infinity)
-//                            .background(RoundedRectangle(cornerRadius: 14).fill(Color.red.opacity(0.2)))
-//                    }
-//                }
-//                .padding(.horizontal)
+                //
+                //                HStack(spacing: 12) {
+                //                    Button {
+                //                        Task { await viewModel.addCoins(100) }
+                //                    } label: {
+                //                        Label("Add 100 Coins", systemImage: "bitcoinsign.circle.fill")
+                //                            .font(.body)
+                //                            .fontWeight(.semibold)
+                //                            .padding()
+                //                            .frame(maxWidth: .infinity)
+                //                            .background(RoundedRectangle(cornerRadius: 14).fill(Color.green.opacity(0.2)))
+                //                    }
+                //
+                //                    Button(role: .destructive) {
+                //                        Task { await viewModel.deleteAllPurchasedItems() }
+                //                    } label: {
+                //                        Label("Delete Purchased", systemImage: "trash")
+                //                            .font(.body)
+                //                            .fontWeight(.semibold)
+                //                            .padding()
+                //                            .frame(maxWidth: .infinity)
+                //                            .background(RoundedRectangle(cornerRadius: 14).fill(Color.red.opacity(0.2)))
+                //                    }
+                //                }
+                //                .padding(.horizontal)
 
                 ScrollView {
-                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 5) {
+                    LazyVGrid(
+                        columns: [
+                            GridItem(.flexible()), GridItem(.flexible()),
+                        ],
+                        spacing: 5
+                    ) {
                         ForEach(ShopItem.allCases, id: \.rawValue) { item in
                             ShopCardView(
                                 item: item,
@@ -69,6 +74,7 @@ struct ShopView: View {
             }
             .navigationTitle("Shop")
             .navigationBarTitleDisplayMode(.inline)
+            .ignoresSafeArea(edges: .bottom)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button {
@@ -79,7 +85,10 @@ struct ShopView: View {
                     }
                 }
             }
-            .alert("Notice", isPresented: .constant(!viewModel.alertMessage.isEmpty)) {
+            .alert(
+                "Notice",
+                isPresented: .constant(!viewModel.alertMessage.isEmpty)
+            ) {
                 Button("OK") { viewModel.alertMessage = "" }
             } message: {
                 Text(viewModel.alertMessage)
@@ -106,21 +115,35 @@ struct ShopView: View {
     }
 
     private func status(for item: ShopItem) -> ShopCardStatus {
-        if let purchased = viewModel.purchasedItems.first(where: { $0.itemName == item.rawValue }) {
+        if let purchased = viewModel.purchasedItems.first(where: {
+            $0.itemName == item.rawValue
+        }) {
             return purchased.isSelected ? .selected : .choose
-        } else {
-            return .price
         }
+
+        if item.isDefault {
+            return .choose
+        }
+
+        return .price
     }
 
     private func handleTap(for item: ShopItem) {
         Task {
-            if let purchased = viewModel.purchasedItems.first(where: { $0.itemName == item.rawValue }) {
+            if let purchased = viewModel.purchasedItems.first(where: {
+                $0.itemName == item.rawValue
+            }) {
                 await viewModel.selectPurchasedItem(purchased)
+            } else if item.isDefault {
+                await viewModel.ensureDefaultCharacterExists()
+                if let purchased = viewModel.purchasedItems.first(where: {
+                    $0.itemName == item.rawValue
+                }) {
+                    await viewModel.selectPurchasedItem(purchased)
+                }
             } else {
                 await viewModel.buyItem(item)
             }
         }
     }
 }
-

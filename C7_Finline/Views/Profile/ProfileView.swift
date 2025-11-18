@@ -49,7 +49,7 @@ struct ProfileView: View {
                         imageToShow
                             .resizable()
                             .aspectRatio(contentMode: .fit)
-                            .frame(width: 180)
+                            .frame(height: 180)
                             .clipShape(RoundedRectangle(cornerRadius: 20))
 
                         Button {

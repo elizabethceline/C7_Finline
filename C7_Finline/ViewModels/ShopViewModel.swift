@@ -86,6 +86,8 @@ class ShopViewModel: ObservableObject {
 
         loadLocalData()
 
+        await ensureDefaultCharacter()
+
         guard networkMonitor.isConnected else {
             print("Offline mode: Using local data")
             return
@@ -114,8 +116,88 @@ class ShopViewModel: ObservableObject {
         }
     }
 
+    private func ensureDefaultCharacter() async {
+        guard let context = modelContext else { return }
+
+        do {
+            let existingItems = try context.fetch(
+                FetchDescriptor<PurchasedItem>()
+            )
+
+            // If no items exist, add default character
+            if existingItems.isEmpty {
+                let defaultItem = PurchasedItem(
+                    id: UUID().uuidString,
+                    itemName: ShopItem.finley.rawValue,
+                    isSelected: true,
+                    needsSync: networkMonitor.isConnected
+                )
+                context.insert(defaultItem)
+                try context.save()
+
+                // Sync to cloud if online
+                if networkMonitor.isConnected {
+                    await shopManager.syncPendingItems(modelContext: context)
+                }
+
+                // Update UI
+                self.purchasedItems = try context.fetch(
+                    FetchDescriptor<PurchasedItem>()
+                )
+                self.selectedItem = .finley
+                self.selectedImage = ShopItem.finley.image
+                self.onSelectedItemChanged?(.finley)
+            }
+        } catch {
+            print("Error ensuring default character: \(error)")
+        }
+    }
+
+    func ensureDefaultCharacterExists() async {
+        guard let context = modelContext else { return }
+
+        do {
+            let existingItems = try context.fetch(
+                FetchDescriptor<PurchasedItem>()
+            )
+
+            // Check if default character exists
+            let hasDefault = existingItems.contains(where: {
+                $0.itemName == ShopItem.finley.rawValue
+            })
+
+            if !hasDefault {
+                let defaultItem = PurchasedItem(
+                    id: UUID().uuidString,
+                    itemName: ShopItem.finley.rawValue,
+                    isSelected: false,
+                    needsSync: networkMonitor.isConnected
+                )
+                context.insert(defaultItem)
+                try context.save()
+
+                // Sync to cloud if online
+                if networkMonitor.isConnected {
+                    await shopManager.syncPendingItems(modelContext: context)
+                }
+
+                // Update UI
+                self.purchasedItems = try context.fetch(
+                    FetchDescriptor<PurchasedItem>()
+                )
+            }
+        } catch {
+            print("Error ensuring default character exists: \(error)")
+        }
+    }
+
     func buyItem(_ item: ShopItem) async {
         guard let profile = userProfile, let context = modelContext else {
+            return
+        }
+
+        if item.isDefault {
+            alertMessage = "\(item.displayName) is your default character!"
             return
         }
 
@@ -217,9 +299,9 @@ class ShopViewModel: ObservableObject {
             }
             try context.save()
             purchasedItems.removeAll()
-            selectedItem = nil
-            selectedImage = nil
-            onSelectedItemChanged?(nil)
+
+            await ensureDefaultCharacter()
+
         } catch {
             alertMessage =
                 "Failed to delete items: \(error.localizedDescription)"
