@@ -30,6 +30,8 @@ class ProfileViewModel: ObservableObject {
     private var modelContext: ModelContext?
     private var cancellables = Set<AnyCancellable>()
 
+    private var lastSaveTime: Date = .distantPast
+
     private let networkMonitor: NetworkMonitor
     private let userProfileManager: UserProfileManager
     private let goalManager: GoalManager
@@ -90,10 +92,27 @@ class ProfileViewModel: ObservableObject {
         self.taskManager = TaskManager(networkMonitor: networkMonitor)
 
         observeNetworkStatus()
+        setupSyncObservers()
+    }
+
+    private func setupSyncObservers() {
+        NotificationCenter.default.publisher(
+            for: Notification.Name("ProfileDataDidSync")
+        )
+        .receive(on: DispatchQueue.main)
+        .sink { [weak self] _ in
+            print("ProfileViewModel: Background Sync Received.")
+            Task { @MainActor in
+                self?.forceLoadData()
+            }
+        }
+        .store(in: &cancellables)
     }
 
     @MainActor
     func setModelContext(_ context: ModelContext) {
+        let isFirstSetup = (self.modelContext == nil)
+
         if self.modelContext == nil {
             self.modelContext = context
         }
@@ -106,9 +125,14 @@ class ProfileViewModel: ObservableObject {
             }
         }
 
-        fetchUserProfile()
-        Task {
-            await initializeShopVM()
+        if isFirstSetup || userProfile == nil {
+            fetchUserProfile()
+        }
+
+        if isFirstSetup {
+            Task {
+                await initializeShopVM()
+            }
         }
     }
 
@@ -129,7 +153,25 @@ class ProfileViewModel: ObservableObject {
     }
 
     @MainActor
+    private func forceLoadData() {
+        performLoadData()
+    }
+
+    @MainActor
     private func loadDataFromSwiftData() {
+        let timeSinceLastSave = Date().timeIntervalSince(lastSaveTime)
+        if timeSinceLastSave < 2.0 {
+            print(
+                "Skipping disk load (Recent save detected: \(timeSinceLastSave)s ago)"
+            )
+            return
+        }
+
+        performLoadData()
+    }
+
+    @MainActor
+    private func performLoadData() {
         guard let modelContext = modelContext else { return }
 
         do {
@@ -147,6 +189,8 @@ class ProfileViewModel: ObservableObject {
             let taskDescriptor = FetchDescriptor<GoalTask>()
             let tasks = try modelContext.fetch(taskDescriptor)
             updatePublishedTasks(tasks)
+
+            print("Data loaded from SwiftData")
         } catch {
             self.error =
                 "Failed to load local data: \(error.localizedDescription)"
@@ -210,6 +254,8 @@ class ProfileViewModel: ObservableObject {
     ) {
         guard let modelContext = modelContext else { return }
 
+        self.lastSaveTime = Date()
+
         do {
             let descriptor = FetchDescriptor<UserProfile>()
             let currentProfile =
@@ -228,10 +274,12 @@ class ProfileViewModel: ObservableObject {
             updatePublishedProfile(userProfile)
 
             try modelContext.save()
+            print("Profile Saved Locally")
 
             Task {
                 do {
                     try await userProfileManager.saveProfile(userProfile)
+                    print("Profile Pushed to Cloud")
                 } catch {
                     self.error =
                         "Failed to save profile: \(error.localizedDescription)"
@@ -323,7 +371,6 @@ class ProfileViewModel: ObservableObject {
             tempUsername = username
             isEditingName = false
             errorMessage = "Username cannot be empty."
-            print(errorMessage)
             return
         }
 
@@ -331,7 +378,6 @@ class ProfileViewModel: ObservableObject {
             tempUsername = username
             isEditingName = false
             errorMessage = "Username must be at least 2 characters long."
-            print(errorMessage)
             return
         }
 
@@ -339,7 +385,6 @@ class ProfileViewModel: ObservableObject {
             tempUsername = username
             isEditingName = false
             errorMessage = "Username cannot exceed 16 characters."
-            print(errorMessage)
             return
         }
 
