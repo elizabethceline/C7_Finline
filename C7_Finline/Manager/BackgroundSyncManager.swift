@@ -295,6 +295,9 @@ class BackgroundSyncManager: NSObject, ObservableObject {
                     object: nil,
                     userInfo: ["modelContext": context]
                 )
+                
+                NotificationCenter.default.post(name: Notification.Name("ProfileDataDidSync"), object: nil)
+                NotificationCenter.default.post(name: Notification.Name("ShopDataDidSync"), object: nil)
             }
 
             // 5. Schedule notifications after sync
