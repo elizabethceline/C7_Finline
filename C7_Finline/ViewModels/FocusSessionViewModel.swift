@@ -55,6 +55,8 @@ final class FocusSessionViewModel: ObservableObject {
     // Dependencies
     let fishingVM: FishingViewModel
     var authManager: FocusAuthorizationManager
+    private let notificationManager = NotificationManager.shared
+    private let userProfileManager: UserProfileManager
     
     private(set) var goal: Goal?
     private(set) var task: GoalTask?
@@ -91,12 +93,14 @@ final class FocusSessionViewModel: ObservableObject {
         goal: Goal? = nil,
         task: GoalTask? = nil,
         fishingVM: FishingViewModel = FishingViewModel(),
-        authManager: FocusAuthorizationManager = FocusAuthorizationManager()
+        authManager: FocusAuthorizationManager = FocusAuthorizationManager(),
+        userProfileManager: UserProfileManager? = nil
     ) {
         self.goal = goal
         self.task = task
         self.fishingVM = fishingVM
         self.authManager = authManager
+        self.userProfileManager = userProfileManager ?? UserProfileManager(networkMonitor: NetworkMonitor())
         
         if let task = task {
             self.goalName = goal?.name
@@ -176,6 +180,8 @@ final class FocusSessionViewModel: ObservableObject {
                 for: sessionDuration,
                 deepFocusEnabled: authManager.isEnabled
             )
+            
+            await scheduleSessionEndNotification()
         }
         
         // Start Live Activity
@@ -194,6 +200,8 @@ final class FocusSessionViewModel: ObservableObject {
         
         fishingVM.stopFishing()
         authManager.clearShield()
+        
+        notificationManager.cancelSessionEndNotification()
         
         //shouldReturnToStart = true
         do {
@@ -216,6 +224,8 @@ final class FocusSessionViewModel: ObservableObject {
         
         fishingVM.stopFishing()
         authManager.clearShield()
+        
+        notificationManager.cancelSessionEndNotification()
         
         isFocusing = false
         shouldReturnToStart = true
@@ -256,6 +266,9 @@ final class FocusSessionViewModel: ObservableObject {
                 deepFocusEnabled: authManager.isEnabled,
                 resume: true
             )
+            
+            notificationManager.cancelSessionEndNotification()
+            await scheduleSessionEndNotification()
         }
         
         if timer == nil {
@@ -330,7 +343,11 @@ final class FocusSessionViewModel: ObservableObject {
         pauseSession()
         startRestTimer()
         lastLiveActivityUpdate = nil
-        Task { await updateLiveActivity() }
+        Task {
+            await updateLiveActivity()
+            
+            await scheduleRestEndNotification(for: seconds)
+        }
     }
     
     func endRest() {
@@ -343,6 +360,9 @@ final class FocusSessionViewModel: ObservableObject {
         stopRestTimer()
         resumeSession()
         lastLiveActivityUpdate = nil
+        
+        notificationManager.cancelRestEndNotification()
+        
         Task { await updateLiveActivity() }
     }
     
@@ -355,6 +375,8 @@ final class FocusSessionViewModel: ObservableObject {
         
         fishingVM.pauseFishing()
         authManager.clearShield()
+        
+        notificationManager.cancelSessionEndNotification()
     }
     
     private func resumeSession() {
@@ -370,6 +392,10 @@ final class FocusSessionViewModel: ObservableObject {
         
         if authManager.isEnabled && authManager.isAuthorized {
             authManager.applyShield()
+        }
+        
+        Task {
+            await scheduleSessionEndNotification()
         }
     }
     
@@ -476,6 +502,10 @@ final class FocusSessionViewModel: ObservableObject {
         restRemainingTime = 0
         restEndTime = nil
         taskTitle = ""
+        
+        notificationManager.cancelSessionEndNotification()
+        notificationManager.cancelRestEndNotification()
+        
         if activity != nil {
                 Task { await endLiveActivity() }
             }
@@ -655,6 +685,9 @@ final class FocusSessionViewModel: ObservableObject {
             
             fishingVM.stopFishing()
             
+            notificationManager.cancelSessionEndNotification()
+            notificationManager.cancelRestEndNotification()
+            
             if let activity = activity {
                 let semaphore = DispatchSemaphore(value: 0)
                 Task {
@@ -672,6 +705,70 @@ final class FocusSessionViewModel: ObservableObject {
             restEndTime = nil
         
         }
+    
+    private func scheduleSessionEndNotification() async {
+        guard let username = await fetchCurrentUsername() else { return }
+        await notificationManager.scheduleSessionEndNotification(
+            username: username,
+            sessionDuration: remainingTime
+        )
+    }
+    
+    private func scheduleRestEndNotification(for duration: TimeInterval) async {
+        guard let username = await fetchCurrentUsername() else { return }
+        await notificationManager.scheduleRestEndNotification(
+            username: username,
+            restDuration: duration
+        )
+    }
+    
+    private func fetchCurrentUsername() async -> String? {
+        do {
+            let userRecordID = try await CloudKitManager.shared.fetchUserRecordID()
+            
+            guard let container = getModelContainer() else {
+                print("Failed to get model container")
+                return nil
+            }
+            
+            let context = ModelContext(container)
+            let profile = try await userProfileManager.fetchProfile(
+                userRecordID: userRecordID,
+                modelContext: context
+            )
+            
+            return profile.username.isEmpty ? "there" : profile.username
+        } catch {
+            print("Failed to fetch current username: \(error.localizedDescription)")
+            return nil
+        }
+    }
+    
+    private func getModelContainer() -> ModelContainer? {
+        let schema = Schema([
+            UserProfile.self,
+            Goal.self,
+            GoalTask.self,
+            PurchasedItem.self,
+            FocusSessionResult.self,
+        ])
+
+        let modelConfiguration = ModelConfiguration(
+            schema: schema,
+            isStoredInMemoryOnly: false,
+            cloudKitDatabase: .none
+        )
+
+        do {
+            return try ModelContainer(
+                for: schema,
+                configurations: [modelConfiguration]
+            )
+        } catch {
+            print("Failed to create ModelContainer: \(error)")
+            return nil
+        }
+    }
 
     //    private func updateLiveActivity() async {
     //        guard let activity else { return }

@@ -196,7 +196,6 @@ class BackgroundSyncManager: NSObject, ObservableObject {
         print("Record: \(recordType)")
         print("Reason: \(reasonDescription(reason))")
 
-        // Trigger sync
         Task {
             await performSync(
                 reason: "CloudKit update (\(reasonDescription(reason)))"
@@ -261,11 +260,15 @@ class BackgroundSyncManager: NSObject, ObservableObject {
             // 1. Sync pending deletions
             await goalManager.syncPendingDeletions()
             await taskManager.syncPendingDeletions()
+            await shopManager.syncPendingDeletions()
 
             // 2. Sync pending local changes
             await goalManager.syncPendingGoals(modelContext: context)
             await taskManager.syncPendingTasks(modelContext: context)
             await userProfileManager.syncPendingProfiles(modelContext: context)
+
+            try? await Task.sleep(nanoseconds: 500_000_000)
+            await shopManager.syncPendingItems(modelContext: context)
 
             // 3. Fetch latest data from cloud
             _ = try await goalManager.fetchGoals(modelContext: context)
@@ -283,6 +286,8 @@ class BackgroundSyncManager: NSObject, ObservableObject {
             // 4. Save all changes
             try context.save()
 
+            try? await Task.sleep(nanoseconds: 100_000_000)
+
             await MainActor.run {
                 lastSyncDate = Date()
                 saveLastSyncDate()
@@ -292,9 +297,17 @@ class BackgroundSyncManager: NSObject, ObservableObject {
                     object: nil,
                     userInfo: ["modelContext": context]
                 )
+
+                NotificationCenter.default.post(
+                    name: Notification.Name("ProfileDataDidSync"),
+                    object: nil
+                )
+                NotificationCenter.default.post(
+                    name: Notification.Name("ShopDataDidSync"),
+                    object: nil
+                )
             }
 
-            // 5. Schedule notifications after sync
             await scheduleNotificationsAfterSync(modelContext: context)
 
             print("Sync completed successfully")
@@ -322,29 +335,34 @@ class BackgroundSyncManager: NSObject, ObservableObject {
         return success
     }
 
-    private func scheduleNotificationsAfterSync(modelContext: ModelContext) async {
+    private func scheduleNotificationsAfterSync(modelContext: ModelContext)
+        async
+    {
         do {
             // Fetch user profile to get username
-            guard let userRecordID = try? await cloudKit.fetchUserRecordID() else {
+            guard let userRecordID = try? await cloudKit.fetchUserRecordID()
+            else {
                 print("Failed to fetch user record ID for notifications")
                 return
             }
-            
+
             let profile = try await userProfileManager.fetchProfile(
                 userRecordID: userRecordID,
                 modelContext: modelContext
             )
-            
+
             let username = profile.username.isEmpty ? "there" : profile.username
-            
+
             // Schedule notifications for all tasks
             await notificationManager.handleSyncCompletion(
                 modelContext: modelContext,
                 username: username
             )
-            
+
         } catch {
-            print("Failed to schedule notifications after sync: \(error.localizedDescription)")
+            print(
+                "Failed to schedule notifications after sync: \(error.localizedDescription)"
+            )
         }
     }
 
@@ -477,7 +495,6 @@ extension BackgroundSyncManager {
                 userInfo: userInfo
             )
 
-            // Perform sync in background
             Task {
                 let success = await performSync(reason: "Remote notification")
 
