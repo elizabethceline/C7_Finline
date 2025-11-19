@@ -6,7 +6,7 @@ struct FocusRestView: View {
     
     let goalName: String?
     let restDuration: TimeInterval
-
+    
     @State private var showEarlyFinishAlert = false
     
     var body: some View {
@@ -14,78 +14,46 @@ struct FocusRestView: View {
             Text(goalName ?? "No Goal")
                 .font(.headline)
                 .bold()
-                //.foregroundColor(.primary)
                 .padding(.horizontal)
                 .padding(.vertical, 8)
-                //.background(Color.secondary)
-                //.clipShape(RoundedRectangle(cornerRadius: 20))
-               // .shadow(radius: 2)
-                //.padding()
             
             Text("You may now\nREST for a while.")
                 .font(.largeTitle)
                 .bold()
-               // .foregroundColor(.white)
                 .multilineTextAlignment(.leading)
-               // .shadow(radius: 6)
                 .padding(.horizontal)
                 .padding(.bottom)
             
             Spacer()
             
-            VStack(spacing: 16) {
-                if viewModel.restRemainingTime > 0 {
-                    Text(TimeFormatter.format(seconds: viewModel.restRemainingTime))
-                        .font(.system(size: 60, weight: .bold, design: .rounded))
-                        .monospacedDigit()
-                } else {
-                    Text("Time's Up!")
-                        .font(.system(size: 60, weight: .bold, design: .rounded))
-                }
-                
-                Button(action: {
+            FocusTimerCard(
+                mode: .rest,
+                timeText: viewModel.restRemainingTime > 0
+                ? TimeFormatter.format(seconds: viewModel.restRemainingTime)
+                : "Time’s Up!",
+                primaryLabel: viewModel.restRemainingTime > 0 ? "I'm done resting" : "Back to Work",
+                onPrimaryTap: {
                     if viewModel.restRemainingTime > 0 {
+                        HapticManager.shared.playConfirmationHaptic()
                         showEarlyFinishAlert = true
                     } else {
+                        HapticManager.shared.playSessionEndHaptic()
                         viewModel.endRest()
                     }
-                }) {
-                    Text(viewModel.restRemainingTime > 0 ? "I'm done resting" : "Back to Work")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.primary)
-                        .foregroundColor(.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 24))
                 }
-            }
-            .padding(.horizontal)
-            .padding(.vertical)
-//            .background(.ultraThinMaterial)
-//            .background(Color.blue.opacity(0.3))
-            .background {
-                // Use glassEffect here if supported
-                if #available(iOS 26.0, *) {
-                    Color.blue.opacity(0.3)
-                        .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 24))
-                } else {
-                    RoundedRectangle(cornerRadius: 24)
-                        .fill(.ultraThinMaterial)
-                }
-            }
-            .clipShape(RoundedRectangle(cornerRadius: 24))
-            .padding(.vertical)
+            )
             .padding(.bottom, 40)
         }
         .onAppear{ viewModel.startRest(for: restDuration)}
         .onDisappear{ viewModel.endRest()}
         .alert("Done Resting?", isPresented: $showEarlyFinishAlert) {
             Button("Yes", role: .destructive) {
+                HapticManager.shared.playConfirmationHaptic()
                 viewModel.endRest()
                     }
                     Button("No", role: .cancel) { }
                 } message: {
-                    Text("Your focus timer will resume, and this rest period will still be counted as used.")
+                    Text("Your focus timer will resume, and this rest period will still be acounted as used.")
                 }
     }
 }

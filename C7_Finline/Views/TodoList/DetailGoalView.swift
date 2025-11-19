@@ -128,6 +128,9 @@ struct DetailGoalView: View {
                     case .focus:
                         FocusModeView(onGiveUp: { task in
                             coverMode = .detail(task)
+                        },
+                                      onSessionEnd: {
+                            coverMode = nil
                         })
                     }
                 }
@@ -402,6 +405,9 @@ struct DetailGoalView: View {
     }
 
     private func deleteSelectedTasks() {
+        
+        HapticManager.shared.playDestructiveHaptic()
+        
         Task {
             for id in selectedTaskIds {
                 if let task = taskVM.goalTasks.first(where: { $0.id == id }) {
@@ -421,6 +427,9 @@ struct DetailGoalView: View {
     }
 
     private func deleteTaskWithAnimation(_ task: GoalTask) {
+        
+        HapticManager.shared.playDestructiveHaptic()
+        
         withAnimation(.easeInOut(duration: 0.3)) {
             removingTaskIds.insert(task.id)
         }
@@ -435,6 +444,9 @@ struct DetailGoalView: View {
     }
 
     private func completeTaskWithAnimation(_ task: GoalTask) {
+        
+        HapticManager.shared.playSuccessHaptic()
+        
         withAnimation(.easeInOut(duration: 0.3)) {
             removingTaskIds.insert(task.id)
         }
@@ -456,6 +468,9 @@ struct DetailGoalView: View {
     }
 
     private func incompleteTaskWithAnimation(_ task: GoalTask) {
+        
+        HapticManager.shared.playUnsavedChangesHaptic()
+        
         withAnimation(.easeInOut(duration: 0.3)) {
             removingTaskIds.insert(task.id)
         }

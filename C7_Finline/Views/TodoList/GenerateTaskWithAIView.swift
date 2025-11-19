@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import TipKit
 
 struct GenerateTaskWithAIView: View {
     @Environment(\.dismiss) private var dismiss
@@ -14,13 +15,14 @@ struct GenerateTaskWithAIView: View {
     @State private var goalDescription: String = ""
     @State private var isShowingAlert = false
     var onGenerate: ((String) -> Void)?
-    
+
     var body: some View {
         NavigationStack {
             Form {
-                Section(header:
-                            Text("Goal Info")
-                    .font(.headline)
+                Section(
+                    header:
+                        Text("Goal Info")
+                        .font(.headline)
                 ) {
                     HStack {
                         Text("Goal")
@@ -29,15 +31,17 @@ struct GenerateTaskWithAIView: View {
                         Text(goalName)
                             .multilineTextAlignment(.trailing)
                     }
-                    
+
                     HStack {
                         Text("Deadline")
                             .foregroundStyle(.secondary)
                         Spacer()
-                        Text("\(goalDeadline.formatted(date: .long, time: .omitted)) | \(goalDeadline.formatted(date: .omitted, time: .shortened))")
-                            .multilineTextAlignment(.trailing)
+                        Text(
+                            "\(goalDeadline.formatted(date: .long, time: .omitted)) | \(goalDeadline.formatted(date: .omitted, time: .shortened))"
+                        )
+                        .multilineTextAlignment(.trailing)
                     }
-                    
+
                     ZStack(alignment: .topLeading) {
                         if goalDescription.isEmpty {
                             Text("Describe details or context about your goal.")
@@ -45,13 +49,21 @@ struct GenerateTaskWithAIView: View {
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 12)
                         }
-                        
+
                         TextEditor(text: $goalDescription)
                             .frame(minHeight: 100)
                             .font(.body)
                             .padding(4)
                             .cornerRadius(8)
+                            .onChange(of: goalDescription) { _, newValue in
+                                if !newValue.trimmingCharacters(
+                                    in: .whitespacesAndNewlines
+                                ).isEmpty {
+                                    AIPromptTip.hasEnteredPrompt = true
+                                }
+                            }
                     }
+                    .popoverTip(AIPromptTip(), arrowEdge: .bottom)
                 }
             }
             .scrollContentBackground(.hidden)
@@ -68,7 +80,9 @@ struct GenerateTaskWithAIView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button {
-                        if goalDescription.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        if goalDescription.trimmingCharacters(
+                            in: .whitespacesAndNewlines
+                        ).isEmpty {
                             isShowingAlert = true
                         } else {
                             onGenerate?(goalDescription)
@@ -78,16 +92,18 @@ struct GenerateTaskWithAIView: View {
                         Image(systemName: "checkmark")
                     }
                 }
-                
+
             }
             .alert("No Description Provided", isPresented: $isShowingAlert) {
                 Button("Continue") {
                     onGenerate?("")
                     dismiss()
                 }
-                Button("Cancel", role: .cancel) { }
+                Button("Cancel", role: .cancel) {}
             } message: {
-                Text("Without giving context, we will only generate the tasks based on your title.")
+                Text(
+                    "Without giving context, we will only generate the tasks based on your title."
+                )
             }
         }
     }
@@ -99,4 +115,3 @@ struct GenerateTaskWithAIView: View {
         goalDeadline: Date()
     )
 }
-

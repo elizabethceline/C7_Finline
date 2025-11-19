@@ -15,7 +15,7 @@ struct CreateTaskManuallyView: View {
     
     @State private var taskName: String = ""
     @State private var taskDeadline: Date
-    @State private var focusDuration: Int = 60
+    @State private var focusDuration: Int = 1
     
     @State private var isShowingDatePicker: Bool = false
     @State private var isShowingTimePicker: Bool = false

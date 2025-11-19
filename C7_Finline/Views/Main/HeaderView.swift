@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import TipKit
 
 struct HeaderView: View {
     @ObservedObject var viewModel: MainViewModel
@@ -19,9 +20,11 @@ struct HeaderView: View {
             ZStack(alignment: .topTrailing) {
                 VStack(alignment: .leading, spacing: 6) {
                     if unfinishedTasks.isEmpty {
-                        Text("You currently have no task, add it if you really need to. Or not...")
-                            .foregroundColor(Color(.label).opacity(0.7))
-                            .font(.body)
+                        Text(
+                            "You currently have no task, add it if you really need to. Or not..."
+                        )
+                        .foregroundColor(Color(.label).opacity(0.7))
+                        .font(.body)
                     } else {
                         Text(tasksMessage)
                             .foregroundColor(Color(.label).opacity(0.7))
@@ -52,12 +55,14 @@ struct HeaderView: View {
 
             Button {
                 navigateToProfile = true
+                ProfileButtonTip.hasClickedProfile = true
             } label: {
                 Image("finley")
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 52)
             }
+            .popoverTip(ProfileButtonTip(), arrowEdge: .top)
         }
         .padding(.horizontal)
         .padding(.top, 4)
@@ -74,7 +79,7 @@ struct HeaderView: View {
 
     private var tasksMessage: AttributedString {
         let attributed = AttributedString(
-            "Oh no, you have \(unfinishedTaskText).\nPlease start doing your task!"
+            "Hey, you have \(unfinishedTaskText).\nPlease start doing your task!"
         )
         //        if let range = attributed.range(of: unfinishedTaskText) {
         //            attributed[range].underlineStyle = .single

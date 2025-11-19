@@ -8,6 +8,7 @@
 import Combine
 import Foundation
 import SwiftData
+import WidgetKit
 
 class MainViewModel: ObservableObject {
     @Published var goals: [Goal] = []
@@ -196,12 +197,33 @@ class MainViewModel: ObservableObject {
 
         self.tasks.removeAll { $0.id == task.id }
         taskManager.deleteTask(task: task, modelContext: modelContext)
+        
+        do {
+                try modelContext.save()
+            
+                WidgetCenter.shared.reloadTimelines(ofKind: "FinlineWidget")
+            } catch {
+                print("Error deleting task: \(error.localizedDescription)")
+            }
     }
 
     @MainActor
     func toggleTaskCompletion(task: GoalTask) {
         taskManager.toggleTaskCompletion(task: task)
+
+        guard let context = modelContext else {
+            print("ModelContext was nil, cannot save.")
+            return
+        }
+
+        do {
+            try context.save()
+            WidgetCenter.shared.reloadTimelines(ofKind: "FinlineWidget")
+        } catch {
+            print("Error saving task completion: \(error.localizedDescription)")
+        }
     }
+
 
     @MainActor
     func appendNewGoal(_ goal: Goal) {

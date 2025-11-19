@@ -9,6 +9,7 @@ import Combine
 import FoundationModels
 import SwiftData
 import SwiftUI
+import WidgetKit
 
 @MainActor
 final class TaskViewModel: ObservableObject {
@@ -54,6 +55,9 @@ final class TaskViewModel: ObservableObject {
         do {
             try modelContext.save()
             print("Saved \(tasks.count) AI tasks for goal \(goal.name)")
+            
+            WidgetCenter.shared.reloadTimelines(ofKind: "FinlineWidget")
+            
         } catch {
             print("Failed to save AI tasks: \(error.localizedDescription)")
         }
@@ -114,6 +118,9 @@ final class TaskViewModel: ObservableObject {
         do {
             try modelContext.save()
             print("Task '\(name)' updated successfully.")
+            
+            WidgetCenter.shared.reloadTimelines(ofKind: "FinlineWidget")
+            
         } catch {
             print("Failed to save updated task: \(error.localizedDescription)")
         }
@@ -129,6 +136,9 @@ final class TaskViewModel: ObservableObject {
             taskManager.deleteTask(task: task, modelContext: modelContext)
 
             try modelContext.save()
+            
+            WidgetCenter.shared.reloadTimelines(ofKind: "FinlineWidget")
+            
             await MainActor.run {
                 self.goalTasks.removeAll { $0.id == task.id }
                 print("Deleted task: \(task.name)")
@@ -255,6 +265,9 @@ final class TaskViewModel: ObservableObject {
         do {
             try modelContext.save()
             print("Context saved successfully")
+            
+            WidgetCenter.shared.reloadTimelines(ofKind: "FinlineWidget")
+            
         } catch {
             print("Failed to save context: \(error)")
         }
@@ -295,144 +308,118 @@ final class TaskViewModel: ObservableObject {
         errorMessage = nil
         defer { isLoading = false }
 
-        //dummy
-        let user = UserProfile(
-            id: "user-1",
-            username: "Elizabeth",
-            points: 200,
-            productiveHours: [
-                ProductiveHours(
-                    day: .monday,
-                    timeSlots: [.morning, .afternoon]
-                ),
-                ProductiveHours(
-                    day: .tuesday,
-                    timeSlots: [.morning, .evening]
-                ),
-                ProductiveHours(day: .wednesday, timeSlots: [.afternoon]),
-                ProductiveHours(
-                    day: .thursday,
-                    timeSlots: [.morning, .afternoon]
-                ),
-                ProductiveHours(day: .friday, timeSlots: [.morning]),
-                ProductiveHours(
-                    day: .saturday,
-                    timeSlots: [.morning, .evening]
-                ),
-                ProductiveHours(day: .sunday, timeSlots: [.evening]),
-            ]
-
-        )
-
         guard model.isAvailable else {
             errorMessage = "On-device model not available."
             return
         }
 
-        let session = LanguageModelSession(
-            model: model,
-            instructions:
-                "You are an AI productivity assistant. Return only structured JSON matching AIGoalTask or an array of them."
-        )
+        let session = LanguageModelSession(model: model)
 
-        let dateFormatter = ISO8601DateFormatter()
-        let todayString = dateFormatter.string(from: Date())
+        let totalMinutesAvailable: Int = Int(goal.due.timeIntervalSinceNow / 60)
+        let totalTask: Int = totalMinutesAvailable < 1440 ? 2 : 5
 
-        let productiveDaysDescription = user.productiveHours.map { ph in
-            let day = ph.day.rawValue.capitalized
-            let slots = ph.timeSlots.map { slot -> [String: String] in
-                switch slot {
-                case .earlyMorning: return ["start": "04:00", "end": "08:00"]
-                case .morning: return ["start": "08:00", "end": "12:00"]
-                case .afternoon: return ["start": "12:00", "end": "17:00"]
-                case .evening: return ["start": "17:00", "end": "21:00"]
-                case .night: return ["start": "21:00", "end": "24:00"]
-                }
-            }
-            let slotsJSON = slots.map { "\($0["start"]!)-\($0["end"]!)" }
-                .joined(separator: ", ")
-            return "- \(day): \(slotsJSON)"
-        }.joined(separator: "\n")
-
-        print("=== Productive Hours Description ===")
-        print(productiveDaysDescription)
-        print("===================================")
-
-        print(goal.due)
-        print(todayString)
         let prompt = """
-            You are an AI productivity assistant that creates actionable milestone tasks for a user's goal.
+        You are an AI productivity assistant.
 
-            ## USER PROFILE
-            - Name: \(user.username)
-            - Productive Hours:
-            \(productiveDaysDescription)
+        Goal Title: \(goal.name)
+        Description: \(goal.goalDescription ?? "No description provided")
 
-            ## GOAL
-            - Title: \(goal.name)
-            - Description: \(goal.goalDescription ?? "No description provided")
-            - Deadline: \(dateFormatter.string(from: goal.due))
-            - Current Date: \(todayString)
+        Generate exactly \(totalTask) tasks.
+        Each must contain:
+        - "name": unique descriptive title
+        - "focusDuration": duration in minutes
+            Easy: 20–30
+            Medium: 30–60
+            Hard: 60–120
 
-            ## TASK GENERATION RULES
-            1. Generate between 2 and 5 milestone tasks that break the goal into clear, actionable steps. Maximum generate 5 task.
-            3. If the time remaining between the current date (\(todayString)) and the goal deadline (\(dateFormatter.string(from: goal.due))) is **less than 24 hours**, generate **only 2 milestone tasks** that can realistically be completed within that limited time.
-            4. Each task must include:
-                - `name`: Short descriptive title
-                - `workingTime`: Start date and time (within productive hours)
-                - `focusDuration`: Duration in minutes (45–120)
-            5. All tasks must:
-                - Start and end **before or exactly at** the goal deadline \(dateFormatter.string(from: goal.due)).
-                - Not overlap with each other.
-                - Fit strictly within productive hours.
-                - Optionally leave 10–15 minutes between tasks.
-            6. If time is tight, ensure the last task ends **just before the deadline**, not after.
-            7. **If the goal deadline is more than a day ahead of the current time (\(todayString)), spread the tasks across multiple days** based on the available productive hours.  
-               - Do **not** stack all tasks on the same day if there is enough time before the deadline.
-               - Try to distribute tasks evenly over the days leading up to the deadline.
-            8. Return only valid JSON.
-            """
+        RULES:
+        - DO NOT generate date/time.
+        - DO NOT include start/end times.
+        - Total focus duration must NOT exceed \(totalMinutesAvailable) minutes.
+        Return ONLY JSON array of { "name": "...", "focusDuration": ... }
+        """
 
+        var aiItems: [AIPlannedItem] = []
         do {
-            var tasks: [AIGoalTask] = []
-
             let response = try await session.respond(
                 to: prompt,
-                generating: [AIGoalTask].self
+                generating: [AIPlannedItem].self
             )
-            tasks = response.content
-
-            if tasks.isEmpty {
-                if let singleResp = try? await session.respond(
-                    to: prompt,
-                    generating: AIGoalTask.self
-                ) {
-                    tasks = [singleResp.content]
-                }
-            }
-
-            if tasks.isEmpty {
-                let raw = try await session.respond(to: prompt)
-                if let data = raw.content.data(using: .utf8),
-                    let decoded = try? JSONDecoder().decode(
-                        [AIGoalTask].self,
-                        from: data
-                    )
-                {
-                    tasks = decoded
-                }
-            }
-
-            if tasks.isEmpty {
-                errorMessage = "AI returned no valid tasks."
-            } else {
-                self.tasks = tasks
-            }
-
+            aiItems = response.content
         } catch {
-            errorMessage = "AI generation failed: \(error.localizedDescription)"
+            errorMessage = "Failed to parse AI tasks: \(error.localizedDescription)"
+            return
+        }
+
+        await mapWorkingTimes(from: aiItems, deadline: goal.due)
+    }
+    
+    func mapWorkingTimes(
+        from items: [AIPlannedItem],
+        deadline: Date
+    ) async {
+        let iso = ISO8601DateFormatter()
+        var currentTime = Date()
+        var usedMinutes = 0
+
+        await MainActor.run { self.tasks = [] }
+
+        for item in items {
+            if usedMinutes + item.focusDuration > Int(deadline.timeIntervalSinceNow / 60) {
+                break
+            }
+
+            currentTime = mapToWorkingHours(currentTime)
+            var finalEnd = currentTime.addingTimeInterval(Double(item.focusDuration) * 60)
+
+            if !isWithinWorkingHours(currentTime, finalEnd) {
+                currentTime = nextWorkDayMorning(from: currentTime)
+                finalEnd = currentTime.addingTimeInterval(Double(item.focusDuration) * 60)
+            }
+
+            let task = AIGoalTask(
+                name: item.name,
+                workingTime: iso.string(from: currentTime),
+                focusDuration: item.focusDuration
+            )
+
+            await MainActor.run { self.tasks.append(task) }
+
+            usedMinutes += item.focusDuration
+            currentTime = finalEnd.addingTimeInterval(15 * 60)
         }
     }
+    
+    let startHour = 8
+    let endHour = 17
+
+    func mapToWorkingHours(_ date: Date) -> Date {
+        let cal = Calendar.current
+        let hour = cal.component(.hour, from: date)
+
+        if hour < startHour {
+            return cal.date(bySettingHour: startHour, minute: 0, second: 0, of: date)!
+        }
+        if hour >= endHour {
+            return nextWorkDayMorning(from: date)
+        }
+        return date
+    }
+
+    func isWithinWorkingHours(_ start: Date, _ end: Date) -> Bool {
+        let cal = Calendar.current
+        return cal.component(.hour, from: start) >= startHour &&
+               cal.component(.hour, from: end) < endHour
+    }
+
+    func nextWorkDayMorning(from date: Date) -> Date {
+        let cal = Calendar.current
+        let next = cal.date(byAdding: .day, value: 1, to: date)!
+        return cal.date(bySettingHour: startHour, minute: 0, second: 0, of: next)!
+    }
+
+
+
 }
 
 extension TaskViewModel {

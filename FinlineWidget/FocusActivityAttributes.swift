@@ -10,10 +10,14 @@ import Foundation
 
 struct FocusActivityAttributes: ActivityAttributes {
     public struct ContentState: Codable, Hashable {
-        var remainingTime: TimeInterval
+        var remainingTime: TimeInterval        // waktu sesi fokus
+        var restRemainingTime: TimeInterval?   // waktu istirahat opsional
         var taskTitle: String
         var isResting: Bool
+        var endTime: Date?
     }
 
+
     var goalName: String
+    var totalDuration: TimeInterval 
 }

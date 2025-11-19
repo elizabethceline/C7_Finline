@@ -5,41 +5,47 @@
 //  Created by Richie Reuben Hermanto on 04/11/25.
 //
 
-import SwiftUI
 import Foundation
+import SwiftUI
 
 enum ShopItem: String, CaseIterable, Codable {
+    case finley  // Default character
     case dogo
     case ebet
-//    case leo
-    
+    //    case leo
+
     var price: Int {
         switch self {
+        case .finley: return 0  // Free default character
         case .dogo: return 100
         case .ebet: return 50
-//        case .leo: return 125
+        //        case .leo: return 125
         }
     }
-    
+
     var displayName: String {
         switch self {
+        case .finley: return "Finley"
         case .dogo: return "Dogo"
         case .ebet: return "Ebet"
-//        case .leo: return "leo"
+        //        case .leo: return "leo"
         }
     }
-    
+
     var imageName: String {
         switch self {
+        case .finley: return "finley"
         case .dogo: return "dogo"
         case .ebet: return "ebet"
-//        case .leo: return "leo"
+        //        case .leo: return "leo"
         }
     }
-    
+
     var image: Image {
         Image(imageName)
     }
+
+    var isDefault: Bool {
+        return self == .finley
+    }
 }
-
-

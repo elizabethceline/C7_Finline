@@ -13,6 +13,7 @@ class TaskManager {
     private let cloudKit = CloudKitManager.shared
     private let networkMonitor: NetworkMonitor
     private let pendingDeletionKey = "pendingTaskDeletionIDs"
+    private let notificationManager = NotificationManager.shared
 
     init(networkMonitor: NetworkMonitor) {
         self.networkMonitor = networkMonitor
@@ -108,6 +109,15 @@ class TaskManager {
 
         Task {
             await syncTask(newTask)
+
+            // Schedule notifications for new task
+            if let username = await fetchCurrentUsername() {
+                await notificationManager.scheduleNotificationsForTasks(
+                    [newTask],
+                    username: username
+                )
+                await notificationManager.logPendingNotifications()
+            }
         }
 
         return newTask
@@ -120,6 +130,8 @@ class TaskManager {
         focusDuration: Int,
         isCompleted: Bool
     ) {
+        let wasCompleted = task.isCompleted
+
         task.name = name
         task.workingTime = workingTime
         task.focusDuration = focusDuration
@@ -128,11 +140,46 @@ class TaskManager {
 
         Task {
             await syncTask(task)
+
+            if let username = await fetchCurrentUsername() {
+                if isCompleted && !wasCompleted {
+                    // task completed: remove all notifications
+                    notificationManager.removeNotification(for: task.id)
+                    print(
+                        "Task '\(task.name)' completed - removed all notifications"
+                    )
+                } else if !isCompleted && wasCompleted {
+                    // task uncomplete: reschedule notifications
+                    await notificationManager.scheduleNotificationsForTasks(
+                        [task],
+                        username: username
+                    )
+                    print(
+                        "Task '\(task.name)' uncompleted - rescheduled notifications"
+                    )
+                } else if !isCompleted {
+                    // task updated while not completed: reschedule notifications
+                    notificationManager.removeNotification(for: task.id)
+                    await notificationManager.scheduleNotificationsForTasks(
+                        [task],
+                        username: username
+                    )
+                    print(
+                        "Task '\(task.name)' updated - rescheduled notifications"
+                    )
+                }
+
+                await notificationManager.logPendingNotifications()
+            }
         }
     }
 
     func deleteTask(task: GoalTask, modelContext: ModelContext) {
         let taskIDToDelete = task.id
+
+        // delete all notifications for the task
+        notificationManager.removeNotification(for: taskIDToDelete)
+        print("Task '\(task.name)' deleted - removed all notifications")
 
         modelContext.delete(task)
         addPendingDeletionID(taskIDToDelete)
@@ -259,6 +306,24 @@ class TaskManager {
         var currentIDs = getPendingDeletionIDs()
         if currentIDs.remove(id) != nil {
             savePendingDeletionIDs(currentIDs)
+        }
+    }
+
+    private func fetchCurrentUsername() async -> String? {
+        do {
+            let userRecordID = try await CKContainer.default().userRecordID()
+            let profileRecordID = CKRecord.ID(
+                recordName: "UserProfile_\(userRecordID.recordName)"
+            )
+            let record = try await CloudKitManager.shared.fetchRecord(
+                recordID: profileRecordID
+            )
+            return record["username"] as? String
+        } catch {
+            print(
+                "Failed to fetch current username: \(error.localizedDescription)"
+            )
+            return nil
         }
     }
 }

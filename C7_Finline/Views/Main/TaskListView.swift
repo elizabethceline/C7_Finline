@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import TipKit
 
 struct TaskListView: View {
     @ObservedObject var viewModel: MainViewModel
@@ -81,6 +82,7 @@ struct TaskListView: View {
                         ForEach(goalTasks) { task in
                             Button {
                                 coverMode = .detail(task)
+                                TaskCardTip.hasClickedTaskCard = true
                             } label: {
                                 TaskCardView(task: task)
                             }
@@ -98,6 +100,7 @@ struct TaskListView: View {
                             .offset(
                                 y: removingTaskIds.contains(task.id) ? -10 : 0
                             )
+                            .popoverTip(TaskCardTip(), arrowEdge: .top)
                             .swipeActions(
                                 edge: .trailing,
                                 allowsFullSwipe: false
@@ -281,6 +284,9 @@ struct TaskListView: View {
     }
 
     private func completeTask(_ task: GoalTask) {
+        
+        HapticManager.shared.playSuccessHaptic()
+        
         withAnimation(.easeInOut(duration: 0.3)) {
             removingTaskIds.insert(task.id)
         }
@@ -292,6 +298,9 @@ struct TaskListView: View {
     }
 
     private func deleteTask(_ task: GoalTask) {
+        
+        HapticManager.shared.playDestructiveHaptic()
+        
         withAnimation(.easeInOut(duration: 0.3)) {
             removingTaskIds.insert(task.id)
         }
