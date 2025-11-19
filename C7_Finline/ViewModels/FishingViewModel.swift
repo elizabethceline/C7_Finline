@@ -65,16 +65,38 @@ final class FishingViewModel: ObservableObject {
             while elapsed < duration {
                 if Task.isCancelled { break }
 
-                if isPaused{
-                    print("Fishing paused. Waiting to resume..")
+//                if isPaused{
+//                    print("Fishing paused. Waiting to resume..")
+//                    await withCheckedContinuation { continuation in
+//                        Task { [weak self] in
+//                            self?.pauseContinuation.sink {
+//                                continuation.resume()
+//                            }.store(in: &self!.cancellables)
+//                        }
+//                    }
+//                }
+                if isPaused {
+                    print("Fishing paused. Waiting to resume...")
+
                     await withCheckedContinuation { continuation in
-                        Task { [weak self] in
-                            self?.pauseContinuation.sink {
+                        var didResume = false
+
+                        let cancellable = pauseContinuation
+                            .first()
+                            .sink { [weak self] _ in
+                                guard let self else { return }
+
+                                if didResume { return }
+                                didResume = true
+
                                 continuation.resume()
-                            }.store(in: &self!.cancellables)
-                        }
+                            }
+
+                        cancellable.store(in: &cancellables)
                     }
                 }
+
+
                 let baseWait = Double.random(in: 60...120)
                 var wait = deepFocusEnabled ? baseWait * 0.7 : baseWait
                 

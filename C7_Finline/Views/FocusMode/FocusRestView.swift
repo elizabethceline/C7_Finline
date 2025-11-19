@@ -45,7 +45,7 @@ struct FocusRestView: View {
             .padding(.bottom, 40)
         }
         .onAppear{ viewModel.startRest(for: restDuration)}
-        .onDisappear{ viewModel.endRest()}
+//        .onDisappear{ viewModel.endRest()}
         .alert("Done Resting?", isPresented: $showEarlyFinishAlert) {
             Button("Yes", role: .destructive) {
                 HapticManager.shared.playConfirmationHaptic()

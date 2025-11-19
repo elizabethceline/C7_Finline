@@ -13,47 +13,62 @@ struct FocusLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: FocusActivityAttributes.self) { context in
             VStack(spacing: 8) {
-                HStack{
-                    if context.state.isResting {
-                        VStack(alignment: .leading){
-                            Text("Resting...")
-                                .font(.system(size: 42))
+                HStack {
+                    if context.state.isCompleted {
+                        VStack(alignment: .leading) {
+                            Text("Session")
+                                .font(.system(size: 32))
                                 .fontWeight(.bold)
-                                .monospacedDigit()
-                                .foregroundColor(.gray)
-                                .offset(x:-5)
-                            
-                            if let endTime = context.state.endTime {
-                                Text(endTime, style: .timer)
-                                    .font(.title2)
-                                    .foregroundColor(.gray)
-                                    .monospacedDigit()
-//                                Text(formattedRemainingTime(from: endTime))
-//                                    .font(.title2)
-//                                    .monospacedDigit()
-//                                    .foregroundColor(.gray)
-                                    
+                                .offset(x: -5)
+                            Text("Complete")
+                                .font(.system(size: 32))
+                                .fontWeight(.bold)
+                                .offset(x: -5)
+                               
 
-                            } else {
-                                Text(TimeFormatter.format(seconds: context.state.restRemainingTime ?? 0))
-                                    .font(.title2)
-                                    .foregroundColor(.gray)
-                            }
-//                            Text(TimeFormatter.format(seconds: (context.state.isResting ? context.state.restRemainingTime : context.state.remainingTime) ?? 0))
+//                            Text(context.state.taskTitle)
 //                                .font(.title2)
 //                                .foregroundColor(.gray)
                         }
-                        .padding(.bottom,13)
-                    }else{
+                        .padding(.bottom, 13)
+                        
+                    } else if context.state.isResting {
                         VStack(alignment: .leading){
-//                            Text(TimeFormatter.format(seconds: (context.state.isResting ? context.state.restRemainingTime : context.state.remainingTime) ?? 0))
-//                                .font(.system(size: 48))
-//                                .fontWeight(.bold)
-//                                .monospacedDigit()
-//                                .foregroundColor(.gray)
-//                                .offset(x:-5)
-//                                .minimumScaleFactor(0.5)
-//                                .layoutPriority(10)
+                            if context.state.isRestOver {
+                                Text("Rest Over")
+                                    .font(.system(size: 32))
+                                    .fontWeight(.bold)
+                                    .foregroundColor(.gray)
+                                    .offset(x:-5)
+                                
+                                Text("Time to go back to work!")
+                                    .font(.title2)
+                                    .foregroundColor(.gray)
+                                
+                            } else {
+                                Text("Resting...")
+                                    .font(.system(size: 32))
+                                    .fontWeight(.bold)
+                                    .monospacedDigit()
+                                    .foregroundColor(.gray)
+                                    .offset(x:-5)
+                                
+                                if let endTime = context.state.endTime {
+                                    Text(endTime, style: .timer)
+                                        .font(.title2)
+                                        .foregroundColor(.gray)
+                                        .monospacedDigit()
+                                } else {
+                                    Text(TimeFormatter.format(seconds: context.state.restRemainingTime ?? 0))
+                                        .font(.title2)
+                                        .foregroundColor(.gray)
+                                }
+                            }
+                        }
+                        .padding(.bottom,13)
+
+                    } else {
+                        VStack(alignment: .leading) {
                             if let endTime = context.state.endTime {
                                 Text(endTime, style: .timer)
                                     .font(.system(size: 48))
@@ -82,7 +97,14 @@ struct FocusLiveActivity: Widget {
                     }
                     
                     Spacer()
-                    if context.state.isResting {
+                    if context.state.isRestOver {
+                        Image("restOver")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 150, height:150)
+                            .offset(x:20)
+                        
+                    } else if context.state.isResting {
                         Image("lockScreenResting")
                             .resizable()
                             .scaledToFit()
@@ -100,17 +122,25 @@ struct FocusLiveActivity: Widget {
                     
                     
                 }
-                ProgressView(value: progress(for: context), total: 1.0)
-                    .progressViewStyle(.linear)
-                    .tint(Color(red: 161/255, green: 210/255, blue: 241/255))
-                    .frame(height: context.state.isResting ? 0 : 10)
-                    .clipShape(Capsule())
-                    .animation(.easeInOut(duration: 0.5), value: progress(for: context))
-                    .offset(y: -20)
-                
+                if !context.state.isResting && !context.state.isCompleted {
+                    ProgressView(value: progress(for: context), total: 1.0)
+                        .progressViewStyle(.linear)
+                        .tint(Color(red: 161/255, green: 210/255, blue: 241/255))
+                        .frame(height: 10)
+                        .clipShape(Capsule())
+                        .offset(y: -20)
+                }
             }
             .padding()
-            .activityBackgroundTint(Color.secondary)
+//            .activityBackgroundTint(Color.secondary)
+            .activityBackgroundTint(
+                Color(UIColor { trait in
+                    trait.userInterfaceStyle == .dark
+                        ? UIColor(Color.darkModeWidget)
+                        : UIColor(Color.secondary)
+                })
+            )
+
             .activitySystemActionForegroundColor(Color.secondary)
             
         } dynamicIsland: { context in
@@ -118,7 +148,19 @@ struct FocusLiveActivity: Widget {
                 DynamicIslandExpandedRegion(.center) {
                     VStack(spacing: 8) {
                         HStack(spacing: 10) {
-                            if context.state.isResting {
+                            if context.state.isRestOver {
+                                ZStack {
+                                    Image("compactDone")
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(width: 1, height: 1)
+                                    
+                                    Image("restOver")
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(width: 130, height: 130)
+                                }
+                            } else if context.state.isResting {
                                 ZStack {
                                     Image("compactResting")
                                         .resizable()
@@ -127,9 +169,9 @@ struct FocusLiveActivity: Widget {
                                     Image("expandResting")
                                         .resizable()
                                         .scaledToFit()
-                                        .frame(width: 130, height: 130)
+                                        .frame(width: 130, height:130)
                                 }
-                            }else{
+                            } else {
                                 ZStack {
                                     Image("compactTimer")
                                         .resizable()
@@ -142,39 +184,50 @@ struct FocusLiveActivity: Widget {
                                 }
                             }
                             
-                            if context.state.isResting{
-                                Spacer()
-                                    .frame(width: 10)
-                            }
                             VStack(alignment: .leading) {
-                                if context.state.isResting{
-                                    Text("Resting...")
+                              
+                                if context.state.isCompleted {
+                                    Text("Session Complete")
                                         .font(.system(size: 35))
                                         .fontWeight(.bold)
-                                        .foregroundColor(.gray)
-                                    
-//                                    Text(TimeFormatter.format(seconds: (context.state.isResting ? context.state.restRemainingTime : context.state.remainingTime) ?? 0))
+                                        .offset(x:-5)
+                                        .lineLimit(2)
+                                        .multilineTextAlignment(.leading)
+
+//                                    Spacer().frame(height: 7)
+//
+//                                    Text(context.state.taskTitle)
 //                                        .font(.subheadline)
 //                                        .foregroundColor(.gray)
-//                                        .monospacedDigit()
+
+                            
+                                } else if context.state.isResting {
+
+                                    if context.state.isRestOver {
+                                        Text("Rest Over")
+                                            .font(.system(size: 35))
+                                            .fontWeight(.bold)
+                                            .foregroundColor(.gray)
+
+                                        Text("Time to get back to work!")
+                                            .font(.subheadline)
+                                            .foregroundColor(.gray)
+
+                                    } else {
+                                        Text("Resting...")
+                                            .font(.system(size: 35))
+                                            .fontWeight(.bold)
+                                            .foregroundColor(.gray)
+                                    }
+
                                     if let endTime = context.state.endTime {
                                         Text(endTime, style: .timer)
                                             .font(.subheadline)
                                             .foregroundColor(.gray)
                                             .monospacedDigit()
-                                    } else {
-                                        Text(TimeFormatter.format(seconds: context.state.restRemainingTime ?? 0))
-                                            .font(.subheadline)
-                                            .foregroundColor(.gray)
-                                            .monospacedDigit()
                                     }
-                                }else{
-//                                    Text(TimeFormatter.format(seconds: (context.state.isResting ? context.state.restRemainingTime : context.state.remainingTime) ?? 0))
-//                                        .font(.system(size: 35))
-//                                        .fontWeight(.bold)
-//                                        .monospacedDigit()
-//                                        .foregroundColor(.gray)
-//                                        .offset(x:-5)
+                                    
+                                } else {
                                     if let endTime = context.state.endTime {
                                         Text(endTime, style: .timer)
                                             .font(.system(size: 35))
@@ -190,30 +243,25 @@ struct FocusLiveActivity: Widget {
                                             .foregroundColor(.gray)
                                             .offset(x:-5)
                                     }
-                                    
-                                    
-                                    
-                                    Spacer()
-                                        .frame(height: 7)
-                                    
-                                    
+
+                                    Spacer().frame(height: 7)
+
                                     Text(context.state.taskTitle)
                                         .font(.subheadline)
                                         .foregroundColor(.gray)
                                 }
                                 
                                 
-                                Spacer()
-                                    .frame(height: 14)
-                                
-                                ProgressView(value: progress(for: context), total: 1.0)
-                                    .progressViewStyle(.linear)
-                                    .tint(context.state.isResting ? .clear : Color(red: 161/255, green: 210/255, blue: 241/255))
-                                    .frame(height: context.state.isResting ? 0 : 4)
-                                    .clipShape(Capsule())
-                                    .animation(.easeInOut(duration: 0.5), value: progress(for: context))
-
-
+                                if !context.state.isResting && !context.state.isCompleted {
+                                    Spacer()
+                                        .frame(height: 14)
+                                    
+                                    ProgressView(value: progress(for: context), total: 1.0)
+                                        .progressViewStyle(.linear)
+                                        .tint(Color(red: 161/255, green: 210/255, blue: 241/255))
+                                        .frame(height: 4)
+                                        .clipShape(Capsule())
+                                }
                             }
                         }
                         
@@ -222,35 +270,62 @@ struct FocusLiveActivity: Widget {
                 }
                 
                 
-            } compactLeading: {
-                if context.state.isResting {
+            }
+            
+            compactLeading: {
+                if context.state.isCompleted {
+                    Image("compactDone")
+                        .resizable()
+                        .scaledToFit()
+                } else if context.state.isRestOver {
+                    Image("compactRestOver")
+                        .resizable()
+                        .scaledToFit()
+                } else if context.state.isResting {
                     Image("compactResting")
                         .resizable()
                         .scaledToFit()
-                    
-                }else{
+                } else {
                     Image("compactTimer")
                         .resizable()
                         .scaledToFit()
                 }
-            } compactTrailing: {
-//                Text(TimeFormatter.format(seconds: (context.state.isResting ? context.state.restRemainingTime : context.state.remainingTime) ?? 0))
-//                    .foregroundColor(Color(red: 161/255, green: 210/255, blue: 241/255))
-                if let endTime = context.state.endTime {
+            }
+            
+            compactTrailing: {
+                if context.state.isCompleted {
+                    Text("Completed")
+                        .font(.headline)
+                } else if context.state.isRestOver {
+                    Text("Rest Over")
+                        .font(.headline)
+                } else if let endTime = context.state.endTime {
                     Text(endTime, style: .timer)
                         .foregroundColor(Color(red: 161/255, green: 210/255, blue: 241/255))
                         .monospacedDigit()
                 } else {
-                    Text(TimeFormatter.format(seconds: context.state.isResting ? (context.state.restRemainingTime ?? 0) : context.state.remainingTime))
-                        .foregroundColor(Color(red: 161/255, green: 210/255, blue: 241/255))
+                    Text(TimeFormatter.format(seconds:
+                        context.state.isResting ?
+                        (context.state.restRemainingTime ?? 0) :
+                        context.state.remainingTime
+                    ))
+                    .foregroundColor(Color(red: 161/255, green: 210/255, blue: 241/255))
                 }
-            } minimal: {
-                if context.state.isResting {
+            }
+            minimal: {
+                if context.state.isCompleted {
+                    Image("compactDone")
+                        .resizable()
+                        .scaledToFit()
+                } else if context.state.isRestOver {
+                    Image("compactRestOver")
+                        .resizable()
+                        .scaledToFit()
+                } else if context.state.isResting {
                     Image("compactResting")
                         .resizable()
                         .scaledToFit()
-                    
-                }else{
+                } else {
                     Image("compactTimer")
                         .resizable()
                         .scaledToFit()
