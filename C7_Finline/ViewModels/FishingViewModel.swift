@@ -30,6 +30,7 @@ final class FishingViewModel: ObservableObject {
         print("Starting fishing for \(duration) seconds (Deep Focus: \(deepFocusEnabled))")
 
         isFishing = true
+        isPaused = false
         totalDuration = duration
         if !resume {
             caughtFish.removeAll()
@@ -52,6 +53,7 @@ final class FishingViewModel: ObservableObject {
         fishingTask?.cancel()
         fishingTask = nil
         isFishing = false
+        isPaused = false
     }
 
     

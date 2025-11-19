@@ -132,6 +132,10 @@ final class FocusSessionViewModel: ObservableObject {
             errorMessage = "Session is already in progress."
             return
         }
+        guard sessionDuration > 0 else {  // ← Add this check
+                errorMessage = "Invalid session duration."
+                return
+            }
         
         print("Starting session... Nudge Me Enabled: \(nudgeMeEnabled)")
         
@@ -175,6 +179,7 @@ final class FocusSessionViewModel: ObservableObject {
                     print("Deep Focus not applied — user denied or authorization failed.")
                 }
             }
+            fishingVM.stopFishing()
             
             await fishingVM.startFishing(
                 for: sessionDuration,
@@ -292,7 +297,7 @@ final class FocusSessionViewModel: ObservableObject {
                 guard let self = self, let endTime = self.endTime else { return }
 
                 let remaining = endTime.timeIntervalSinceNow
-                if remaining > 2 {
+                if remaining > 0.1 && self.isFocusing {
                     self.remainingTime = remaining
                     self.checkNudgeAlerts()
                     
@@ -312,6 +317,10 @@ final class FocusSessionViewModel: ObservableObject {
                     self.remainingTime = 0
                     self.endTime = nil
                     self.didTimeRunOut = true
+                    self.isFocusing = false
+                    self.authManager.clearShield()
+                    self.fishingVM.stopFishing()
+//                    self.notificationManager.cancelSessionEndNotification()
                     await self.activity?.update(using:
                         FocusActivityAttributes.ContentState(
                             remainingTime: 0,
@@ -334,6 +343,10 @@ final class FocusSessionViewModel: ObservableObject {
     // Rest
     func startRest(for seconds: TimeInterval) {
         guard !isResting, seconds > 0, seconds <= remainingRestSeconds else { return }
+        guard seconds >= 1 else {  // ← Add minimum duration check
+                print("Rest duration too short")
+                return
+            }
         
         isResting = true
         currentRestStart = Date()
@@ -409,7 +422,7 @@ final class FocusSessionViewModel: ObservableObject {
                 if let restEndTime = self.restEndTime {
                     let remaining = restEndTime.timeIntervalSinceNow
                     
-                    if remaining > 2 {
+                    if remaining > 0.1 && self.isResting {
                         self.restRemainingTime = remaining
                         let now = Date()
                         let interval = self.liveActivityUpdateInterval
@@ -422,6 +435,7 @@ final class FocusSessionViewModel: ObservableObject {
                         // Rest is over
                         self.restRemainingTime = 0
                         self.restEndTime = nil
+//                        self.isResting = false
                         await self.activity?.update(using:
                                                 FocusActivityAttributes.ContentState(
                                                     remainingTime: self.remainingTime,
@@ -595,6 +609,13 @@ final class FocusSessionViewModel: ObservableObject {
         let isCompleted = (!isResting && remainingTime <= 0)
         let isRestOver = (isResting && restRemainingTime <= 0)
         
+        if remainingTime <= 0 {
+            endTime = nil
+        }
+        if restRemainingTime <= 0 {
+            restEndTime = nil
+        }
+        
         let shouldShowEndTime: Date? = {
             if isCompleted {
                 return nil  // Session is done
@@ -653,6 +674,9 @@ final class FocusSessionViewModel: ObservableObject {
                 self.didTimeRunOut = true
                 timer?.invalidate()
                 timer = nil
+                
+                authManager.clearShield()
+                fishingVM.stopFishing()
             }
         }
         

@@ -54,10 +54,10 @@ struct FocusLiveActivity: Widget {
                                     .offset(x:-5)
                                 
                                 if let endTime = context.state.endTime {
-                                    Text(endTime, style: .timer)
-                                        .font(.title2)
-                                        .foregroundColor(.gray)
-                                        .monospacedDigit()
+                                    Text(timerInterval: Date.now...endTime, countsDown: true)
+                                            .font(.title2)
+                                            .foregroundColor(.gray)
+                                            .monospacedDigit()
                                 } else {
                                     Text(TimeFormatter.format(seconds: context.state.restRemainingTime ?? 0))
                                         .font(.title2)
@@ -69,8 +69,17 @@ struct FocusLiveActivity: Widget {
 
                     } else {
                         VStack(alignment: .leading) {
+//                            if let endTime = context.state.endTime {
+//                                Text(endTime, style: .timer)
+//                                    .font(.system(size: 48))
+//                                    .fontWeight(.bold)
+//                                    .monospacedDigit()
+//                                    .foregroundColor(.gray)
+//                                    .offset(x:-5)
+//                                    .minimumScaleFactor(0.5)
+//                                    .layoutPriority(10)
                             if let endTime = context.state.endTime {
-                                Text(endTime, style: .timer)
+                                Text(timerInterval: Date.now...endTime, countsDown: true)
                                     .font(.system(size: 48))
                                     .fontWeight(.bold)
                                     .monospacedDigit()
@@ -221,15 +230,16 @@ struct FocusLiveActivity: Widget {
                                     }
 
                                     if let endTime = context.state.endTime {
-                                        Text(endTime, style: .timer)
-                                            .font(.subheadline)
-                                            .foregroundColor(.gray)
-                                            .monospacedDigit()
+                                        Text(timerInterval: Date.now...endTime, countsDown: true)
+                                                .font(.subheadline)
+                                                .foregroundColor(.gray)
+                                                .monospacedDigit()
                                     }
                                     
                                 } else {
                                     if let endTime = context.state.endTime {
-                                        Text(endTime, style: .timer)
+                                        Text(timerInterval: Date.now...endTime, countsDown: true)
+                                            .multilineTextAlignment(.leading)
                                             .font(.system(size: 35))
                                             .fontWeight(.bold)
                                             .monospacedDigit()
@@ -300,9 +310,10 @@ struct FocusLiveActivity: Widget {
                     Text("Rest Over")
                         .font(.headline)
                 } else if let endTime = context.state.endTime {
-                    Text(endTime, style: .timer)
+                    Text(timerInterval: Date.now...endTime, countsDown: true)
                         .foregroundColor(Color(red: 161/255, green: 210/255, blue: 241/255))
                         .monospacedDigit()
+                        .frame(width: 50) // Recommended to prevent jitter
                 } else {
                     Text(TimeFormatter.format(seconds:
                         context.state.isResting ?
@@ -331,7 +342,7 @@ struct FocusLiveActivity: Widget {
                         .scaledToFit()
                 }
             }
-            .widgetURL(URL(string: "finline://"))
+//            .widgetURL(URL(string: "finline://"))
             .keylineTint(Color.red)
         }
     }
