@@ -342,11 +342,22 @@ struct FocusLiveActivity: Widget {
     }
 
     
+//    private func progress(for context: ActivityViewContext<FocusActivityAttributes>) -> Double {
+//        let remaining = max(context.state.remainingTime, 0)
+//        let total = max(context.attributes.totalDuration, remaining)
+//        
+//        let progress = (total - remaining) / total
+//        return min(max(progress, 0), 1)
+//    }
     private func progress(for context: ActivityViewContext<FocusActivityAttributes>) -> Double {
-        let remaining = max(context.state.remainingTime, 0)
-        let total = max(context.attributes.totalDuration, remaining)
-        
-        let progress = (total - remaining) / total
+        guard
+            let endTime = context.state.endTime
+        else { return 1.0 }  // Complete
+
+        let total = context.attributes.totalDuration
+        let elapsed = total - max(endTime.timeIntervalSinceNow, 0)
+        let progress = elapsed / total
+
         return min(max(progress, 0), 1)
     }
 }

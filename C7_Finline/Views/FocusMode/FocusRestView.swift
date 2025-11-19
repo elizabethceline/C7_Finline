@@ -37,7 +37,7 @@ struct FocusRestView: View {
                         HapticManager.shared.playConfirmationHaptic()
                         showEarlyFinishAlert = true
                     } else {
-                        HapticManager.shared.playSessionEndHaptic()
+                        HapticManager.shared.playStartSessionHaptic()
                         viewModel.endRest()
                     }
                 }

@@ -279,7 +279,7 @@ final class FocusSessionViewModel: ObservableObject {
                 guard let self = self, let endTime = self.endTime else { return }
 
                 let remaining = endTime.timeIntervalSinceNow
-                if remaining > 0 {
+                if remaining > 2 {
                     self.remainingTime = remaining
                     self.checkNudgeAlerts()
                     
@@ -383,7 +383,7 @@ final class FocusSessionViewModel: ObservableObject {
                 if let restEndTime = self.restEndTime {
                     let remaining = restEndTime.timeIntervalSinceNow
                     
-                    if remaining > 0 {
+                    if remaining > 2 {
                         self.restRemainingTime = remaining
                         let now = Date()
                         let interval = self.liveActivityUpdateInterval
@@ -566,22 +566,19 @@ final class FocusSessionViewModel: ObservableObject {
         let isRestOver = (isResting && restRemainingTime <= 0)
         
         let shouldShowEndTime: Date? = {
-            if isCompleted || isRestOver {
-                return nil  // Always nil when completed or rest is over
+            if isCompleted {
+                return nil  // Session is done
             }
             
             if isResting {
-                // Only show restEndTime if it's still in the future
-                if let restEndTime = restEndTime, restEndTime.timeIntervalSinceNow > 0 {
-                    return restEndTime
+                if isRestOver {
+                    return nil  // Rest is done
                 }
-                return nil
+                // Keep restEndTime for progress bar during active rest
+                return restEndTime
             } else {
-                // Only show endTime if it's still in the future
-                if let endTime = endTime, endTime.timeIntervalSinceNow > 0 {
-                    return endTime
-                }
-                return nil
+                // Keep endTime for progress bar during active focus session
+                return endTime
             }
         }()
         
@@ -616,7 +613,17 @@ final class FocusSessionViewModel: ObservableObject {
     @objc private func appDidBecomeActive() {
         // Update focus session time
         if let endTime = endTime, !isResting {
-            remainingTime = max(0, endTime.timeIntervalSinceNow)
+            let remaining = endTime.timeIntervalSinceNow
+            if remaining > 0 {
+                remainingTime = remaining
+            } else {
+                // Session ended while app was in background
+                remainingTime = 0
+                self.endTime = nil
+                self.didTimeRunOut = true
+                timer?.invalidate()
+                timer = nil
+            }
         }
         
         // ADDED: Update rest time
