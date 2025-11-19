@@ -243,6 +243,9 @@ final class FocusSessionViewModel: ObservableObject {
         self.isShowingNudgeAlert = false
         self.nudgesTriggered.removeAll()
         
+        self.didTimeRunOut = false
+        self.isSessionEnded = false
+        
         if authManager.isEnabled {
             authManager.applyShield()
         }
