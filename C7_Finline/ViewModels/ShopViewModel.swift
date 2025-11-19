@@ -32,10 +32,14 @@ class ShopViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     private var syncDebounceTask: Task<Void, Never>?
 
-    init(userProfileManager: UserProfileManager, networkMonitor: NetworkMonitor)
-    {
-        self.userProfileManager = userProfileManager
+    init(
+        userProfileManager: UserProfileManager? = nil,
+        networkMonitor: NetworkMonitor = .shared
+    ) {
         self.networkMonitor = networkMonitor
+        self.userProfileManager =
+            userProfileManager
+            ?? UserProfileManager(networkMonitor: networkMonitor)
         self.shopManager = ShopManager(networkMonitor: networkMonitor)
 
         observeNetworkStatus()
@@ -206,7 +210,7 @@ class ShopViewModel: ObservableObject {
 
     func buyItem(_ item: ShopItem) async {
         guard !isPurchasing else { return }
-        
+
         guard let profile = userProfile, let context = modelContext else {
             return
         }
@@ -220,9 +224,9 @@ class ShopViewModel: ObservableObject {
             alertMessage = "Not enough points to buy \(item.displayName)."
             return
         }
-        
+
         isPurchasing = true
-        
+
         defer { isPurchasing = false }
 
         profile.points -= item.price
@@ -282,7 +286,8 @@ class ShopViewModel: ObservableObject {
 
     private func updateSelectedItem(from items: [PurchasedItem]) {
         if let selected = items.first(where: { $0.isSelected }),
-           let shopItem = ShopItem(rawValue: selected.itemName) {
+            let shopItem = ShopItem(rawValue: selected.itemName)
+        {
             self.selectedItem = shopItem
             self.selectedImage = shopItem.image
         } else {

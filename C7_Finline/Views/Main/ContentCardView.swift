@@ -195,7 +195,7 @@ struct ContentCardView: View {
         goals: [],
         tasks: [],
         selectedDate: .constant(Date()),
-        networkMonitor: NetworkMonitor()
+        networkMonitor: NetworkMonitor.shared
     )
     .environmentObject(FocusSessionViewModel())
 }

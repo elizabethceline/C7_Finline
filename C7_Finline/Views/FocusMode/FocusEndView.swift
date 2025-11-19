@@ -63,7 +63,7 @@ struct FocusEndView: View {
 
     let mockVM = FocusResultViewModel(
         context: nil,
-        networkMonitor: NetworkMonitor()
+        networkMonitor: NetworkMonitor.shared
     )
     mockVM.currentResult = mockResult
     mockVM.bonusPoints = 20
@@ -87,7 +87,7 @@ struct FocusEndView: View {
 
     let mockVM = FocusResultViewModel(
         context: nil,
-        networkMonitor: NetworkMonitor()
+        networkMonitor: NetworkMonitor.shared
     )
     mockVM.currentResult = emptyResult
     mockVM.bonusPoints = 0  // optional, just to make it clean

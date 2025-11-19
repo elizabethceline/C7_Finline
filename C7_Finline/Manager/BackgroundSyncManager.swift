@@ -35,7 +35,7 @@ class BackgroundSyncManager: NSObject, ObservableObject {
     private var cancellables = Set<AnyCancellable>()
 
     private override init() {
-        self.networkMonitor = NetworkMonitor()
+        self.networkMonitor = NetworkMonitor.shared
         self.goalManager = GoalManager(networkMonitor: networkMonitor)
         self.taskManager = TaskManager(networkMonitor: networkMonitor)
         self.userProfileManager = UserProfileManager(

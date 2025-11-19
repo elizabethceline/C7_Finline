@@ -180,13 +180,15 @@ struct DetailTaskView: View {
 
                                 if hasUnsavedChanges {
                                     isShowingUnsavedChangesAlert = true
-                                    HapticManager.shared.playUnsavedChangesHaptic()
+                                    HapticManager.shared
+                                        .playUnsavedChangesHaptic()
                                 } else {
                                     focusVM.setTask(task, goal: task.goal)
                                     isShowingFocusSettings = true
-                                    
-                                    HapticManager.shared.playConfirmationHaptic()
-                                       
+
+                                    HapticManager.shared
+                                        .playConfirmationHaptic()
+
                                 }
                             }) {
                                 Text("Start Focus")
@@ -350,7 +352,7 @@ struct DetailTaskView: View {
 }
 
 #Preview {
-    let dummyNetworkMonitor = NetworkMonitor()
+    let dummyNetworkMonitor = NetworkMonitor.shared
     let dummyManager = TaskManager(networkMonitor: dummyNetworkMonitor)
     let dummyViewModel = TaskViewModel(networkMonitor: dummyNetworkMonitor)
 
