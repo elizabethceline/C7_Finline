@@ -107,7 +107,7 @@ struct FocusModeView: View {
                 HapticManager.shared.playDestructiveHaptic()
                 Task {
                     isGivingUp = true
-                    await viewModel.giveUp() // mark incomplete
+                    await viewModel.endSession() // mark incomplete
                     if let task = viewModel.task {
                         onGiveUp(task)
                     } else {
