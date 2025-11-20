@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import Lottie
 
 struct FocusModeView: View {
     @EnvironmentObject var viewModel: FocusSessionViewModel
@@ -32,6 +33,11 @@ struct FocusModeView: View {
     var body: some View {
         ZStack {
             backgroundView
+            
+            LottieView(name: "Fishinganimated", loopMode: .loop)
+                .allowsHitTesting(false)
+                .frame(width: 300, height: 300)
+                .offset(y: 70)
             
             SnowView()
                    .allowsHitTesting(false)

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		922EC4E92ECEBBDA00E71F8C /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = 922EC4E82ECEBBDA00E71F8C /* Lottie */; };
 		92EBA3362ECC997B008DBAB4 /* ConfettiSwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = 92EBA3352ECC997B008DBAB4 /* ConfettiSwiftUI */; };
 		A57CCEE22EC1960C00013DA3 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A57CCEE12EC1960C00013DA3 /* WidgetKit.framework */; };
 		A57CCEE42EC1960C00013DA3 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A57CCEE32EC1960C00013DA3 /* SwiftUI.framework */; };
@@ -136,6 +137,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				92EBA3362ECC997B008DBAB4 /* ConfettiSwiftUI in Frameworks */,
+				922EC4E92ECEBBDA00E71F8C /* Lottie in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -234,6 +236,7 @@
 			name = C7_Finline;
 			packageProductDependencies = (
 				92EBA3352ECC997B008DBAB4 /* ConfettiSwiftUI */,
+				922EC4E82ECEBBDA00E71F8C /* Lottie */,
 			);
 			productName = C7_Finline;
 			productReference = A5E3A6B52EA7673A0035E192 /* C7_Finline.app */;
@@ -322,6 +325,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				92EBA3342ECC9902008DBAB4 /* XCRemoteSwiftPackageReference "ConfettiSwiftUI" */,
+				922EC4E72ECEBBDA00E71F8C /* XCLocalSwiftPackageReference "lottie-spm" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A5E3A6B62EA7673A0035E192 /* Products */;
@@ -852,6 +856,13 @@
 		};
 /* End XCConfigurationList section */
 
+/* Begin XCLocalSwiftPackageReference section */
+		922EC4E72ECEBBDA00E71F8C /* XCLocalSwiftPackageReference "lottie-spm" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = "lottie-spm";
+		};
+/* End XCLocalSwiftPackageReference section */
+
 /* Begin XCRemoteSwiftPackageReference section */
 		92EBA3342ECC9902008DBAB4 /* XCRemoteSwiftPackageReference "ConfettiSwiftUI" */ = {
 			isa = XCRemoteSwiftPackageReference;
@@ -864,6 +875,10 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		922EC4E82ECEBBDA00E71F8C /* Lottie */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = Lottie;
+		};
 		92EBA3352ECC997B008DBAB4 /* ConfettiSwiftUI */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 92EBA3342ECC9902008DBAB4 /* XCRemoteSwiftPackageReference "ConfettiSwiftUI" */;
