@@ -161,7 +161,7 @@ struct DetailTaskView: View {
                             Spacer()
                             Image(systemName: "chevron.right")
                         }
-                        .foregroundStyle(.black)
+                        .foregroundStyle(Color(.label))
                     }
                     .sheet(isPresented: $isShowingDurationPicker) {
                         TimerPickerSheetView(
