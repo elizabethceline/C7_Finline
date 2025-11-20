@@ -12,6 +12,7 @@ import UIKit
 import AppKit
 #endif
 
+@MainActor
 final class FocusSessionViewModel: ObservableObject {
     // Focus Session
     @Published var isFocusing = false
@@ -92,13 +93,13 @@ final class FocusSessionViewModel: ObservableObject {
     init(
         goal: Goal? = nil,
         task: GoalTask? = nil,
-        fishingVM: FishingViewModel = FishingViewModel(),
+        fishingVM: FishingViewModel? = nil,
         authManager: FocusAuthorizationManager = FocusAuthorizationManager(),
         userProfileManager: UserProfileManager? = nil
     ) {
         self.goal = goal
         self.task = task
-        self.fishingVM = fishingVM
+        self.fishingVM = fishingVM ?? FishingViewModel()
         self.authManager = authManager
         self.userProfileManager = userProfileManager ?? UserProfileManager(networkMonitor: NetworkMonitor())
         
@@ -319,7 +320,7 @@ final class FocusSessionViewModel: ObservableObject {
                     self.didTimeRunOut = true
                     self.isFocusing = false
                     self.authManager.clearShield()
-                    self.fishingVM.stopFishing()
+//                    self.fishingVM.stopFishing()
 //                    self.notificationManager.cancelSessionEndNotification()
                     await self.activity?.update(using:
                         FocusActivityAttributes.ContentState(
@@ -587,7 +588,7 @@ final class FocusSessionViewModel: ObservableObject {
                 endTime: endTime,
                 isCompleted: false
             ),
-            staleDate: nil
+            staleDate: endTime
         )
         
         do {
@@ -620,18 +621,18 @@ final class FocusSessionViewModel: ObservableObject {
             if isCompleted {
                 return nil  // Session is done
             }
-            
             if isResting {
                 if isRestOver {
                     return nil  // Rest is done
                 }
-                // Keep restEndTime for progress bar during active rest
                 return restEndTime
             } else {
                 // Keep endTime for progress bar during active focus session
                 return endTime
             }
         }()
+        
+        let currentStaleDate: Date? = isResting ? restEndTime : endTime
         
         let updatedState = FocusActivityAttributes.ContentState(
             remainingTime: max(0, remainingTime),
@@ -643,7 +644,9 @@ final class FocusSessionViewModel: ObservableObject {
             isRestOver: isRestOver
         )
         
-        await activity.update(using: updatedState)
+        let content = ActivityContent(state: updatedState, staleDate: currentStaleDate)
+        
+        await activity.update(content)
     }
 
 
@@ -679,8 +682,7 @@ final class FocusSessionViewModel: ObservableObject {
                 fishingVM.stopFishing()
             }
         }
-        
-        // ADDED: Update rest time
+       
         if let restEndTime = restEndTime, isResting {
             let remaining = restEndTime.timeIntervalSinceNow
             if remaining > 0 {
@@ -693,7 +695,10 @@ final class FocusSessionViewModel: ObservableObject {
             }
         }
         
-        Task { await updateLiveActivity() }
+        Task {
+            try? await Task.sleep(nanoseconds: 100_000_000)
+            await updateLiveActivity()
+        }
     }
 
     

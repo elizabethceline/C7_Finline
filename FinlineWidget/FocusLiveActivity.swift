@@ -303,24 +303,28 @@ struct FocusLiveActivity: Widget {
             }
             
             compactTrailing: {
-                if context.state.isCompleted {
-                    Text("Completed")
-                        .font(.headline)
-                } else if context.state.isRestOver {
-                    Text("Rest Over")
-                        .font(.headline)
-                } else if let endTime = context.state.endTime {
-                    Text(timerInterval: Date.now...endTime, countsDown: true)
+                HStack {
+                    Spacer(minLength: 0)
+                    
+                    if context.state.isCompleted {
+                        Text("Completed")
+                            .font(.headline)
+                    } else if context.state.isRestOver {
+                        Text("Rest Over")
+                            .font(.headline)
+                    } else if let endTime = context.state.endTime {
+                        Text(timerInterval: Date.now...endTime, countsDown: true)
+                            .foregroundColor(Color(red: 161/255, green: 210/255, blue: 241/255))
+                            .monospacedDigit()
+                            .frame(width: 65)
+                    } else {
+                        Text(TimeFormatter.format(seconds:
+                                                    context.state.isResting ?
+                                                  (context.state.restRemainingTime ?? 0) :
+                                                    context.state.remainingTime
+                                                 ))
                         .foregroundColor(Color(red: 161/255, green: 210/255, blue: 241/255))
-                        .monospacedDigit()
-                        .frame(width: 50) // Recommended to prevent jitter
-                } else {
-                    Text(TimeFormatter.format(seconds:
-                        context.state.isResting ?
-                        (context.state.restRemainingTime ?? 0) :
-                        context.state.remainingTime
-                    ))
-                    .foregroundColor(Color(red: 161/255, green: 210/255, blue: 241/255))
+                    }
                 }
             }
             minimal: {
