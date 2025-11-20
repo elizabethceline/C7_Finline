@@ -33,12 +33,12 @@ enum FishRarity: String, Codable, CaseIterable { case common, uncommon, rare, su
 extension Fish {
     var imageName: String {
         switch rarity {
-        case "common": return "goldFish"
-        case "uncommon": return "tuna"
-        case "rare": return "angler"
+        case "common": return "Goldfish"
+        case "uncommon": return "Tuna"
+        case "rare": return "Angler"
         case "superRare": return "ghostFish"
         case "legendary": return "rainbowSquid"
-        default: return "goldFish"
+        default: return "Goldfish"
         }
     }
 }
