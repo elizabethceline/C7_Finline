@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		92250AD82ECF12CA001FC609 /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = 92250AD72ECF12CA001FC609 /* Lottie */; };
 		922EC4E92ECEBBDA00E71F8C /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = 922EC4E82ECEBBDA00E71F8C /* Lottie */; };
 		92EBA3362ECC997B008DBAB4 /* ConfettiSwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = 92EBA3352ECC997B008DBAB4 /* ConfettiSwiftUI */; };
 		A57CCEE22EC1960C00013DA3 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A57CCEE12EC1960C00013DA3 /* WidgetKit.framework */; };
@@ -138,6 +139,7 @@
 			files = (
 				92EBA3362ECC997B008DBAB4 /* ConfettiSwiftUI in Frameworks */,
 				922EC4E92ECEBBDA00E71F8C /* Lottie in Frameworks */,
+				92250AD82ECF12CA001FC609 /* Lottie in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -237,6 +239,7 @@
 			packageProductDependencies = (
 				92EBA3352ECC997B008DBAB4 /* ConfettiSwiftUI */,
 				922EC4E82ECEBBDA00E71F8C /* Lottie */,
+				92250AD72ECF12CA001FC609 /* Lottie */,
 			);
 			productName = C7_Finline;
 			productReference = A5E3A6B52EA7673A0035E192 /* C7_Finline.app */;
@@ -325,7 +328,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				92EBA3342ECC9902008DBAB4 /* XCRemoteSwiftPackageReference "ConfettiSwiftUI" */,
-				922EC4E72ECEBBDA00E71F8C /* XCLocalSwiftPackageReference "lottie-spm" */,
+				92250AD62ECF12CA001FC609 /* XCRemoteSwiftPackageReference "lottie-spm" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A5E3A6B62EA7673A0035E192 /* Products */;
@@ -856,14 +859,15 @@
 		};
 /* End XCConfigurationList section */
 
-/* Begin XCLocalSwiftPackageReference section */
-		922EC4E72ECEBBDA00E71F8C /* XCLocalSwiftPackageReference "lottie-spm" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = "lottie-spm";
-		};
-/* End XCLocalSwiftPackageReference section */
-
 /* Begin XCRemoteSwiftPackageReference section */
+		92250AD62ECF12CA001FC609 /* XCRemoteSwiftPackageReference "lottie-spm" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/airbnb/lottie-spm.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 4.5.2;
+			};
+		};
 		92EBA3342ECC9902008DBAB4 /* XCRemoteSwiftPackageReference "ConfettiSwiftUI" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/simibac/ConfettiSwiftUI?tab=readme-ov-file";
@@ -875,6 +879,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		92250AD72ECF12CA001FC609 /* Lottie */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 92250AD62ECF12CA001FC609 /* XCRemoteSwiftPackageReference "lottie-spm" */;
+			productName = Lottie;
+		};
 		922EC4E82ECEBBDA00E71F8C /* Lottie */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = Lottie;
