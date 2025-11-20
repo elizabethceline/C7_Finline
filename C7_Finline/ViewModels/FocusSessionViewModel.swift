@@ -226,23 +226,23 @@ final class FocusSessionViewModel: ObservableObject {
         isSessionEnded = true
     }
 
-    func giveUp() async {
-        guard isFocusing else { return }
-
-        timer?.invalidate()
-        timer = nil
-
-        fishingVM.stopFishing()
-        authManager.clearShield()
-
-        notificationManager.cancelSessionEndNotification()
-
-        isFocusing = false
-        shouldReturnToStart = true
-
-        // End Live Activity
-        await endLiveActivity()
-    }
+//    func giveUp() async {
+//        guard isFocusing else { return }
+//
+//        timer?.invalidate()
+//        timer = nil
+//
+//        fishingVM.stopFishing()
+//        authManager.clearShield()
+//
+//        notificationManager.cancelSessionEndNotification()
+//
+//        isFocusing = false
+//        shouldReturnToStart = true
+//
+//        // End Live Activity
+//        await endLiveActivity()
+//    }
 
     func finishEarly() {
         didFinishEarly = true
