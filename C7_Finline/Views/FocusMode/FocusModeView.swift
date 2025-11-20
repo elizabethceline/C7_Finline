@@ -16,6 +16,7 @@ struct FocusModeView: View {
     @State private var resultVM: FocusResultViewModel?
     
     @State private var isShowingTimesUpAlert = false
+    @State private var timeUpAlertShown = false
     @State private var isShowingAddTimeModal = false
     @State private var extraTimeInMinutes: Int = 5
     @State private var hasExtendedTime = false
@@ -31,6 +32,9 @@ struct FocusModeView: View {
     var body: some View {
         ZStack {
             backgroundView
+            
+            SnowView()
+                   .allowsHitTesting(false)
             
             if viewModel.isResting {
                 Color.blue.opacity(0.3)
@@ -57,6 +61,7 @@ struct FocusModeView: View {
             oldValue, newValue in
             if newValue {
                 isShowingTimesUpAlert = true
+                timeUpAlertShown = true
                 HapticManager.shared.playSessionEndHaptic()
             }
         }
@@ -128,6 +133,8 @@ struct FocusModeView: View {
             }
             Button("I need more time") {
                 extraTimeInMinutes = 5
+                isShowingTimesUpAlert = false
+                timeUpAlertShown = false
                 isShowingAddTimeModal = true
             }
         } message: {

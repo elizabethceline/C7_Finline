@@ -15,6 +15,8 @@ struct FocusActivityAttributes: ActivityAttributes {
         var taskTitle: String
         var isResting: Bool
         var endTime: Date?
+        var isCompleted: Bool = false
+        var isRestOver: Bool = false
     }
 
 
