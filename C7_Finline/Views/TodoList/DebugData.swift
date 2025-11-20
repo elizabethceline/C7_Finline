@@ -5,44 +5,44 @@
 //  Created by Richie Reuben Hermanto on 28/10/25.
 //
 
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 struct DebugDataView: View {
     @Environment(\.modelContext) private var modelContext
     @StateObject private var taskViewModel = TaskViewModel()
     @StateObject private var goalVM = GoalViewModel()
-    
+
     @State private var coverMode: FocusCoverMode?
-        @EnvironmentObject var focusVM: FocusSessionViewModel
-    
+    @EnvironmentObject var focusVM: FocusSessionViewModel
+
     private var isCoverPresented: Binding<Bool> {
-            Binding(
-                get: { coverMode != nil },
-                set: { if !$0 { coverMode = nil } }
-            )
-        }
-    
+        Binding(
+            get: { coverMode != nil },
+            set: { if !$0 { coverMode = nil } }
+        )
+    }
+
     @State private var goals: [Goal] = []
     @State private var tasks: [GoalTask] = []
     @State private var isLoading = false
     @State private var syncMessage: String = ""
-    
+
     private let goalManager: GoalManager
     private let taskManager: TaskManager
-    
+
     @State private var selectedTask: GoalTask? = nil
     //@State private var showDetailModal = false
-    
+
     @State private var selectedGoal: Goal? = nil
     @State private var showGoalDetailModal = false
-    
+
     init() {
-        let networkMonitor = NetworkMonitor()
+        let networkMonitor = NetworkMonitor.shared
         self.goalManager = GoalManager(networkMonitor: networkMonitor)
         self.taskManager = TaskManager(networkMonitor: networkMonitor)
     }
-    
+
     var body: some View {
         NavigationStack {
             List {
@@ -56,18 +56,24 @@ struct DebugDataView: View {
                                 .foregroundColor(.green)
                         }
                     }
-                    
+
                     Section("Stored Goals (\(goals.count))") {
                         ForEach(goals) { goal in
                             NavigationLink {
-                                DetailGoalView(goal: goal, goalVM: goalVM, mainVM: MainViewModel())
+                                DetailGoalView(
+                                    goal: goal,
+                                    goalVM: goalVM,
+                                    mainVM: MainViewModel()
+                                )
                             } label: {
                                 VStack(alignment: .leading) {
                                     Text(goal.name)
                                         .font(.headline)
-                                    Text("Due: \(goal.due.formatted(date: .long, time: .shortened))")
-                                        .font(.subheadline)
-                                        .foregroundColor(.secondary)
+                                    Text(
+                                        "Due: \(goal.due.formatted(date: .long, time: .shortened))"
+                                    )
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
                                     if let desc = goal.goalDescription {
                                         Text(desc)
                                             .font(.caption)
@@ -82,23 +88,27 @@ struct DebugDataView: View {
                             }
                         }
                     }
-                    
+
                     Section("Stored Tasks (\(tasks.count))") {
                         ForEach(tasks) { task in
                             Button {
-//                                selectedTask = task
-//                                showDetailModal = true
+                                //                                selectedTask = task
+                                //                                showDetailModal = true
                                 coverMode = .detail(task)
                             } label: {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text(task.name)
                                         .font(.headline)
-                                    Text("\(task.workingTime.formatted(date: .abbreviated, time: .shortened))")
-                                        .font(.subheadline)
-                                        .foregroundColor(.secondary)
-                                    Text("Focus: \(task.focusDuration) mins | Goal: \(task.goal?.name ?? "-")")
-                                        .font(.caption)
-                                        .foregroundColor(.gray)
+                                    Text(
+                                        "\(task.workingTime.formatted(date: .abbreviated, time: .shortened))"
+                                    )
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                    Text(
+                                        "Focus: \(task.focusDuration) mins | Goal: \(task.goal?.name ?? "-")"
+                                    )
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
                                     if task.needsSync {
                                         Text("⚠️ Pending Sync")
                                             .font(.caption2)
@@ -109,36 +119,39 @@ struct DebugDataView: View {
                             .buttonStyle(.plain)
                         }
                     }
-//                    .sheet(isPresented: $showDetailModal) {
-//                        if let selectedTask {
-//                            DetailTaskView(task: selectedTask, taskManager: TaskManager(networkMonitor: NetworkMonitor()), viewModel: taskViewModel)
-//                        }
-//                    }
+                    //                    .sheet(isPresented: $showDetailModal) {
+                    //                        if let selectedTask {
+                    //                            DetailTaskView(task: selectedTask, taskManager: TaskManager(networkMonitor: NetworkMonitor()), viewModel: taskViewModel)
+                    //                        }
+                    //                    }
                     .fullScreenCover(isPresented: isCoverPresented) {
-                                        Group {
-                                            if let mode = coverMode {
-                                                switch mode {
-                                                case .detail(let task):
-                                                    DetailTaskView(
-                                                        task: task,
-                                                        taskManager: taskManager,
-                                                        viewModel: taskViewModel,
-                                                        onStartFocus: {
-                                                            coverMode = .focus
-                                                        }
-                                                    )
-                                                case .focus:
-                                                    FocusModeView(onGiveUp: { task in 
-                                                        coverMode = .detail(task)
-                                                                    }, onSessionEnd: {
-                                coverMode = nil
-                                                                    })
-                                                }
-                                            }
+                        Group {
+                            if let mode = coverMode {
+                                switch mode {
+                                case .detail(let task):
+                                    DetailTaskView(
+                                        task: task,
+                                        taskManager: taskManager,
+                                        viewModel: taskViewModel,
+                                        onStartFocus: {
+                                            coverMode = .focus
                                         }
-                                        .environmentObject(focusVM)
-                                        .environment(\.modelContext, modelContext)
-                                    }
+                                    )
+                                case .focus:
+                                    FocusModeView(
+                                        onGiveUp: { task in
+                                            coverMode = .detail(task)
+                                        },
+                                        onSessionEnd: {
+                                            coverMode = nil
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                        .environmentObject(focusVM)
+                        .environment(\.modelContext, modelContext)
+                    }
                 }
             }
             .navigationTitle("SwiftData Debug")
@@ -159,33 +172,38 @@ struct DebugDataView: View {
             }
         }
     }
-    
+
     private func loadData() async {
         await MainActor.run {
             isLoading = true
             syncMessage = "Fetching & syncing with iCloud..."
         }
-        
+
         do {
-            let fetchedGoals = try await goalManager.fetchGoals(modelContext: modelContext)
-            let fetchedTasks = try await taskManager.fetchTasks(for: fetchedGoals, modelContext: modelContext)
-            
+            let fetchedGoals = try await goalManager.fetchGoals(
+                modelContext: modelContext
+            )
+            let fetchedTasks = try await taskManager.fetchTasks(
+                for: fetchedGoals,
+                modelContext: modelContext
+            )
+
             await MainActor.run {
                 self.goals = fetchedGoals
                 self.tasks = fetchedTasks
                 self.syncMessage = "Fetched from iCloud successfully ✅"
             }
-            
+
             await goalManager.syncPendingGoals(modelContext: modelContext)
             await taskManager.syncPendingTasks(modelContext: modelContext)
             await goalManager.syncPendingDeletions()
             await taskManager.syncPendingDeletions()
-            
+
             await MainActor.run {
                 self.syncMessage = "Sync completed ✅"
                 self.isLoading = false
             }
-            
+
         } catch {
             await MainActor.run {
                 syncMessage = "❌ Sync failed: \(error.localizedDescription)"
@@ -193,7 +211,7 @@ struct DebugDataView: View {
             }
         }
     }
-    
+
     private func clearAllData() {
         for goal in goals { modelContext.delete(goal) }
         for task in tasks { modelContext.delete(task) }

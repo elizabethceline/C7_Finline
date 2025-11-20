@@ -30,7 +30,7 @@ struct ShopView: View {
     init(userRecordID: CKRecord.ID) {
         self.userRecordID = userRecordID
 
-        let networkMonitor = NetworkMonitor()
+        let networkMonitor = NetworkMonitor.shared
         let userProfileManager = UserProfileManager(
             networkMonitor: networkMonitor
         )
