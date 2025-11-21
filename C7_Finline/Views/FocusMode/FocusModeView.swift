@@ -34,10 +34,17 @@ struct FocusModeView: View {
         ZStack {
             backgroundView
             
-            LottieView(name: "Fishinganimated", loopMode: .loop)
-                .allowsHitTesting(false)
-                .frame(width: 300, height: 300)
-                .offset(y: 70)
+            if viewModel.isResting {
+                LottieView(name: "SleepingAnimated", loopMode: .loop)
+                    .allowsHitTesting(false)
+                    .frame(width: 300, height: 300)
+                    .offset(y: 70)
+            } else {
+                LottieView(name: "FishingAnimated", loopMode: .loop)
+                    .allowsHitTesting(false)
+                    .frame(width: 300, height: 300)
+                    .offset(y: 70)
+            }
             
             SnowView()
                    .allowsHitTesting(false)
@@ -188,15 +195,19 @@ struct FocusModeView: View {
         //        Image(viewModel.isResting ? "restBackground" : "focusBackground")
         //            .resizable()
         //            .frame(height: 910)
-        let focusImageName: String = {
-            guard !viewModel.isResting else {
-                return "focusBackground"
-            }
-            
-            return colorScheme == .dark ? "focusBackgroundDark" : "focusBackground"
-        }()
+//        let focusImageName: String = {
+//            guard !viewModel.isResting else {
+//                return "lightFocusBackground"
+//            }
+//            
+//            return colorScheme == .dark ? "darkFocusBackground" : "lightFocusBackground"
+//        }()
+//        
+        //        let imageName = viewModel.isResting ? "restBackground" : focusImageName
         
-        let imageName = viewModel.isResting ? "restBackground" : focusImageName
+        let imageName = colorScheme == .dark
+        ? "darkFocusBackground"
+        : "lightFocusBackground"
         
         return Image(imageName)
             .resizable()
