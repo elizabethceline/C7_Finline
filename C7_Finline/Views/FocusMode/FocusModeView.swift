@@ -64,7 +64,7 @@ struct FocusModeView: View {
             if newValue && !isGivingUp && resultVM == nil {
                 isShowingTimesUpAlert = true
             }
-            if newValue && resultVM == nil {
+            if newValue && !isGivingUp && resultVM == nil {
                 Task { @MainActor in
                     resultVM = viewModel.createResult(using: modelContext, didComplete: true)
                 }
