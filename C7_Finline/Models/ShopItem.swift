@@ -56,9 +56,9 @@ extension ShopItem {
         case .finley:
             return "FishingAnimated"
         case .dogo:
-            return "SleepingAnimated"
+            return "FishingAnimatedScarf"
         case .ebet:
-            return "FishingAnimated"
+            return "FishingAnimatedGlasses"
         }
     }
     
@@ -67,9 +67,9 @@ extension ShopItem {
         case .finley:
             return "SleepingAnimated"
         case .dogo:
-            return "FishingAnimated"
+            return "SleepingAnimatedScarf"
         case .ebet:
-            return "SleepingAnimated"
+            return "SleepingAnimatedGlasses"
         }
         
     }
