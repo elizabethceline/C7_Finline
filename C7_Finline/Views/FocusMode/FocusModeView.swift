@@ -49,12 +49,12 @@ struct FocusModeView: View {
             if viewModel.isResting {
                 LottieView(name: restAnimationName, loopMode: .loop)
                     .allowsHitTesting(false)
-                    .frame(width: 300, height: 300)
-                    .offset(y: 70)
+                    .frame(width: 280, height: 280)
+                    .offset(y: 85)
             } else {
                 LottieView(name: focusAnimationName, loopMode: .loop)
                     .allowsHitTesting(false)
-                    .frame(width: 300, height: 300)
+                    .frame(width: 280, height: 280)
                     .offset(y: 70)
             }
             
