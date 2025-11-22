@@ -8,6 +8,8 @@ struct FocusModeView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.colorScheme) var colorScheme
     
+    @Query private var purchasedItems: [PurchasedItem]
+    
     var onGiveUp: (GoalTask) -> Void
     var onSessionEnd: () -> Void
     
@@ -30,17 +32,27 @@ struct FocusModeView: View {
         return blocksOf30Min * (5 * 60)
     }
     
+    private var selectedShopItem: ShopItem? {
+        purchasedItems.first(where: { $0.isSelected })?.shopItem ?? .finley
+    }
+    private var focusAnimationName: String {
+        selectedShopItem?.focusAnimationName ?? "FishingAnimated"
+    }
+    private var restAnimationName: String {
+        selectedShopItem?.restAnimationName ?? "SleepingaAnimated"
+    }
+    
     var body: some View {
         ZStack {
             backgroundView
             
             if viewModel.isResting {
-                LottieView(name: "SleepingAnimated", loopMode: .loop)
+                LottieView(name: restAnimationName, loopMode: .loop)
                     .allowsHitTesting(false)
                     .frame(width: 300, height: 300)
                     .offset(y: 70)
             } else {
-                LottieView(name: "FishingAnimated", loopMode: .loop)
+                LottieView(name: focusAnimationName, loopMode: .loop)
                     .allowsHitTesting(false)
                     .frame(width: 300, height: 300)
                     .offset(y: 70)
