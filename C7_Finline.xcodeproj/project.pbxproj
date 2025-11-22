@@ -106,13 +106,6 @@
 			);
 			target = 9200F50B2ED160100039CB8B /* FinlineShieldConfig */;
 		};
-		9200F5292ED16B390039CB8B /* Exceptions for "FinlineWidget" folder in "FinlineShieldConfig" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Assets.xcassets,
-			);
-			target = 9200F50B2ED160100039CB8B /* FinlineShieldConfig */;
-		};
 		A57CCEF92EC1960C00013DA3 /* Exceptions for "FinlineWidget" folder in "FinlineWidgetExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -123,7 +116,6 @@
 		A57CCF002EC1997600013DA3 /* Exceptions for "FinlineWidget" folder in "C7_Finline" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Assets.xcassets,
 				FocusActivityAttributes.swift,
 				FocusLiveActivity.swift,
 			);
@@ -156,7 +148,6 @@
 			exceptions = (
 				A57CCF002EC1997600013DA3 /* Exceptions for "FinlineWidget" folder in "C7_Finline" target */,
 				A57CCEF92EC1960C00013DA3 /* Exceptions for "FinlineWidget" folder in "FinlineWidgetExtension" target */,
-				9200F5292ED16B390039CB8B /* Exceptions for "FinlineWidget" folder in "FinlineShieldConfig" target */,
 			);
 			path = FinlineWidget;
 			sourceTree = "<group>";
