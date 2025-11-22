@@ -49,3 +49,28 @@ enum ShopItem: String, CaseIterable, Codable {
         return self == .finley
     }
 }
+
+extension ShopItem {
+    var focusAnimationName: String {
+        switch self {
+        case .finley:
+            return "FishingAnimated"
+        case .dogo:
+            return "SleepingAnimated"
+        case .ebet:
+            return "FishingAnimated"
+        }
+    }
+    
+    var restAnimationName: String {
+        switch self {
+        case .finley:
+            return "SleepingAnimated"
+        case .dogo:
+            return "FishingAnimated"
+        case .ebet:
+            return "SleepingAnimated"
+        }
+        
+    }
+}

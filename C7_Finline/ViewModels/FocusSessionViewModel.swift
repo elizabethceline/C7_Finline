@@ -571,6 +571,8 @@ final class FocusSessionViewModel: ObservableObject {
         print("remainingTime: \(remainingTime)")
         print("Task: \(task?.name ?? "nil")")
 
+        let actualElapsedTime = sessionDuration - remainingTime
+        
         let resultVM = FocusResultViewModel(
             context: context,
             networkMonitor: .shared
@@ -582,7 +584,7 @@ final class FocusSessionViewModel: ObservableObject {
         resultVM.recordSessionResult(
             fish: fishingVM.caughtFish,
             bonusPoints: bonusPointsFromNudge,
-            duration: sessionDuration,
+            duration: actualElapsedTime,
             task: task,
             shouldMarkComplete: shouldMarkComplete
         )
