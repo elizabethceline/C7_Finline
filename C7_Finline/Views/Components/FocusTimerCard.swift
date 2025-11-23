@@ -15,12 +15,11 @@ struct FocusTimerCard: View {
 
     let mode: Mode
     let timeText: String
-
-    /// Primary button (e.g. "End", "I'm done resting")
+    var timeImageName: String? = nil
+    
     let primaryLabel: String
     let onPrimaryTap: () -> Void
 
-    /// Optional secondary button (e.g. "Rest", none in Rest mode)
     var secondaryLabel: String?
     var onSecondaryTap: (() -> Void)?
     var secondaryEnabled: Bool = true
@@ -28,10 +27,18 @@ struct FocusTimerCard: View {
     var body: some View {
         VStack(spacing: 16) {
             // Timer
-            Text(timeText)
-                .font(.system(size: 60, weight: .bold, design: .rounded))
-                .monospacedDigit()
-                .transition(.opacity)
+            HStack(spacing: 8) {
+                Text(timeText)
+                    .font(.system(size: 60, weight: .bold, design: .rounded))
+                    .monospacedDigit()
+                    .transition(.opacity)
+                if let imageName = timeImageName {
+                    Image(imageName)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(height: 50)
+                }
+            }
 
             // Buttons
             HStack(spacing: 12) {
@@ -102,6 +109,13 @@ struct FocusTimerCard: View {
             timeText: "05:00",
             primaryLabel: "I'm done resting",
             onPrimaryTap: { print("Done tapped") }
+        )
+        FocusTimerCard(
+            mode: .focus,
+            timeText: "+150",
+            timeImageName: "fishCoins",
+            primaryLabel: "Back to Main Menu",
+            onPrimaryTap: { print("Back tapped") }
         )
     }
     .padding()
