@@ -173,37 +173,40 @@ struct DetailTaskView: View {
                     }
                 }
                 Section {
-                    if !isCompleted {
-                        HStack {
-                            Button(action: {
-                                StartFocusTip.hasStartedFocus = true
+                    HStack {
+                        Button(action: {
+                            StartFocusTip.hasStartedFocus = true
 
-                                if hasUnsavedChanges {
-                                    isShowingUnsavedChangesAlert = true
-                                    HapticManager.shared
-                                        .playUnsavedChangesHaptic()
-                                } else {
-                                    focusVM.setTask(task, goal: task.goal)
-                                    isShowingFocusSettings = true
+                            if hasUnsavedChanges {
+                                isShowingUnsavedChangesAlert = true
+                                HapticManager.shared
+                                    .playUnsavedChangesHaptic()
+                            } else {
+                                focusVM.setTask(task, goal: task.goal)
+                                isShowingFocusSettings = true
 
-                                    HapticManager.shared
-                                        .playConfirmationHaptic()
+                                HapticManager.shared
+                                    .playConfirmationHaptic()
 
-                                }
-                            }) {
-                                Text("Start Focus")
-                                    .font(.headline)
-                                    .frame(maxWidth: .infinity)
-                                    .padding()
-                                    .background(Color.primary)
-                                    .foregroundColor(.white)
-                                    .cornerRadius(50)
                             }
-                            .popoverTip(StartFocusTip(), arrowEdge: .bottom)
+                        }) {
+                            Text("Start Focus")
+                                .font(.headline)
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(
+                                    isCompleted
+                                        ? Color.gray.opacity(0.4)
+                                        : Color.primary
+                                )
+                                .foregroundColor(.white)
+                                .cornerRadius(50)
                         }
-                        .listRowInsets(EdgeInsets())
-                        .listRowBackground(Color.clear)
+                        .popoverTip(StartFocusTip(), arrowEdge: .bottom)
+                        .disabled(isCompleted)
                     }
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
                 }
 
             }
