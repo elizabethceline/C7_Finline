@@ -134,18 +134,19 @@ struct ShopView: View {
     private var headerView: some View {
         HStack {
             Spacer()
-            HStack {
+            HStack(spacing: 6) {
                 Text("\(coins)")
                     .font(.system(size: 18, weight: .bold))
                     .foregroundStyle(Color.white)
                 Image("fishCoins")
                     .resizable()
-                    .frame(width: 40, height: 40)
+                    .frame(width: 30, height: 30)
                 //                    .foregroundColor(.yellow)
                 //                    .imageScale(.large)
             }
-            .padding(.leading, 20)
-            .padding(.trailing, 8)
+//            .padding(.leading, 20)
+//            .padding(.trailing, 8)
+            .padding(.horizontal, 14)
             .padding(.vertical, 10)
             .background(Capsule().fill(Color.primary))
         }
