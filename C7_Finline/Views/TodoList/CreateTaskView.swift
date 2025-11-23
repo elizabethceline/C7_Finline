@@ -22,12 +22,10 @@ struct CreateTaskView: View {
     
     @State private var isShowingModalCreateWithAI: Bool = false
     @State private var isShowingModalCreateManually: Bool = false
-    @State private var editingTask: AIGoalTask? = nil
+    @State private var taskToEdit: AIGoalTask? = nil
     @State private var removingTaskIds: Set<String> = []
     @State private var showDeleteAlert = false
     @State private var taskToDelete: AIGoalTask?
-
-    //    @State private var animate: Bool = false
 
     @StateObject private var taskVM = TaskViewModel()
     @StateObject private var goalVM = GoalViewModel()
@@ -64,18 +62,6 @@ struct CreateTaskView: View {
                 if taskVM.isLoading {
                     Section {
                         VStack {
-                            //                            Image("finley")
-                            //                                .resizable()
-                            //                                .scaledToFit()
-                            //                                .frame(width: 40, height: 40)
-                            //                                .padding(.bottom, 8)
-                            //                                .offset(y: animate ? -10 : 10)
-                            //                                .animation(
-                            //                                    .easeInOut(duration: 0.6).repeatForever(
-                            //                                        autoreverses: true
-                            //                                    ),
-                            //                                    value: animate
-                            //                                )
                             LottieView(name: "WritingAnimated", loopMode: .loop)
                                 .allowsHitTesting(false)
                                 .frame(width: 80, height: 80)
@@ -85,20 +71,10 @@ struct CreateTaskView: View {
                             Text("Generating AI tasks...")
                                 .font(.subheadline)
                                 .foregroundColor(.black)
-                            //                                .offset(y: animate ? -10 : 10)
-                            //                                .animation(
-                            //                                    .easeInOut(duration: 0.6).repeatForever(
-                            //                                        autoreverses: true
-                            //                                    ),
-                            //                                    value: animate
-                            //                                )
                         }
                         .padding(.vertical)
                         .listRowBackground(Color.clear)
                         .frame(maxWidth: .infinity, alignment: .center)
-                        //                        .onAppear {
-                        //                            animate = true
-                        //                        }
                     }
                 }
                 
@@ -154,8 +130,7 @@ struct CreateTaskView: View {
                                         ? -10 : 0
                                     )
                                     .onTapGesture {
-                                        editingTask = aiTask
-                                        isShowingModalCreateManually = true
+                                        taskToEdit = aiTask
                                     }
                                     .swipeActions(
                                         edge: .trailing,
@@ -228,7 +203,6 @@ struct CreateTaskView: View {
                         .padding()
                         .background(
                             isAIAvailable
-
                                 ? (colorScheme == .light
                                     ? Color(.systemBackground)
                                     : Color(.gray.opacity(0.3)))
@@ -240,14 +214,14 @@ struct CreateTaskView: View {
                 }
                 if isAIAvailable {
                     Text(
-                        "*With create with AI, tasks will be automatically created based on the goal you’ve set."
+                        "*With create with AI, tasks will be automatically created based on the goal you've set."
                     )
                     .font(.footnote)
                     .foregroundColor(.gray)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 } else {
                     Text(
-                        "*AI task creation isn’t supported on your device right now."
+                        "*AI task creation isn't supported on your device right now."
                     )
                     .font(.footnote)
                     .foregroundColor(.red)
@@ -338,22 +312,18 @@ struct CreateTaskView: View {
                 .presentationDetents([.medium])
             }
         }
-        .sheet(
-            isPresented: $isShowingModalCreateManually,
-            onDismiss: {
-                editingTask = nil
-            }
-        ) {
-            if let taskToEdit = editingTask {
-                CreateTaskManuallyView(taskVM: taskVM, existingTask: taskToEdit)
-                    .presentationDetents([.medium])
-            } else {
-                CreateTaskManuallyView(
-                    taskVM: taskVM,
-                    taskDeadline: goalDeadline
-                )
+        
+        .sheet(item: $taskToEdit) { task in
+            CreateTaskManuallyView(taskVM: taskVM, existingTask: task)
                 .presentationDetents([.medium])
-            }
+        }
+        
+        .sheet(isPresented: $isShowingModalCreateManually) {
+            CreateTaskManuallyView(
+                taskVM: taskVM,
+                taskDeadline: goalDeadline
+            )
+            .presentationDetents([.medium])
         }
     }
     
@@ -368,7 +338,6 @@ struct CreateTaskView: View {
         }
     }
 }
-
 extension CreateTaskView {
     static var previewWithDummyTasks: some View {
         let view = CreateTaskView(
