@@ -30,7 +30,7 @@ struct HeaderView: View {
     }
 
     var body: some View {
-        HStack(alignment: .bottom, spacing: 8) {
+        HStack(alignment: .bottom) {
             ZStack(alignment: .topTrailing) {
                 VStack(alignment: .leading, spacing: 6) {
                     if unfinishedTasks.isEmpty {
@@ -74,7 +74,7 @@ struct HeaderView: View {
                 selectedCharacterImage
                     .resizable()
                     .aspectRatio(contentMode: .fit)
-                    .frame(width: 52)
+                    .frame(width: 70)
             }
             .popoverTip(ProfileButtonTip(), arrowEdge: .top)
         }
