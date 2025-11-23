@@ -21,7 +21,7 @@ struct EmptyStateView: View {
 
             Text("No More Task")
                 .font(.headline)
-            Text("you may rest...")
+            Text("Do you have task? Add it!")
                 .font(.subheadline)
                 .foregroundColor(.gray)
         }
