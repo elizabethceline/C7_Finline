@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct AIGeneratorView: View {
-    @StateObject private var vm = TaskViewModel(networkMonitor: NetworkMonitor())
+    @StateObject private var vm = TaskViewModel()
     @ObservedObject var mainVM: MainViewModel
 
     @State private var title: String = ""
@@ -23,19 +23,23 @@ struct AIGeneratorView: View {
                     Section(header: Text("Your Goal")) {
                         TextField("Title", text: $title)
                         TextField("Description", text: $desc)
-                        DatePicker("Deadline", selection: $due, displayedComponents: [.date, .hourAndMinute])
+                        DatePicker(
+                            "Deadline",
+                            selection: $due,
+                            displayedComponents: [.date, .hourAndMinute]
+                        )
                     }
 
                     Section {
-//                        if vm.isLoading {
-//                            HStack { Spacer(); ProgressView("Generating..."); Spacer() }
-//                        } else {
-//                            Button(action: generate) {
-//                                Text("Generate Tasks with AI")
-//                                    .frame(maxWidth: .infinity)
-//                            }
-//                            .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty)
-//                        }
+                        //                        if vm.isLoading {
+                        //                            HStack { Spacer(); ProgressView("Generating..."); Spacer() }
+                        //                        } else {
+                        //                            Button(action: generate) {
+                        //                                Text("Generate Tasks with AI")
+                        //                                    .frame(maxWidth: .infinity)
+                        //                            }
+                        //                            .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty)
+                        //                        }
                     }
                 }
                 .frame(maxHeight: 360)
@@ -55,7 +59,8 @@ struct AIGeneratorView: View {
                             ForEach(vm.tasks) { t in
                                 VStack(alignment: .leading, spacing: 6) {
                                     Text(t.name).bold()
-                                    Text("Focus: \(t.focusDuration) minutes").foregroundColor(.secondary)
+                                    Text("Focus: \(t.focusDuration) minutes")
+                                        .foregroundColor(.secondary)
                                 }
                                 .padding()
                                 .background(Color(.systemGray6))
@@ -89,8 +94,8 @@ struct AIGeneratorView: View {
         }
     }
 
-//    private func generate() {
-//        let goal = Goal(id: UUID().uuidString, name: title, due: due, goalDescription: desc)
-//        Task { await vm.generateTaskWithAI(for: goal) }
-//    }
+    //    private func generate() {
+    //        let goal = Goal(id: UUID().uuidString, name: title, due: due, goalDescription: desc)
+    //        Task { await vm.generateTaskWithAI(for: goal) }
+    //    }
 }

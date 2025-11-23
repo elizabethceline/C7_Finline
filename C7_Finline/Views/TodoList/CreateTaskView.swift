@@ -6,6 +6,7 @@
 //
 
 import FoundationModels
+import Lottie
 import SwiftData
 import SwiftUI
 import TipKit
@@ -25,12 +26,14 @@ struct CreateTaskView: View {
     @State private var removingTaskIds: Set<String> = []
     @State private var showDeleteAlert = false
     @State private var taskToDelete: AIGoalTask?
-    
-    @State private var animate: Bool = false
-    
+
+    //    @State private var animate: Bool = false
+
     @StateObject private var taskVM = TaskViewModel()
     @StateObject private var goalVM = GoalViewModel()
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.colorScheme) var colorScheme
+
     private var isAIAvailable: Bool {
         SystemLanguageModel.default.isAvailable
     }
@@ -61,36 +64,41 @@ struct CreateTaskView: View {
                 if taskVM.isLoading {
                     Section {
                         VStack {
-                            Image("finley")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 40, height: 40)
-                                .padding(.bottom, 8)
-                                .offset(y: animate ? -10 : 10)
-                                .animation(
-                                    .easeInOut(duration: 0.6).repeatForever(
-                                        autoreverses: true
-                                    ),
-                                    value: animate
-                                )
-                            
+                            //                            Image("finley")
+                            //                                .resizable()
+                            //                                .scaledToFit()
+                            //                                .frame(width: 40, height: 40)
+                            //                                .padding(.bottom, 8)
+                            //                                .offset(y: animate ? -10 : 10)
+                            //                                .animation(
+                            //                                    .easeInOut(duration: 0.6).repeatForever(
+                            //                                        autoreverses: true
+                            //                                    ),
+                            //                                    value: animate
+                            //                                )
+                            LottieView(name: "WritingAnimated", loopMode: .loop)
+                                .allowsHitTesting(false)
+                                .frame(width: 80, height: 80)
+                                .rotationEffect(.degrees(-25))
+                                .offset(y: 0)
+
                             Text("Generating AI tasks...")
                                 .font(.subheadline)
                                 .foregroundColor(.black)
-                                .offset(y: animate ? -10 : 10)
-                                .animation(
-                                    .easeInOut(duration: 0.6).repeatForever(
-                                        autoreverses: true
-                                    ),
-                                    value: animate
-                                )
+                            //                                .offset(y: animate ? -10 : 10)
+                            //                                .animation(
+                            //                                    .easeInOut(duration: 0.6).repeatForever(
+                            //                                        autoreverses: true
+                            //                                    ),
+                            //                                    value: animate
+                            //                                )
                         }
                         .padding(.vertical)
                         .listRowBackground(Color.clear)
                         .frame(maxWidth: .infinity, alignment: .center)
-                        .onAppear {
-                            animate = true
-                        }
+                        //                        .onAppear {
+                        //                            animate = true
+                        //                        }
                     }
                 }
                 
@@ -220,10 +228,13 @@ struct CreateTaskView: View {
                         .padding()
                         .background(
                             isAIAvailable
-                            ? Color.gray.opacity(0.4) : Color.primary
+                                ? (colorScheme == .light
+                                    ? Color(.systemBackground)
+                                    : Color(.gray.opacity(0.3)))
+                                : Color.primary
                         )
                         .clipShape(RoundedRectangle(cornerRadius: 24))
-                        .foregroundColor(isAIAvailable ? .black : .white)
+                        .foregroundColor(isAIAvailable ? Color(.label) : .white)
                         .cornerRadius(10)
                 }
                 if isAIAvailable {

@@ -23,14 +23,14 @@ struct ToggleCardView: View {
                     
                     Text(title)
                         .font(.headline)
-                        .foregroundStyle(.black)
+                        //.foregroundStyle(.black)
                 }
                 Spacer()
                     .frame(height: 4)
                 
                 Text(desc)
                     .font(.subheadline)
-                    .foregroundStyle(.black)
+                    //.foregroundStyle(.black)
                     .fixedSize(horizontal: false, vertical: true)
             }
             Spacer()

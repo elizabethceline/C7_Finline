@@ -1,11 +1,14 @@
 import SwiftUI
 import SwiftData
+import Lottie
 
 struct FocusModeView: View {
     @EnvironmentObject var viewModel: FocusSessionViewModel
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Environment(\.colorScheme) var colorScheme
+    
+    @Query private var purchasedItems: [PurchasedItem]
     
     var onGiveUp: (GoalTask) -> Void
     var onSessionEnd: () -> Void
@@ -16,6 +19,7 @@ struct FocusModeView: View {
     @State private var resultVM: FocusResultViewModel?
     
     @State private var isShowingTimesUpAlert = false
+    @State private var timeUpAlertShown = false
     @State private var isShowingAddTimeModal = false
     @State private var extraTimeInMinutes: Int = 5
     @State private var hasExtendedTime = false
@@ -28,9 +32,34 @@ struct FocusModeView: View {
         return blocksOf30Min * (5 * 60)
     }
     
+    private var selectedShopItem: ShopItem? {
+        purchasedItems.first(where: { $0.isSelected })?.shopItem ?? .finley
+    }
+    private var focusAnimationName: String {
+        selectedShopItem?.focusAnimationName ?? "FishingAnimated"
+    }
+    private var restAnimationName: String {
+        selectedShopItem?.restAnimationName ?? "SleepingaAnimated"
+    }
+    
     var body: some View {
         ZStack {
             backgroundView
+            
+            if viewModel.isResting {
+                LottieView(name: restAnimationName, loopMode: .loop)
+                    .allowsHitTesting(false)
+                    .frame(width: 280, height: 280)
+                    .offset(y: 85)
+            } else {
+                LottieView(name: focusAnimationName, loopMode: .loop)
+                    .allowsHitTesting(false)
+                    .frame(width: 280, height: 280)
+                    .offset(y: 70)
+            }
+            
+            SnowView()
+                   .allowsHitTesting(false)
             
             if viewModel.isResting {
                 Color.blue.opacity(0.3)
@@ -47,7 +76,7 @@ struct FocusModeView: View {
             if newValue && !isGivingUp && resultVM == nil {
                 isShowingTimesUpAlert = true
             }
-            if newValue && resultVM == nil {
+            if newValue && !isGivingUp && resultVM == nil {
                 Task { @MainActor in
                     resultVM = viewModel.createResult(using: modelContext, didComplete: true)
                 }
@@ -57,6 +86,7 @@ struct FocusModeView: View {
             oldValue, newValue in
             if newValue {
                 isShowingTimesUpAlert = true
+                timeUpAlertShown = true
                 HapticManager.shared.playSessionEndHaptic()
             }
         }
@@ -102,7 +132,7 @@ struct FocusModeView: View {
                 HapticManager.shared.playDestructiveHaptic()
                 Task {
                     isGivingUp = true
-                    await viewModel.giveUp() // mark incomplete
+                    await viewModel.endSession() // mark incomplete
                     if let task = viewModel.task {
                         onGiveUp(task)
                     } else {
@@ -128,6 +158,8 @@ struct FocusModeView: View {
             }
             Button("I need more time") {
                 extraTimeInMinutes = 5
+                isShowingTimesUpAlert = false
+                timeUpAlertShown = false
                 isShowingAddTimeModal = true
             }
         } message: {
@@ -175,15 +207,19 @@ struct FocusModeView: View {
         //        Image(viewModel.isResting ? "restBackground" : "focusBackground")
         //            .resizable()
         //            .frame(height: 910)
-        let focusImageName: String = {
-            guard !viewModel.isResting else {
-                return "focusBackground"
-            }
-            
-            return colorScheme == .dark ? "focusBackgroundDark" : "focusBackground"
-        }()
+//        let focusImageName: String = {
+//            guard !viewModel.isResting else {
+//                return "lightFocusBackground"
+//            }
+//            
+//            return colorScheme == .dark ? "darkFocusBackground" : "lightFocusBackground"
+//        }()
+//        
+        //        let imageName = viewModel.isResting ? "restBackground" : focusImageName
         
-        let imageName = viewModel.isResting ? "restBackground" : focusImageName
+        let imageName = colorScheme == .dark
+        ? "darkFocusBackground"
+        : "lightFocusBackground"
         
         return Image(imageName)
             .resizable()

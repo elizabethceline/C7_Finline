@@ -161,7 +161,7 @@ struct DetailTaskView: View {
                             Spacer()
                             Image(systemName: "chevron.right")
                         }
-                        .foregroundStyle(.black)
+                        .foregroundStyle(Color(.label))
                     }
                     .sheet(isPresented: $isShowingDurationPicker) {
                         TimerPickerSheetView(
@@ -173,35 +173,40 @@ struct DetailTaskView: View {
                     }
                 }
                 Section {
-                    if !isCompleted {
-                        HStack {
-                            Button(action: {
-                                StartFocusTip.hasStartedFocus = true
+                    HStack {
+                        Button(action: {
+                            StartFocusTip.hasStartedFocus = true
 
-                                if hasUnsavedChanges {
-                                    isShowingUnsavedChangesAlert = true
-                                    HapticManager.shared.playUnsavedChangesHaptic()
-                                } else {
-                                    focusVM.setTask(task, goal: task.goal)
-                                    isShowingFocusSettings = true
-                                    
-                                    HapticManager.shared.playConfirmationHaptic()
-                                       
-                                }
-                            }) {
-                                Text("Start Focus")
-                                    .font(.headline)
-                                    .frame(maxWidth: .infinity)
-                                    .padding()
-                                    .background(Color.primary)
-                                    .foregroundColor(.white)
-                                    .cornerRadius(50)
+                            if hasUnsavedChanges {
+                                isShowingUnsavedChangesAlert = true
+                                HapticManager.shared
+                                    .playUnsavedChangesHaptic()
+                            } else {
+                                focusVM.setTask(task, goal: task.goal)
+                                isShowingFocusSettings = true
+
+                                HapticManager.shared
+                                    .playConfirmationHaptic()
+
                             }
-                            .popoverTip(StartFocusTip(), arrowEdge: .bottom)
+                        }) {
+                            Text("Start Focus")
+                                .font(.headline)
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(
+                                    isCompleted
+                                        ? Color.gray.opacity(0.4)
+                                        : Color.primary
+                                )
+                                .foregroundColor(.white)
+                                .cornerRadius(50)
                         }
-                        .listRowInsets(EdgeInsets())
-                        .listRowBackground(Color.clear)
+                        .popoverTip(StartFocusTip(), arrowEdge: .bottom)
+                        .disabled(isCompleted)
                     }
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
                 }
 
             }
@@ -350,7 +355,7 @@ struct DetailTaskView: View {
 }
 
 #Preview {
-    let dummyNetworkMonitor = NetworkMonitor()
+    let dummyNetworkMonitor = NetworkMonitor.shared
     let dummyManager = TaskManager(networkMonitor: dummyNetworkMonitor)
     let dummyViewModel = TaskViewModel(networkMonitor: dummyNetworkMonitor)
 
