@@ -13,10 +13,24 @@ struct HeaderView: View {
     let unfinishedTasks: [GoalTask]
     @Binding var selectedDate: Date
 
+    @StateObject private var shopVM: ShopViewModel
     @State private var navigateToProfile: Bool = false
+    @State private var selectedCharacterImage: Image = ShopItem.finley.image
+
+    init(
+        viewModel: MainViewModel,
+        unfinishedTasks: [GoalTask],
+        selectedDate: Binding<Date>,
+        shopVM: ShopViewModel
+    ) {
+        self.viewModel = viewModel
+        self.unfinishedTasks = unfinishedTasks
+        self._selectedDate = selectedDate
+        self._shopVM = StateObject(wrappedValue: shopVM)
+    }
 
     var body: some View {
-        HStack(alignment: .bottom, spacing: 8) {
+        HStack(alignment: .bottom) {
             ZStack(alignment: .topTrailing) {
                 VStack(alignment: .leading, spacing: 6) {
                     if unfinishedTasks.isEmpty {
@@ -57,10 +71,10 @@ struct HeaderView: View {
                 navigateToProfile = true
                 ProfileButtonTip.hasClickedProfile = true
             } label: {
-                Image("finley")
+                selectedCharacterImage
                     .resizable()
                     .aspectRatio(contentMode: .fit)
-                    .frame(width: 52)
+                    .frame(width: 70)
             }
             .popoverTip(ProfileButtonTip(), arrowEdge: .top)
         }
@@ -69,6 +83,14 @@ struct HeaderView: View {
         .padding(.bottom, 12)
         .navigationDestination(isPresented: $navigateToProfile) {
             ProfileView(viewModel: ProfileViewModel())
+        }
+        .onAppear {
+            updateSelectedCharacter()
+        }
+        .onChange(of: shopVM.selectedItem) { _, newItem in
+            if let newItem = newItem {
+                selectedCharacterImage = newItem.image
+            }
         }
     }
 
@@ -90,6 +112,14 @@ struct HeaderView: View {
         //        }
         return attributed
     }
+
+    private func updateSelectedCharacter() {
+        if let selectedItem = shopVM.selectedItem {
+            selectedCharacterImage = selectedItem.image
+        } else {
+            selectedCharacterImage = ShopItem.finley.image
+        }
+    }
 }
 
 // tail
@@ -105,7 +135,10 @@ struct TriangleTail: Shape {
 }
 
 #Preview {
-    HeaderView(
+    let networkMonitor = NetworkMonitor.shared
+    let shopVM = ShopViewModel(networkMonitor: networkMonitor)
+
+    return HeaderView(
         viewModel: MainViewModel(),
         unfinishedTasks: [
             GoalTask(
@@ -121,23 +154,10 @@ struct TriangleTail: Shape {
                     goalDescription:
                         "Understand the basics of algebraic expressions and equations."
                 )
-            ),
-            GoalTask(
-                id: "task_001",
-                name: "Study Math",
-                workingTime: Date(),
-                focusDuration: 25,
-                isCompleted: false,
-                goal: Goal(
-                    id: "goal_001",
-                    name: "Learn Algebra",
-                    due: Date().addingTimeInterval(7 * 24 * 60 * 60),
-                    goalDescription:
-                        "Understand the basics of algebraic expressions and equations."
-                )
-            ),
+            )
         ],
-        selectedDate: .constant(Date())
+        selectedDate: .constant(Date()),
+        shopVM: shopVM
     )
     .background(Color.red)
 }
