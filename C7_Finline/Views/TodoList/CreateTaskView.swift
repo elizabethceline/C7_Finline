@@ -14,20 +14,18 @@ import TipKit
 struct CreateTaskView: View {
     let goalName: String
     let goalDeadline: Date
-
+    
     @Environment(\.dismiss) private var dismiss
     var dismissParent: DismissAction? = nil
-
+    
     @ObservedObject var mainVM: MainViewModel
-
+    
     @State private var isShowingModalCreateWithAI: Bool = false
     @State private var isShowingModalCreateManually: Bool = false
-    @State private var editingTask: AIGoalTask? = nil
+    @State private var taskToEdit: AIGoalTask? = nil
     @State private var removingTaskIds: Set<String> = []
     @State private var showDeleteAlert = false
     @State private var taskToDelete: AIGoalTask?
-
-    //    @State private var animate: Bool = false
 
     @StateObject private var taskVM = TaskViewModel()
     @StateObject private var goalVM = GoalViewModel()
@@ -37,7 +35,7 @@ struct CreateTaskView: View {
     private var isAIAvailable: Bool {
         SystemLanguageModel.default.isAvailable
     }
-
+    
     var body: some View {
         VStack(spacing: 0) {
             Form {
@@ -60,22 +58,10 @@ struct CreateTaskView: View {
                         .multilineTextAlignment(.trailing)
                     }
                 }
-
+                
                 if taskVM.isLoading {
                     Section {
                         VStack {
-                            //                            Image("finley")
-                            //                                .resizable()
-                            //                                .scaledToFit()
-                            //                                .frame(width: 40, height: 40)
-                            //                                .padding(.bottom, 8)
-                            //                                .offset(y: animate ? -10 : 10)
-                            //                                .animation(
-                            //                                    .easeInOut(duration: 0.6).repeatForever(
-                            //                                        autoreverses: true
-                            //                                    ),
-                            //                                    value: animate
-                            //                                )
                             LottieView(name: "WritingAnimated", loopMode: .loop)
                                 .allowsHitTesting(false)
                                 .frame(width: 80, height: 80)
@@ -85,23 +71,13 @@ struct CreateTaskView: View {
                             Text("Generating AI tasks...")
                                 .font(.subheadline)
                                 .foregroundColor(.black)
-                            //                                .offset(y: animate ? -10 : 10)
-                            //                                .animation(
-                            //                                    .easeInOut(duration: 0.6).repeatForever(
-                            //                                        autoreverses: true
-                            //                                    ),
-                            //                                    value: animate
-                            //                                )
                         }
                         .padding(.vertical)
                         .listRowBackground(Color.clear)
                         .frame(maxWidth: .infinity, alignment: .center)
-                        //                        .onAppear {
-                        //                            animate = true
-                        //                        }
                     }
                 }
-
+                
                 if let error = taskVM.errorMessage {
                     Section {
                         Text("Error: \(error)")
@@ -109,7 +85,7 @@ struct CreateTaskView: View {
                             .padding(.vertical)
                     }
                 }
-
+                
                 if !taskVM.tasks.isEmpty {
                     ForEach(taskVM.groupedGoalTaskAI(), id: \.date) { group in
                         Section(
@@ -123,9 +99,9 @@ struct CreateTaskView: View {
                         ) {
                             ForEach(group.tasks) { aiTask in
                                 let workingDate: Date? =
-                                    ISO8601DateFormatter.parse(
-                                        aiTask.workingTime
-                                    )
+                                ISO8601DateFormatter.parse(
+                                    aiTask.workingTime
+                                )
                                 let finalWorkingDate = workingDate ?? Date()
                                 let goalTask = taskVM.toGoalTask(
                                     from: aiTask,
@@ -133,7 +109,7 @@ struct CreateTaskView: View {
                                     goalName: goalName,
                                     goalDeadline: goalDeadline
                                 )
-
+                                
                                 TaskCardView(task: goalTask)
                                     .listRowInsets(
                                         EdgeInsets(
@@ -147,15 +123,14 @@ struct CreateTaskView: View {
                                     .listRowBackground(Color.clear)
                                     .opacity(
                                         removingTaskIds.contains(aiTask.id)
-                                            ? 0 : 1
+                                        ? 0 : 1
                                     )
                                     .offset(
                                         y: removingTaskIds.contains(aiTask.id)
-                                            ? -10 : 0
+                                        ? -10 : 0
                                     )
                                     .onTapGesture {
-                                        editingTask = aiTask
-                                        isShowingModalCreateManually = true
+                                        taskToEdit = aiTask
                                     }
                                     .swipeActions(
                                         edge: .trailing,
@@ -193,12 +168,12 @@ struct CreateTaskView: View {
                     .frame(maxWidth: .infinity, alignment: .center)
                     .listRowBackground(Color.clear)
                 }
-
+                
             }
             .scrollContentBackground(.hidden)
             .animation(.easeInOut(duration: 0.3), value: taskVM.tasks)
             .animation(.easeInOut(duration: 0.3), value: removingTaskIds)
-
+            
             VStack(spacing: 16) {
                 Button(action: {
                     if isAIAvailable {
@@ -212,7 +187,7 @@ struct CreateTaskView: View {
                         .padding()
                         .background(
                             isAIAvailable
-                                ? Color.primary : Color.gray.opacity(0.4)
+                            ? Color.primary : Color.gray.opacity(0.4)
                         )
                         .clipShape(RoundedRectangle(cornerRadius: 24))
                         .foregroundColor(.white)
@@ -220,7 +195,7 @@ struct CreateTaskView: View {
                 }
                 .disabled(!isAIAvailable)
                 .popoverTip(CreateWithAITip(), arrowEdge: .bottom)
-
+                
                 Button(action: { isShowingModalCreateManually = true }) {
                     Text("Create Task Manually")
                         .font(.headline)
@@ -239,20 +214,20 @@ struct CreateTaskView: View {
                 }
                 if isAIAvailable {
                     Text(
-                        "*With create with AI, tasks will be automatically created based on the goal you’ve set."
+                        "*With create with AI, tasks will be automatically created based on the goal you've set."
                     )
                     .font(.footnote)
                     .foregroundColor(.gray)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 } else {
                     Text(
-                        "*AI task creation isn’t supported on your device right now."
+                        "*AI task creation isn't supported on your device right now."
                     )
                     .font(.footnote)
                     .foregroundColor(.red)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
-
+                
             }
             .padding()
         }
@@ -271,13 +246,12 @@ struct CreateTaskView: View {
                             for: goal,
                             modelContext: modelContext
                         )
-
+                        
                         await MainActor.run {
                             mainVM.appendNewGoal(goal)
                             mainVM.appendNewTasks(goal.tasks)
                             dismissParent?()
-
-                            // Navigate to the first task's date after dismissal
+                            
                             DispatchQueue.main.asyncAfter(
                                 deadline: .now() + 0.3
                             ) {
@@ -298,7 +272,12 @@ struct CreateTaskView: View {
             }
         }
         .background(Color(.systemGroupedBackground))
-
+        .onAppear {
+            Task {
+                await taskVM.loadUserProfile(modelContext: modelContext)
+            }
+        }
+        
         .alert("Delete Task", isPresented: $showDeleteAlert) {
             Button("Cancel", role: .cancel) {
                 taskToDelete = nil
@@ -315,7 +294,7 @@ struct CreateTaskView: View {
                 )
             }
         }
-
+        
         .sheet(isPresented: $isShowingModalCreateWithAI) {
             NavigationStack {
                 GenerateTaskWithAIView(
@@ -333,25 +312,21 @@ struct CreateTaskView: View {
                 .presentationDetents([.medium])
             }
         }
-        .sheet(
-            isPresented: $isShowingModalCreateManually,
-            onDismiss: {
-                editingTask = nil
-            }
-        ) {
-            if let taskToEdit = editingTask {
-                CreateTaskManuallyView(taskVM: taskVM, existingTask: taskToEdit)
-                    .presentationDetents([.medium])
-            } else {
-                CreateTaskManuallyView(
-                    taskVM: taskVM,
-                    taskDeadline: goalDeadline
-                )
+        
+        .sheet(item: $taskToEdit) { task in
+            CreateTaskManuallyView(taskVM: taskVM, existingTask: task)
                 .presentationDetents([.medium])
-            }
+        }
+        
+        .sheet(isPresented: $isShowingModalCreateManually) {
+            CreateTaskManuallyView(
+                taskVM: taskVM,
+                taskDeadline: goalDeadline
+            )
+            .presentationDetents([.medium])
         }
     }
-
+    
     private func deleteTaskWithAnimation(_ task: AIGoalTask) {
         withAnimation(.easeInOut(duration: 0.3)) {
             removingTaskIds.insert(task.id)
@@ -363,7 +338,6 @@ struct CreateTaskView: View {
         }
     }
 }
-
 extension CreateTaskView {
     static var previewWithDummyTasks: some View {
         let view = CreateTaskView(
@@ -375,7 +349,7 @@ extension CreateTaskView {
             ) ?? Date(),
             mainVM: MainViewModel()
         )
-
+        
         view.taskVM.tasks = [
             AIGoalTask(
                 id: "1",
@@ -396,7 +370,7 @@ extension CreateTaskView {
                 focusDuration: 45
             ),
         ]
-
+        
         return NavigationStack { view }
     }
 }

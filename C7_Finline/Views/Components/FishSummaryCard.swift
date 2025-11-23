@@ -70,7 +70,7 @@ struct FishSummaryCard: View {
                             
                             Image("fishCoins")
                                 .resizable()
-                                .frame(width: 20, height: 20)
+                                .frame(width: 25, height: 25)
                         }
                     }
                     
@@ -93,7 +93,7 @@ struct FishSummaryCard: View {
                             .foregroundColor(.black)
                         Image("fishCoins")
                             .resizable()
-                            .frame(width: 20, height: 20)
+                            .frame(width: 25, height: 25)
                     }
                 }
             }
