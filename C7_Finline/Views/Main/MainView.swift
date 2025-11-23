@@ -11,6 +11,7 @@ import TipKit
 
 struct MainView: View {
     @StateObject private var viewModel = MainViewModel()
+    @StateObject private var shopVM: ShopViewModel
     @Environment(\.modelContext) private var modelContext
     @EnvironmentObject var networkMonitor: NetworkMonitor
     @EnvironmentObject var focusVM: FocusSessionViewModel
@@ -32,14 +33,29 @@ struct MainView: View {
     @Query(sort: \Goal.due, order: .forward) private var goals: [Goal]
     @Query private var tasks: [GoalTask]
 
+    init() {
+        let networkMonitor = NetworkMonitor.shared
+        let userProfileManager = UserProfileManager(
+            networkMonitor: networkMonitor
+        )
+        _shopVM = StateObject(
+            wrappedValue: ShopViewModel(
+                userProfileManager: userProfileManager,
+                networkMonitor: networkMonitor
+            )
+        )
+    }
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 12) {
                 HeaderView(
                     viewModel: viewModel,
                     unfinishedTasks: unfinishedTasks,
-                    selectedDate: $selectedDate
+                    selectedDate: $selectedDate,
+                    shopVM: shopVM
                 )
+                .environmentObject(shopVM)
 
                 // Date Header
                 DateHeaderView(
@@ -64,12 +80,23 @@ struct MainView: View {
             .background(Color(uiColor: .systemGray6).ignoresSafeArea())
             .onAppear {
                 viewModel.setModelContext(modelContext)
+                shopVM.setModelContext(modelContext)
+
                 if !hasAppeared {
                     jumpToToday()
                     hasAppeared = true
                 }
                 viewModel.goals = goals
                 viewModel.tasks = tasks
+
+                // Fetch user profile and shop items
+                Task {
+                    if let userRecordID = await viewModel.userRecordID {
+                        await shopVM.fetchUserProfile(
+                            userRecordID: userRecordID
+                        )
+                    }
+                }
             }
             .onChange(of: currentWeekIndex) { oldValue, newValue in
                 updateSelectedDateFromWeekChange(
@@ -192,7 +219,9 @@ struct MainView: View {
 
 #Preview {
     MainView()
-        .modelContainer(for: [Goal.self, GoalTask.self, UserProfile.self])
+        .modelContainer(for: [
+            Goal.self, GoalTask.self, UserProfile.self, PurchasedItem.self,
+        ])
         .environmentObject(NetworkMonitor.shared)
         .environmentObject(FocusSessionViewModel())
 }

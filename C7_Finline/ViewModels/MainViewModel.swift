@@ -5,6 +5,7 @@
 //  Created by Elizabeth Celine Liong on 25/10/25.
 //
 
+import CloudKit
 import Combine
 import Foundation
 import SwiftData
@@ -29,6 +30,18 @@ class MainViewModel: ObservableObject {
     @MainActor
     var isSignedInToiCloud: Bool {
         CloudKitManager.shared.isSignedInToiCloud
+    }
+
+    @MainActor
+    var userRecordID: CKRecord.ID? {
+        get async {
+            do {
+                return try await CloudKitManager.shared.fetchUserRecordID()
+            } catch {
+                print("Failed to get user record ID: \(error)")
+                return nil
+            }
+        }
     }
 
     init(
@@ -101,28 +114,6 @@ class MainViewModel: ObservableObject {
             }
             .store(in: &cancellables)
     }
-
-    //    @MainActor
-    //    private func loadDataFromSwiftData() {
-    //        guard let modelContext = modelContext else { return }
-    //
-    //        do {
-    //            // Load goals
-    //            let goalDescriptor = FetchDescriptor<Goal>(
-    //                sortBy: [SortDescriptor(\.due, order: .forward)]
-    //            )
-    //            let taskDescriptor = FetchDescriptor<GoalTask>()
-    //
-    //            let localGoals = try modelContext.fetch(goalDescriptor)
-    //            let localTasks = try modelContext.fetch(taskDescriptor)
-    //
-    //            updatePublishedGoals(localGoals)
-    //            updatePublishedTasks(localTasks)
-    //        } catch {
-    //            self.error =
-    //                "Failed to load local data: \(error.localizedDescription)"
-    //        }
-    //    }
 
     @MainActor
     private func updatePublishedGoals(_ goals: [Goal]) {
