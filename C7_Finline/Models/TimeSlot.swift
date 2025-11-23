@@ -23,4 +23,14 @@ enum TimeSlot: String, CaseIterable, Codable {
         case .night: return "9PM - 12AM"
         }
     }
+    
+    var order: Int {
+            switch self {
+            case .earlyMorning: return 0
+            case .morning: return 1
+            case .afternoon: return 2
+            case .evening: return 3
+            case .night: return 4
+            }
+        }
 }
