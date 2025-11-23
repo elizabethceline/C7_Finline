@@ -14,7 +14,7 @@ struct C7_FinlineApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
     @StateObject private var focusVM = FocusSessionViewModel()
-    @StateObject private var networkMonitor = NetworkMonitor()
+    @StateObject private var networkMonitor = NetworkMonitor.shared
     @StateObject private var syncManager = BackgroundSyncManager.shared
 
     @Environment(\.scenePhase) private var scenePhase
@@ -31,20 +31,21 @@ struct C7_FinlineApp: App {
             PurchasedItem.self,
             FocusSessionResult.self,
         ])
-        
+
         let sharedURL = FileManager.default
-            .containerURL(forSecurityApplicationGroupIdentifier: "group.c7.finline")!
+            .containerURL(
+                forSecurityApplicationGroupIdentifier: "group.c7.finline"
+            )!
             .appendingPathComponent("swiftdata.store")
-        
-        
+
         let modelConfiguration = ModelConfiguration(
-                schema: schema,
-                isStoredInMemoryOnly: false,
-                allowsSave: true,
-                groupContainer: .identifier("group.c7.finline"),
-                cloudKitDatabase: .none
-            )
-        
+            schema: schema,
+            isStoredInMemoryOnly: false,
+            allowsSave: true,
+            groupContainer: .identifier("group.c7.finline"),
+            cloudKitDatabase: .none
+        )
+
         do {
             return try ModelContainer(
                 for: schema,
@@ -61,13 +62,13 @@ struct C7_FinlineApp: App {
                 .environmentObject(focusVM)
                 .environmentObject(networkMonitor)
                 .environmentObject(syncManager)
-//                .onOpenURL { url in
-//                    if url.host == "endSession" {
-//                        Task {
-//                            await focusVM.giveUp()
-//                        }
-//                    }
-//                }
+            //                .onOpenURL { url in
+            //                    if url.host == "endSession" {
+            //                        Task {
+            //                            await focusVM.giveUp()
+            //                        }
+            //                    }
+            //                }
         }
         .modelContainer(sharedModelContainer)
         .onChange(of: scenePhase) { oldPhase, newPhase in

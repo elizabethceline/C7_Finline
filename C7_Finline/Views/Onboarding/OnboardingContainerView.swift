@@ -16,7 +16,7 @@ struct OnboardingContainerView: View {
 
     init(
         hasCompletedOnboarding: Binding<Bool>,
-        networkMonitor: NetworkMonitor = NetworkMonitor()
+        networkMonitor: NetworkMonitor = NetworkMonitor.shared
     ) {
         self._hasCompletedOnboarding = hasCompletedOnboarding
         self._viewModel = StateObject(
@@ -53,7 +53,7 @@ struct OnboardingContainerView: View {
             while viewModel.isLoading {
                 try? await Task.sleep(nanoseconds: 200_000_000)
             }
-            
+
             await MainActor.run {
                 withAnimation {
                     showSplash = false

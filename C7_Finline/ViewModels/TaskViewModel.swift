@@ -21,8 +21,9 @@ final class TaskViewModel: ObservableObject {
     @Published var errorMessage: String?
     private let taskManager: TaskManager
     private let networkMonitor: NetworkMonitor
-    
-    init(networkMonitor: NetworkMonitor = NetworkMonitor()) {
+
+
+    init(networkMonitor: NetworkMonitor = .shared) {
         self.networkMonitor = networkMonitor
         self.taskManager = TaskManager(networkMonitor: networkMonitor)
     }
@@ -96,9 +97,9 @@ final class TaskViewModel: ObservableObject {
         do {
             try modelContext.save()
             print("Saved \(tasks.count) AI tasks for goal \(goal.name)")
-            
+
             WidgetCenter.shared.reloadTimelines(ofKind: "FinlineWidget")
-            
+
         } catch {
             print("Failed to save AI tasks: \(error.localizedDescription)")
         }
@@ -159,9 +160,9 @@ final class TaskViewModel: ObservableObject {
         do {
             try modelContext.save()
             print("Task '\(name)' updated successfully.")
-            
+
             WidgetCenter.shared.reloadTimelines(ofKind: "FinlineWidget")
-            
+
         } catch {
             print("Failed to save updated task: \(error.localizedDescription)")
         }
@@ -177,9 +178,9 @@ final class TaskViewModel: ObservableObject {
             taskManager.deleteTask(task: task, modelContext: modelContext)
             
             try modelContext.save()
-            
+
             WidgetCenter.shared.reloadTimelines(ofKind: "FinlineWidget")
-            
+
             await MainActor.run {
                 self.goalTasks.removeAll { $0.id == task.id }
                 print("Deleted task: \(task.name)")
@@ -284,15 +285,17 @@ final class TaskViewModel: ObservableObject {
         modelContext: ModelContext
     ) async {
         let goalPredicate = #Predicate<Goal> { $0.id == goalId }
-        guard let goal = try? modelContext.fetch(
-            FetchDescriptor(predicate: goalPredicate)
-        ).first else {
+        guard
+            let goal = try? modelContext.fetch(
+                FetchDescriptor(predicate: goalPredicate)
+            ).first
+        else {
             print("Goal not found")
             return
         }
-        
+
         print("Found goal: \(goal.name)")
-        
+
         let newTask = taskManager.createTask(
             goal: goal,
             name: name,
@@ -302,13 +305,13 @@ final class TaskViewModel: ObservableObject {
         )
         print("Created task: \(newTask.name) for goal: \(goal.name)")
         print("Goal now has \(goal.tasks.count) tasks")
-        
+
         do {
             try modelContext.save()
             print("Context saved successfully")
-            
+
             WidgetCenter.shared.reloadTimelines(ofKind: "FinlineWidget")
-            
+
         } catch {
             print("Failed to save context: \(error)")
         }
@@ -361,26 +364,26 @@ final class TaskViewModel: ObservableObject {
         let totalTask: Int = totalMinutesAvailable < 1440 ? 2 : 5
         
         let prompt = """
-        You are an AI productivity assistant.
-        
-        Goal Title: \(goal.name)
-        Description: \(goal.goalDescription ?? "No description provided")
-        
-        Generate exactly \(totalTask) tasks.
-        Each must contain:
-        - "name": unique descriptive title
-        - "focusDuration": duration in minutes
-            Easy: 20–30
-            Medium: 30–60
-            Hard: 60–120
-        
-        RULES:
-        - DO NOT generate date/time.
-        - DO NOT include start/end times.
-        - Total focus duration must NOT exceed \(totalMinutesAvailable) minutes.
-        Return ONLY JSON array of { "name": "...", "focusDuration": ... }
-        """
-        
+            You are an AI productivity assistant.
+
+            Goal Title: \(goal.name)
+            Description: \(goal.goalDescription ?? "No description provided")
+
+            Generate exactly \(totalTask) tasks.
+            Each must contain:
+            - "name": unique descriptive title
+            - "focusDuration": duration in minutes
+                Easy: 20–30
+                Medium: 30–60
+                Hard: 60–120
+
+            RULES:
+            - DO NOT generate date/time.
+            - DO NOT include start/end times.
+            - Total focus duration must NOT exceed \(totalMinutesAvailable) minutes.
+            Return ONLY JSON array of { "name": "...", "focusDuration": ... }
+            """
+
         var aiItems: [AIPlannedItem] = []
         do {
             let response = try await session.respond(
@@ -389,13 +392,14 @@ final class TaskViewModel: ObservableObject {
             )
             aiItems = response.content
         } catch {
-            errorMessage = "Failed to parse AI tasks: \(error.localizedDescription)"
+            errorMessage =
+                "Failed to parse AI tasks: \(error.localizedDescription)"
             return
         }
         
         await mapWorkingTimes(from: aiItems, deadline: goal.due)
     }
-    
+
     func mapWorkingTimes(
         from items: [AIPlannedItem],
         deadline: Date
@@ -407,13 +411,16 @@ final class TaskViewModel: ObservableObject {
         await MainActor.run { self.tasks = [] }
         
         for item in items {
-            if usedMinutes + item.focusDuration > Int(deadline.timeIntervalSinceNow / 60) {
+            if usedMinutes + item.focusDuration
+                > Int(deadline.timeIntervalSinceNow / 60)
+            {
                 break
             }
             
             guard let nextSlot = nextAvailableProductiveSlot(from: currentTime, duration: item.focusDuration) else {
                 print("No available productive slot found for remaining time")
                 break
+
             }
             
             let taskStart = nextSlot.start
@@ -458,6 +465,7 @@ final class TaskViewModel: ObservableObject {
             
             currentDate = cal.date(byAdding: .day, value: 1, to: currentDate)!
             currentDate = cal.date(bySettingHour: 0, minute: 0, second: 0, of: currentDate)!
+
         }
         
         return nil
@@ -512,6 +520,7 @@ extension DayOfWeek {
         default: return .monday
         }
     }
+
 }
 
 extension TaskViewModel {

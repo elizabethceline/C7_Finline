@@ -8,18 +8,25 @@
 import SwiftUI
 
 struct EmptyStateView: View {
+    @State private var randomFishImage: String = "Goldfish"
+    
+    private let fishImageNames = ["Goldfish", "Tuna", "Angler", "ghostFish"]
+    
     var body: some View {
         VStack(spacing: 8) {
-            Image("fish")
+            Image(randomFishImage)
                 .resizable()
                 .scaledToFit()
                 .frame(width: 100, height: 100)
 
             Text("No More Task")
                 .font(.headline)
-            Text("you may rest...")
+            Text("Do you have task? Add it!")
                 .font(.subheadline)
                 .foregroundColor(.gray)
+        }
+        .onAppear {
+            randomFishImage = fishImageNames.randomElement() ?? "Goldfish"
         }
     }
 }

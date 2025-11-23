@@ -22,10 +22,12 @@ struct ShopCardView: View {
             // BACKGROUND + BORDER
             RoundedRectangle(cornerRadius: 20)
                 .fill(Color.secondary)
-                .frame(width: 170, height: 200)
                 .overlay(
                     RoundedRectangle(cornerRadius: 20)
-                        .stroke(status == .selected ? Color.primary : Color.clear, lineWidth: 3)
+                        .stroke(
+                            status == .selected ? Color.primary : Color.clear,
+                            lineWidth: 3
+                        )
                 )
 
             // CONTENT
@@ -34,13 +36,11 @@ struct ShopCardView: View {
                 item.image
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 180, height: 180)
-                    .offset(y: -23) // tetap di atas border, tidak kena edge
+                    .frame(width: 120, height: 120)
 
                 Text(item.displayName)
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(.primary)
-                    .offset(y: -40)
 
                 Group {
                     switch status {
@@ -76,25 +76,24 @@ struct ShopCardView: View {
                         .clipShape(Capsule())
                     }
                 }
-                .offset(y: -40)
             }
             .padding(.horizontal, 12)
-            .padding(.vertical, 16)
+            .padding(.vertical, 8)
         }
         .onTapGesture { onTap() }
+        .padding(.bottom, 12)
     }
 }
-
 
 #Preview {
     VStack(spacing: 20) {
         ShopCardView(
-            item: .dogo,
+            item: .glasses,
             status: .price,
-            price: ShopItem.dogo.price
+            price: ShopItem.glasses.price
         ) {
             print("Dogo selected")
         }
     }
-    .padding()
+    .frame(width: 200, height: 200)
 }

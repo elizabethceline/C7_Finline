@@ -29,7 +29,7 @@ class OnboardingViewModel: ObservableObject {
         CloudKitManager.shared.isSignedInToiCloud
     }
 
-    init(networkMonitor: NetworkMonitor = NetworkMonitor()) {
+    init(networkMonitor: NetworkMonitor = NetworkMonitor.shared) {
         self.networkMonitor = networkMonitor
         self.userProfileManager = UserProfileManager(
             networkMonitor: networkMonitor

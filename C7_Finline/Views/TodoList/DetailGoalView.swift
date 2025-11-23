@@ -89,12 +89,16 @@ struct DetailGoalView: View {
                 goalId: goal.id,
                 onTaskCreated: {
                     Task {
-                        print("Before refresh - Goal has \(goal.tasks.count) tasks")
+                        print(
+                            "Before refresh - Goal has \(goal.tasks.count) tasks"
+                        )
                         await taskVM.getGoalTaskByGoalId(
                             for: goal,
                             modelContext: modelContext
                         )
-                        print("After refresh - TaskVM has \(taskVM.goalTasks.count) tasks")
+                        print(
+                            "After refresh - TaskVM has \(taskVM.goalTasks.count) tasks"
+                        )
                     }
                 }
             )
@@ -108,7 +112,7 @@ struct DetailGoalView: View {
                         DetailTaskView(
                             task: task,
                             taskManager: TaskManager(
-                                networkMonitor: NetworkMonitor()
+                                networkMonitor: NetworkMonitor.shared
                             ),
                             viewModel: taskVM,
                             onStartFocus: {
@@ -126,12 +130,14 @@ struct DetailGoalView: View {
 
                         )
                     case .focus:
-                        FocusModeView(onGiveUp: { task in
-                            coverMode = .detail(task)
-                        },
-                                      onSessionEnd: {
-                            coverMode = nil
-                        })
+                        FocusModeView(
+                            onGiveUp: { task in
+                                coverMode = .detail(task)
+                            },
+                            onSessionEnd: {
+                                coverMode = nil
+                            }
+                        )
                     }
                 }
             }
@@ -240,29 +246,29 @@ struct DetailGoalView: View {
             }
         }
 
-//        .toolbar {
-//            ToolbarItemGroup(placement: .bottomBar) {
-//                if isSelecting {
-//
-//                    Text("\(selectedTaskIds.count) selected")
-//                        .foregroundColor(.gray)
-//                        .font(.subheadline)
-//                        .padding(8)
-//                        .fixedSize()
-//
-//                    Spacer()
-//
-//                    Button(role: .destructive) {
-//                        showBulkDeleteAlert = true
-//                    } label: {
-//                        Label("Delete", systemImage: "trash")
-//                    }
-//                    .tint(.red)
-//                    .disabled(selectedTaskIds.isEmpty)
-//
-//                }
-//            }
-//        }
+        //        .toolbar {
+        //            ToolbarItemGroup(placement: .bottomBar) {
+        //                if isSelecting {
+        //
+        //                    Text("\(selectedTaskIds.count) selected")
+        //                        .foregroundColor(.gray)
+        //                        .font(.subheadline)
+        //                        .padding(8)
+        //                        .fixedSize()
+        //
+        //                    Spacer()
+        //
+        //                    Button(role: .destructive) {
+        //                        showBulkDeleteAlert = true
+        //                    } label: {
+        //                        Label("Delete", systemImage: "trash")
+        //                    }
+        //                    .tint(.red)
+        //                    .disabled(selectedTaskIds.isEmpty)
+        //
+        //                }
+        //            }
+        //        }
     }
 
     private var taskSection: some View {
@@ -287,7 +293,6 @@ struct DetailGoalView: View {
                             }
                             .buttonStyle(.plain)
                         }
-
 
                         Button {
                             if isSelecting {
@@ -405,9 +410,9 @@ struct DetailGoalView: View {
     }
 
     private func deleteSelectedTasks() {
-        
+
         HapticManager.shared.playDestructiveHaptic()
-        
+
         Task {
             for id in selectedTaskIds {
                 if let task = taskVM.goalTasks.first(where: { $0.id == id }) {
@@ -427,9 +432,9 @@ struct DetailGoalView: View {
     }
 
     private func deleteTaskWithAnimation(_ task: GoalTask) {
-        
+
         HapticManager.shared.playDestructiveHaptic()
-        
+
         withAnimation(.easeInOut(duration: 0.3)) {
             removingTaskIds.insert(task.id)
         }
@@ -444,9 +449,9 @@ struct DetailGoalView: View {
     }
 
     private func completeTaskWithAnimation(_ task: GoalTask) {
-        
+
         HapticManager.shared.playSuccessHaptic()
-        
+
         withAnimation(.easeInOut(duration: 0.3)) {
             removingTaskIds.insert(task.id)
         }
@@ -468,9 +473,9 @@ struct DetailGoalView: View {
     }
 
     private func incompleteTaskWithAnimation(_ task: GoalTask) {
-        
+
         HapticManager.shared.playUnsavedChangesHaptic()
-        
+
         withAnimation(.easeInOut(duration: 0.3)) {
             removingTaskIds.insert(task.id)
         }
