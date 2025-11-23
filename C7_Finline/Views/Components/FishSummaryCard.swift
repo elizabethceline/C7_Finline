@@ -42,17 +42,36 @@ struct FishSummaryCard: View {
                         Text(name)
                             .font(.title3)
                             .foregroundColor(.black)
-                        Text("+\(totalPoints)")
-                            .font(.title3)
-                            .foregroundColor(.black)
-
+                            .fixedSize(horizontal: false, vertical: true)
+                        
+//                        HStack (spacing: 4){
+//                            Text("+\(totalPoints)")
+//                                .font(.title3)
+//                                .foregroundColor(.black)
+//                            
+//                            Image("fishCoins")
+//                                .resizable()
+//                                .frame(width: 20, height: 20)
+//                        }
+                        Text("x\(fishes.count)")
+                            .font(.title.bold())
+                            .foregroundColor(.primary)
                         
                         Spacer()
                         
                         // Count
-                        Text("\(fishes.count)x")
-                            .font(.title.bold())
-                            .foregroundColor(.primary)
+//                        Text("\(fishes.count)x")
+//                            .font(.title.bold())
+//                            .foregroundColor(.primary)
+                        HStack (spacing: 4){
+                            Text("+\(totalPoints)")
+                                .font(.title3)
+                                .foregroundColor(.black)
+                            
+                            Image("fishCoins")
+                                .resizable()
+                                .frame(width: 20, height: 20)
+                        }
                     }
                     
                     if name != sortedNames.last {
@@ -64,13 +83,18 @@ struct FishSummaryCard: View {
             if viewModel.bonusPoints > 0 {
                 Divider()
                 HStack(spacing: 16) {
-                    Text("Bonus Points")
+                    Text("Bonus Nudge Points")
                         .font(.title3)
                         .foregroundColor(.black)
                     Spacer()
-                    Text("+\(viewModel.bonusPoints)")
-                        .font(.title.bold())
-                        .foregroundColor(.primary)
+                    HStack(spacing: 4) {
+                        Text("+\(viewModel.bonusPoints)")
+                            .font(.title3)
+                            .foregroundColor(.black)
+                        Image("fishCoins")
+                            .resizable()
+                            .frame(width: 20, height: 20)
+                    }
                 }
             }
         }

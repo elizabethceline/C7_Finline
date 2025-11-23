@@ -29,7 +29,8 @@ struct FocusEndView: View {
                 
                 FocusTimerCard(
                     mode: .focus,
-                    timeText: "+\(viewModel.grandTotal.formatted(.number)) pts",
+                    timeText: "+\(viewModel.grandTotal.formatted(.number))",
+                    timeImageName: "fishCoins",
                     primaryLabel: "Back to Main Menu",
                     onPrimaryTap: {
                         onDismiss()
