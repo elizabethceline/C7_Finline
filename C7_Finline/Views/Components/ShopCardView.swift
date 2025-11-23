@@ -88,9 +88,9 @@ struct ShopCardView: View {
 #Preview {
     VStack(spacing: 20) {
         ShopCardView(
-            item: .dogo,
+            item: .glasses,
             status: .price,
-            price: ShopItem.dogo.price
+            price: ShopItem.glasses.price
         ) {
             print("Dogo selected")
         }
