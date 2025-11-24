@@ -11,21 +11,20 @@ struct ChatBubble: View {
     let message: String
     let showNameTag: Bool
     let shouldCompleteImmediately: Bool
-    
+
     var body: some View {
         ZStack(alignment: .topLeading) {
-            TypingText(text: message, shouldCompleteImmediately: shouldCompleteImmediately)
-                .padding(.horizontal, 28)
-                .frame(height: 120, alignment: .center)
-                .background(
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(
-                            Color(
-                                uiColor: .systemBackground
-                            ).opacity(0.5)
-                        )
-                )
-            
+            TypingText(
+                text: message,
+                shouldCompleteImmediately: shouldCompleteImmediately
+            )
+            .padding(.horizontal, 28)
+            .frame(height: 120, alignment: .center)
+            .background(
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(.thinMaterial)
+            )
+
             if showNameTag {
                 Text("Finley")
                     .font(.title2)
