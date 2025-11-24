@@ -10,10 +10,12 @@ import SwiftUI
 struct SplashScreenView: View {
     @State private var scale: CGFloat = 0.5
     @State private var opacity: Double = 0
-    
+
     var body: some View {
         GeometryReader { geometry in
             ZStack {
+                OnboardingBackground()
+
                 VStack(spacing: geometry.size.height * 0.03) {
                     // logo
                     Image("finley")
@@ -24,7 +26,7 @@ struct SplashScreenView: View {
                         )
                         .scaleEffect(scale)
                         .opacity(opacity)
-                    
+
                     // app name
                     Text("Finline")
                         .font(.largeTitle)

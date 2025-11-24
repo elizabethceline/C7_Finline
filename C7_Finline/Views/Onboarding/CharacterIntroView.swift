@@ -18,6 +18,8 @@ struct CharacterIntroView: View {
     @State private var shouldCompleteTyping = false
     @State private var isTypingComplete = false
 
+    @Environment(\.colorScheme) var colorScheme
+
     let messages = [
         "Hi there, nice to meet you. I'm Finley",
         "Lately, it's hard for me to go out and fish so I can eat.",
@@ -38,10 +40,13 @@ struct CharacterIntroView: View {
         GeometryReader { geometry in
             ZStack {
                 // Background
-                Image("lightFocusBackground")
-                    .resizable()
-                    .scaledToFill()
-                    .ignoresSafeArea()
+                Image(
+                    colorScheme == .dark
+                        ? "darkFocusBackground" : "lightFocusBackground"
+                )
+                .resizable()
+                .scaledToFill()
+                .ignoresSafeArea()
 
                 // Content
                 VStack {
