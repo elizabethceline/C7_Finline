@@ -69,7 +69,6 @@ final class TaskViewModel: ObservableObject {
         }
     }
     
-    //saved to Swift Data
     func createAllGoalTasks(for goal: Goal, modelContext: ModelContext) async {
         guard !tasks.isEmpty else {
             print("No generated tasks to save.")
@@ -276,7 +275,7 @@ final class TaskViewModel: ObservableObject {
             print("Task not found for deletion")
         }
     }
-    //Create Task on Goal Detail View
+    
     func createTaskForGoal(
         goalId: String,
         name: String,
@@ -329,10 +328,16 @@ final class TaskViewModel: ObservableObject {
         }
     }
     
+    // Public function untuk calculate available minutes
+    func calculateAvailableMinutes(from startDate: Date, to endDate: Date) async -> Int {
+        return calculateProductiveMinutes(from: startDate, to: endDate)
+    }
+    
     func generateTaskWithAI(
         for goalName: String,
         goalDescription: String,
-        goalDeadline: Date
+        goalDeadline: Date,
+        ignoreTimeLimit: Bool = false
     ) async {
         await MainActor.run {
             self.tasks.removeAll()
@@ -344,10 +349,10 @@ final class TaskViewModel: ObservableObject {
             due: goalDeadline,
             goalDescription: goalDescription
         )
-        await prompt(for: goal)
+        await prompt(for: goal, ignoreTimeLimit: ignoreTimeLimit)
     }
     
-    func prompt(for goal: Goal) async {
+    func prompt(for goal: Goal, ignoreTimeLimit: Bool = false) async {
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
@@ -360,8 +365,19 @@ final class TaskViewModel: ObservableObject {
         let session = LanguageModelSession(model: model)
         print(productiveHours)
         
-        let totalMinutesAvailable: Int = Int(goal.due.timeIntervalSinceNow / 60)
-        let totalTask: Int = totalMinutesAvailable < 1440 ? 2 : 5
+        let totalMinutesAvailable = calculateProductiveMinutes(from: Date(), to: goal.due)
+        print("total minutes: \(totalMinutesAvailable)")
+        
+        let totalTask: Int
+        let timeConstraint: String
+        
+        if ignoreTimeLimit {
+            totalTask = 5
+            timeConstraint = "Generate tasks without strict time constraints."
+        } else {
+            totalTask = totalMinutesAvailable < 500 ? 2 : 5
+            timeConstraint = "Total focus duration must NOT exceed \(totalMinutesAvailable) minutes."
+        }
         
         let prompt = """
             You are an AI productivity assistant.
@@ -380,7 +396,7 @@ final class TaskViewModel: ObservableObject {
             RULES:
             - DO NOT generate date/time.
             - DO NOT include start/end times.
-            - Total focus duration must NOT exceed \(totalMinutesAvailable) minutes.
+            - \(timeConstraint)
             Return ONLY JSON array of { "name": "...", "focusDuration": ... }
             """
 
@@ -397,12 +413,51 @@ final class TaskViewModel: ObservableObject {
             return
         }
         
-        await mapWorkingTimes(from: aiItems, deadline: goal.due)
+        await mapWorkingTimes(from: aiItems, deadline: goal.due, ignoreTimeLimit: ignoreTimeLimit)
+    }
+    
+    private func calculateProductiveMinutes(from startDate: Date, to endDate: Date) -> Int {
+        let cal = Calendar.current
+        var currentDate = startDate
+        var totalMinutes = 0
+        
+        var daysChecked = 0
+        let maxDays = 365
+        
+        while currentDate < endDate && daysChecked < maxDays {
+            let dayOfWeek = DayOfWeek.from(date: currentDate)
+            guard let dayHours = productiveHours.first(where: { $0.day == dayOfWeek }),
+                  !dayHours.timeSlots.isEmpty else {
+                currentDate = cal.date(byAdding: .day, value: 1, to: currentDate)!
+                currentDate = cal.startOfDay(for: currentDate)
+                daysChecked += 1
+                continue
+            }
+            
+            for slot in dayHours.timeSlots {
+                let slotRange = timeRange(for: slot, on: currentDate)
+                
+                let actualStart = max(startDate, slotRange.start)
+                let actualEnd = min(endDate, slotRange.end)
+                
+                if actualStart < actualEnd {
+                    let slotMinutes = Int(actualEnd.timeIntervalSince(actualStart) / 60)
+                    totalMinutes += slotMinutes
+                }
+            }
+            
+            currentDate = cal.date(byAdding: .day, value: 1, to: currentDate)!
+            currentDate = cal.startOfDay(for: currentDate)
+            daysChecked += 1
+        }
+        
+        return totalMinutes
     }
 
     func mapWorkingTimes(
         from items: [AIPlannedItem],
-        deadline: Date
+        deadline: Date,
+        ignoreTimeLimit: Bool = false
     ) async {
         let iso = ISO8601DateFormatter()
         var currentTime = Date()
@@ -411,16 +466,13 @@ final class TaskViewModel: ObservableObject {
         await MainActor.run { self.tasks = [] }
         
         for item in items {
-            if usedMinutes + item.focusDuration
-                > Int(deadline.timeIntervalSinceNow / 60)
-            {
+            if !ignoreTimeLimit && usedMinutes + item.focusDuration > Int(deadline.timeIntervalSinceNow / 60) {
                 break
             }
             
             guard let nextSlot = nextAvailableProductiveSlot(from: currentTime, duration: item.focusDuration) else {
                 print("No available productive slot found for remaining time")
                 break
-
             }
             
             let taskStart = nextSlot.start
@@ -471,8 +523,6 @@ final class TaskViewModel: ObservableObject {
         return nil
     }
     
-    
-    
     private func timeRange(for slot: TimeSlot, on date: Date) -> (start: Date, end: Date) {
         let cal = Calendar.current
         switch slot {
@@ -520,7 +570,6 @@ extension DayOfWeek {
         default: return .monday
         }
     }
-
 }
 
 extension TaskViewModel {
@@ -530,8 +579,7 @@ extension TaskViewModel {
         let grouped = Dictionary(grouping: pendingTasks) { task in
             Calendar.current.startOfDay(for: task.workingTime)
         }
-        return
-        grouped
+        return grouped
             .sorted { $0.key < $1.key }
             .map { (date: $0.key, tasks: $0.value) }
     }
@@ -540,8 +588,7 @@ extension TaskViewModel {
         let grouped = Dictionary(grouping: goalTasks) { task in
             Calendar.current.startOfDay(for: task.workingTime)
         }
-        return
-        grouped
+        return grouped
             .sorted { $0.key < $1.key }
             .map { (date: $0.key, tasks: $0.value) }
     }
@@ -558,8 +605,7 @@ extension TaskViewModel {
             }
         }
         
-        return
-        grouped
+        return grouped
             .sorted { $0.key < $1.key }
             .map {
                 (

@@ -26,6 +26,10 @@ struct CreateTaskView: View {
     @State private var removingTaskIds: Set<String> = []
     @State private var showDeleteAlert = false
     @State private var taskToDelete: AIGoalTask?
+    
+    // State untuk insufficient time alert
+    @State private var showInsufficientTimeAlert = false
+    @State private var pendingGoalDescription: String = ""
 
     @StateObject private var taskVM = TaskViewModel()
     @StateObject private var goalVM = GoalViewModel()
@@ -278,6 +282,7 @@ struct CreateTaskView: View {
             }
         }
         
+        // Alert untuk delete task
         .alert("Delete Task", isPresented: $showDeleteAlert) {
             Button("Cancel", role: .cancel) {
                 taskToDelete = nil
@@ -295,6 +300,25 @@ struct CreateTaskView: View {
             }
         }
         
+        .alert("Insufficient Time", isPresented: $showInsufficientTimeAlert) {
+            Button("Cancel", role: .cancel) {
+                pendingGoalDescription = ""
+            }
+            Button("Generate Anyway", role: .destructive) {
+                Task {
+                    await taskVM.generateTaskWithAI(
+                        for: goalName,
+                        goalDescription: pendingGoalDescription,
+                        goalDeadline: goalDeadline,
+                        ignoreTimeLimit: true
+                    )
+                    pendingGoalDescription = ""
+                }
+            }
+        } message: {
+            Text("The deadline is too soon. There may not be enough time to complete all generated tasks. Do you want to generate tasks anyway?")
+        }
+        
         .sheet(isPresented: $isShowingModalCreateWithAI) {
             NavigationStack {
                 GenerateTaskWithAIView(
@@ -302,11 +326,22 @@ struct CreateTaskView: View {
                     goalDeadline: goalDeadline
                 ) { description in
                     Task {
-                        await taskVM.generateTaskWithAI(
-                            for: goalName,
-                            goalDescription: description,
-                            goalDeadline: goalDeadline
+                        let totalMinutes = await taskVM.calculateAvailableMinutes(
+                            from: Date(),
+                            to: goalDeadline
                         )
+                        
+                        if totalMinutes < 60 {
+                            pendingGoalDescription = description
+                            showInsufficientTimeAlert = true
+                            isShowingModalCreateWithAI = false
+                        } else {
+                            await taskVM.generateTaskWithAI(
+                                for: goalName,
+                                goalDescription: description,
+                                goalDeadline: goalDeadline
+                            )
+                        }
                     }
                 }
                 .presentationDetents([.medium])
@@ -338,6 +373,7 @@ struct CreateTaskView: View {
         }
     }
 }
+
 extension CreateTaskView {
     static var previewWithDummyTasks: some View {
         let view = CreateTaskView(
