@@ -58,7 +58,7 @@ struct GoalCardView: View {
             LinearGradient(
                 colors: colorScheme == .dark
                     ? [
-                        Color.black,
+                        Color(.systemGray6),
                         Color.gray.opacity(0.4),
                     ]
                     : [

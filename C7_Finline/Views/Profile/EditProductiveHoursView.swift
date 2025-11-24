@@ -14,6 +14,8 @@ struct EditProductiveHoursView: View {
     @State private var hasChanges = false
     @Environment(\.dismiss) private var dismiss
 
+    @Environment(\.colorScheme) var colorScheme
+
     var body: some View {
         VStack(spacing: 16) {
             DaySelectorView(selectedDay: $selectedDay)
@@ -27,7 +29,11 @@ struct EditProductiveHoursView: View {
 
             Spacer()
         }
-        .background(Color(uiColor: .systemGray6).ignoresSafeArea())
+        .background(
+            (colorScheme == .light
+                ? Color(.systemGray6)
+                : Color(.systemBackground)).ignoresSafeArea()
+        )
         .navigationTitle("Activity Time")
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {

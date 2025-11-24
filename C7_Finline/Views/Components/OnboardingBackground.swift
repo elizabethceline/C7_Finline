@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct OnboardingBackground: View {
+    @Environment(\.colorScheme) var colorScheme
     var body: some View {
         //        LinearGradient(
         //            colors: [
@@ -19,7 +20,7 @@ struct OnboardingBackground: View {
         //        )
         Rectangle()
             .fill(
-                Color(uiColor: .systemGray6)
+                (colorScheme == .light ? Color(.systemGray6) : Color.black)
             )
             .ignoresSafeArea()
     }

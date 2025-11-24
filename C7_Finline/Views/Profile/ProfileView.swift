@@ -89,7 +89,10 @@ struct ProfileView: View {
                     }
                 }
             }
-            .background(Color(uiColor: .systemGray6).ignoresSafeArea())
+            .background(
+                (colorScheme == .light ? Color(.systemGray6) : Color.black)
+                    .ignoresSafeArea()
+            )
             .refreshable {
                 viewModel.fetchUserProfile()
             }
@@ -197,7 +200,10 @@ struct ProfileView: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 20)
-                .fill(Color(uiColor: .systemBackground))
+                .fill(
+                    (colorScheme == .light
+                        ? Color(.systemBackground) : Color(.systemGray6))
+                )
         )
     }
 
@@ -245,7 +251,10 @@ struct ProfileView: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 20)
-                .fill(Color(uiColor: .systemBackground))
+                .fill(
+                    (colorScheme == .light
+                        ? Color(.systemBackground) : Color(.systemGray6))
+                )
         )
     }
 
@@ -278,7 +287,10 @@ struct ProfileView: View {
             .padding(20)
             .background(
                 RoundedRectangle(cornerRadius: 20)
-                    .fill(Color(uiColor: .systemBackground))
+                    .fill(
+                        (colorScheme == .light
+                            ? Color(.systemBackground) : Color(.systemGray6))
+                    )
             )
         }
         .buttonStyle(.plain)
@@ -297,6 +309,8 @@ struct StatCard: View {
     let title: String
     let value: String
     let color: Color
+
+    @Environment(\.colorScheme) var colorScheme
 
     var body: some View {
         VStack(spacing: 12) {
@@ -319,7 +333,10 @@ struct StatCard: View {
         .padding(.vertical, 20)
         .background(
             RoundedRectangle(cornerRadius: 20)
-                .fill(Color(uiColor: .systemBackground))
+                .fill(
+                    (colorScheme == .light
+                        ? Color(.systemBackground) : Color(.systemGray6))
+                )
         )
     }
 }
@@ -328,6 +345,8 @@ struct StatCardWithImage: View {
     let image: Image
     let title: String
     let value: String
+
+    @Environment(\.colorScheme) var colorScheme
 
     var body: some View {
         VStack(spacing: 12) {
@@ -351,7 +370,10 @@ struct StatCardWithImage: View {
         .padding(.vertical, 20)
         .background(
             RoundedRectangle(cornerRadius: 20)
-                .fill(Color(uiColor: .systemBackground))
+                .fill(
+                    (colorScheme == .light
+                        ? Color(.systemBackground) : Color(.systemGray6))
+                )
         )
     }
 }

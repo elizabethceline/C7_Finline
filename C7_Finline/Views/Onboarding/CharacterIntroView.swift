@@ -186,7 +186,7 @@ struct CharacterIntroView: View {
             .padding()
             .background(
                 RoundedRectangle(cornerRadius: 20)
-                    .fill(Color(uiColor: .systemBackground))
+                    .fill(.thinMaterial)
             )
             .frame(height: 120)
             .padding(.horizontal, 28)
