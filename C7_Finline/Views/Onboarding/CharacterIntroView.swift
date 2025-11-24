@@ -62,7 +62,10 @@ struct CharacterIntroView: View {
                         ChatBubble(
                             message: "Alright \(username), let's do our best!",
                             showNameTag: true,
-                            shouldCompleteImmediately: shouldCompleteTyping
+                            shouldCompleteImmediately: shouldCompleteTyping,
+                            onTypingComplete: {
+                                isTypingComplete = true
+                            }
                         )
 
                         Text("Tap the arrow to continue")
@@ -74,7 +77,10 @@ struct CharacterIntroView: View {
                         ChatBubble(
                             message: messages[currentMessageIndex],
                             showNameTag: true,
-                            shouldCompleteImmediately: shouldCompleteTyping
+                            shouldCompleteImmediately: shouldCompleteTyping,
+                            onTypingComplete: {
+                                isTypingComplete = true
+                            }
                         )
 
                         Text("Tap anywhere to continue")

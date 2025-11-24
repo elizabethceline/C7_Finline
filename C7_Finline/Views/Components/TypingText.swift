@@ -10,10 +10,22 @@ import SwiftUI
 struct TypingText: View {
     let text: String
     let shouldCompleteImmediately: Bool
+    let onTypingComplete: (() -> Void)?
+
     @State private var displayedText = ""
     @State private var typingTimer: Timer?
     @State private var isTypingComplete = false
-    
+
+    init(
+        text: String,
+        shouldCompleteImmediately: Bool,
+        onTypingComplete: (() -> Void)? = nil
+    ) {
+        self.text = text
+        self.shouldCompleteImmediately = shouldCompleteImmediately
+        self.onTypingComplete = onTypingComplete
+    }
+
     var body: some View {
         Text(displayedText)
             .font(.body)
@@ -43,20 +55,24 @@ struct TypingText: View {
                 typingTimer = nil
             }
     }
-    
+
     private func completeTyping() {
         typingTimer?.invalidate()
         typingTimer = nil
         displayedText = text
         isTypingComplete = true
+        onTypingComplete?()
     }
-    
+
     private func startTyping(_ fullText: String) {
         let characters = Array(fullText)
         var currentIndex = 0
-        
+
         typingTimer?.invalidate()
-        typingTimer = Timer.scheduledTimer(withTimeInterval: 0.03, repeats: true) { timer in
+        typingTimer = Timer.scheduledTimer(
+            withTimeInterval: 0.03,
+            repeats: true
+        ) { timer in
             if currentIndex < characters.count {
                 displayedText.append(characters[currentIndex])
                 currentIndex += 1
@@ -64,6 +80,7 @@ struct TypingText: View {
                 timer.invalidate()
                 typingTimer = nil
                 isTypingComplete = true
+                onTypingComplete?()
             }
         }
     }
