@@ -16,6 +16,8 @@ struct HeaderView: View {
     @StateObject private var shopVM: ShopViewModel
     @State private var navigateToProfile: Bool = false
     @State private var selectedCharacterImage: Image = ShopItem.finley.image
+    
+    @Environment(\.colorScheme) var colorScheme
 
     init(
         viewModel: MainViewModel,
@@ -47,7 +49,7 @@ struct HeaderView: View {
                 }
                 .padding(14)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color(.systemBackground))
+                .background(colorScheme == .light ? Color(.systemBackground) : Color(.systemGray6))
                 .clipShape(
                     UnevenRoundedRectangle(
                         topLeadingRadius: 18,
@@ -58,12 +60,13 @@ struct HeaderView: View {
                 )
 
                 TriangleTail()
-                    .fill(Color(.systemBackground))
+                    .fill(colorScheme == .light ? Color(.systemBackground) : Color(.systemGray6))
                     .frame(width: 25, height: 20)
                     .rotationEffect(.degrees(58))
                     .offset(x: 14, y: -4.5)
 
             }
+            .padding(.trailing, 8)
 
             Spacer()
 
@@ -74,7 +77,7 @@ struct HeaderView: View {
                 selectedCharacterImage
                     .resizable()
                     .aspectRatio(contentMode: .fit)
-                    .frame(width: 70)
+                    .frame(width: 56)
             }
             .popoverTip(ProfileButtonTip(), arrowEdge: .top)
         }

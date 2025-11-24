@@ -13,6 +13,8 @@ struct DateItemView: View {
     let hasUnfinishedTask: Bool
     let action: () -> Void
 
+    @Environment(\.colorScheme) var colorScheme
+
     private func shortWeekday(from date: Date) -> String {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
@@ -37,7 +39,11 @@ struct DateItemView: View {
                 .contentShape(Rectangle())
                 .background(
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(Color(uiColor: .systemBackground))
+                        .fill(
+                            (colorScheme == .light
+                                ? Color(.systemBackground)
+                                : Color(.systemGray6))
+                        )
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
