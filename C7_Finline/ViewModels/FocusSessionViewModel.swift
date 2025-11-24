@@ -101,6 +101,10 @@ final class FocusSessionViewModel: ObservableObject {
         self.authManager = authManager
         self.userProfileManager =
             userProfileManager ?? UserProfileManager(networkMonitor: .shared)
+        
+        if !self.authManager.isAuthorized {
+               self.authManager.isEnabled = false
+           }
 
         if let task = task {
             self.goalName = goal?.name
