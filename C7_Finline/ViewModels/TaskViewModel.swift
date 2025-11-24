@@ -360,8 +360,9 @@ final class TaskViewModel: ObservableObject {
         let session = LanguageModelSession(model: model)
         print(productiveHours)
         
-        let totalMinutesAvailable: Int = Int(goal.due.timeIntervalSinceNow / 60)
-        let totalTask: Int = totalMinutesAvailable < 1440 ? 2 : 5
+        let totalMinutesAvailable = calculateProductiveMinutes(from: Date(), to: goal.due)
+        print("total minutes: \(totalMinutesAvailable)")
+        let totalTask: Int = totalMinutesAvailable < 500 ? 2 : 5
         
         let prompt = """
             You are an AI productivity assistant.
@@ -398,6 +399,44 @@ final class TaskViewModel: ObservableObject {
         }
         
         await mapWorkingTimes(from: aiItems, deadline: goal.due)
+    }
+    
+    private func calculateProductiveMinutes(from startDate: Date, to endDate: Date) -> Int {
+        let cal = Calendar.current
+        var currentDate = startDate
+        var totalMinutes = 0
+        
+        var daysChecked = 0
+        let maxDays = 365
+        
+        while currentDate < endDate && daysChecked < maxDays {
+            let dayOfWeek = DayOfWeek.from(date: currentDate)
+            guard let dayHours = productiveHours.first(where: { $0.day == dayOfWeek }),
+                  !dayHours.timeSlots.isEmpty else {
+                currentDate = cal.date(byAdding: .day, value: 1, to: currentDate)!
+                currentDate = cal.startOfDay(for: currentDate)
+                daysChecked += 1
+                continue
+            }
+            
+            for slot in dayHours.timeSlots {
+                let slotRange = timeRange(for: slot, on: currentDate)
+                
+                let actualStart = max(startDate, slotRange.start)
+                let actualEnd = min(endDate, slotRange.end)
+                
+                if actualStart < actualEnd {
+                    let slotMinutes = Int(actualEnd.timeIntervalSince(actualStart) / 60)
+                    totalMinutes += slotMinutes
+                }
+            }
+            
+            currentDate = cal.date(byAdding: .day, value: 1, to: currentDate)!
+            currentDate = cal.startOfDay(for: currentDate)
+            daysChecked += 1
+        }
+        
+        return totalMinutes
     }
 
     func mapWorkingTimes(
@@ -530,8 +569,7 @@ extension TaskViewModel {
         let grouped = Dictionary(grouping: pendingTasks) { task in
             Calendar.current.startOfDay(for: task.workingTime)
         }
-        return
-        grouped
+        return grouped
             .sorted { $0.key < $1.key }
             .map { (date: $0.key, tasks: $0.value) }
     }
@@ -540,8 +578,7 @@ extension TaskViewModel {
         let grouped = Dictionary(grouping: goalTasks) { task in
             Calendar.current.startOfDay(for: task.workingTime)
         }
-        return
-        grouped
+        return grouped
             .sorted { $0.key < $1.key }
             .map { (date: $0.key, tasks: $0.value) }
     }
@@ -558,8 +595,7 @@ extension TaskViewModel {
             }
         }
         
-        return
-        grouped
+        return grouped
             .sorted { $0.key < $1.key }
             .map {
                 (
