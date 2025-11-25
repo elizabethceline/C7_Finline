@@ -12,6 +12,8 @@ struct TimeSlotListView: View {
     let selectedDay: DayOfWeek
     let onChange: () -> Void
 
+    @Environment(\.colorScheme) var colorScheme
+
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 12) {
@@ -48,7 +50,11 @@ struct TimeSlotListView: View {
                         }
                         .padding()
                         .frame(maxWidth: .infinity)
-                        .background(Color(uiColor: .systemBackground))
+                        .background(
+                            (colorScheme == .light
+                                ? Color(.systemBackground)
+                                : Color(.systemGray6))
+                        )
                         .cornerRadius(20)
                     }
                     .buttonStyle(.plain)

@@ -21,7 +21,7 @@ struct ShopCardView: View {
         ZStack {
             // BACKGROUND + BORDER
             RoundedRectangle(cornerRadius: 20)
-                .fill(Color.secondary)
+                .fill(Color(.systemBackground))
                 .overlay(
                     RoundedRectangle(cornerRadius: 20)
                         .stroke(
@@ -36,17 +36,20 @@ struct ShopCardView: View {
                 item.image
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 120, height: 120)
+                    .frame(width: 80, height: 80)
+                    .padding(.top, 12)
 
                 Text(item.displayName)
-                    .font(.system(size: 16, weight: .medium))
+                    .font(.body)
+                    .fontWeight(.medium)
                     .foregroundColor(.primary)
 
                 Group {
                     switch status {
                     case .selected:
                         Text("Selected")
-                            .font(.system(size: 20, weight: .bold))
+                            .font(.title3)
+                            .fontWeight(.bold)
                             .foregroundColor(.primary)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 8)
@@ -54,20 +57,23 @@ struct ShopCardView: View {
 
                     case .choose:
                         Text("Choose")
-                            .font(.system(size: 20, weight: .bold))
+                            .font(.title3)
+                            .fontWeight(.bold)
                             .foregroundColor(.white)
                             .frame(width: 150)
                             .padding(.vertical, 8)
-                            .background(Color.primary.opacity(0.6))
+                            .background(Color.primary)
                             .clipShape(Capsule())
 
                     case .price:
                         HStack(spacing: 6) {
-                            Image(systemName: "bitcoinsign.circle.fill")
-                                .font(.system(size: 20))
+                            Image("fishCoins")
+                                .resizable()
+                                .frame(width: 24, height: 24)
                                 .foregroundColor(.yellow)
                             Text("\(price)")
-                                .font(.system(size: 20, weight: .semibold))
+                                .font(.title3)
+                                .fontWeight(.bold)
                                 .foregroundColor(.white)
                         }
                         .frame(width: 150)
@@ -78,19 +84,19 @@ struct ShopCardView: View {
                 }
             }
             .padding(.horizontal, 12)
-            .padding(.vertical, 8)
+            .padding(.vertical, 12)
         }
         .onTapGesture { onTap() }
-        .padding(.bottom, 12)
+        .padding(.bottom, 8)
     }
 }
 
 #Preview {
     VStack(spacing: 20) {
         ShopCardView(
-            item: .dogo,
+            item: .glasses,
             status: .price,
-            price: ShopItem.dogo.price
+            price: ShopItem.glasses.price
         ) {
             print("Dogo selected")
         }

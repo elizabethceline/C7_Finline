@@ -16,6 +16,8 @@ class NotificationManager: ObservableObject {
     private let notificationCenter = UNUserNotificationCenter.current()
     private let taskReminderPrefix = "task_reminder_"
     private let taskCompletionPrefix = "task_completion_"
+    private let restEndNotificationID = "rest_end_notification"
+    private let focusEndNotificationID = "focus_end_notification"
 
     private init() {
         Task {
@@ -184,6 +186,94 @@ class NotificationManager: ObservableObject {
         }
     }
 
+    func scheduleRestEndNotification(
+        username: String,
+        restDuration: TimeInterval
+    ) async {
+        let content = UNMutableNotificationContent()
+        content.title = "Rest Time's Up!"
+        content.body =
+            "Hey \(username)! Your rest is over. Time to get back to work and stay focused!"
+        content.sound = .default
+        content.badge = 1
+
+        content.userInfo = [
+            "notificationType": "rest_end"
+        ]
+
+        let trigger = UNTimeIntervalNotificationTrigger(
+            timeInterval: restDuration,
+            repeats: false
+        )
+
+        let request = UNNotificationRequest(
+            identifier: restEndNotificationID,
+            content: content,
+            trigger: trigger
+        )
+
+        do {
+            try await notificationCenter.add(request)
+            print("Scheduled rest end notification for \(restDuration) seconds")
+        } catch {
+            print(
+                "Failed to schedule rest end notification: \(error.localizedDescription)"
+            )
+        }
+    }
+
+    func scheduleSessionEndNotification(
+        username: String,
+        sessionDuration: TimeInterval
+    ) async {
+        let content = UNMutableNotificationContent()
+        content.title = "Focus Session Complete!"
+        content.body =
+            "Great job, \(username)! You've completed your focus session. Have you done your tasks?"
+        content.sound = .default
+        content.badge = 1
+
+        content.userInfo = [
+            "notificationType": "focus_end"
+        ]
+
+        let trigger = UNTimeIntervalNotificationTrigger(
+            timeInterval: sessionDuration,
+            repeats: false
+        )
+
+        let request = UNNotificationRequest(
+            identifier: focusEndNotificationID,
+            content: content,
+            trigger: trigger
+        )
+
+        do {
+            try await notificationCenter.add(request)
+            print(
+                "Scheduled focus end notification for \(sessionDuration) seconds"
+            )
+        } catch {
+            print(
+                "Failed to schedule focus end notification: \(error.localizedDescription)"
+            )
+        }
+    }
+
+    func cancelRestEndNotification() {
+        notificationCenter.removePendingNotificationRequests(
+            withIdentifiers: [restEndNotificationID]
+        )
+        print("Cancelled rest end notification")
+    }
+
+    func cancelSessionEndNotification() {
+        notificationCenter.removePendingNotificationRequests(
+            withIdentifiers: [focusEndNotificationID]
+        )
+        print("Cancelled session end notification")
+    }
+
     func removeAllTaskNotifications() async {
         let pendingNotifications =
             await notificationCenter.pendingNotificationRequests()
@@ -230,6 +320,15 @@ class NotificationManager: ObservableObject {
                     )
                     print("  Scheduled for: \(nextTriggerDate)")
                 }
+            } else if request.identifier == restEndNotificationID
+                || request.identifier == focusEndNotificationID
+            {
+                let type =
+                    request.identifier == restEndNotificationID
+                    ? "Rest End" : "Focus End"
+                print(
+                    "- [\(type)] \(request.content.title): \(request.content.body)"
+                )
             }
         }
         print("=====================================")

@@ -5,6 +5,7 @@
 //  Created by Elizabeth Celine Liong on 25/10/25.
 //
 
+import CloudKit
 import Combine
 import Foundation
 import SwiftData
@@ -31,8 +32,20 @@ class MainViewModel: ObservableObject {
         CloudKitManager.shared.isSignedInToiCloud
     }
 
+    @MainActor
+    var userRecordID: CKRecord.ID? {
+        get async {
+            do {
+                return try await CloudKitManager.shared.fetchUserRecordID()
+            } catch {
+                print("Failed to get user record ID: \(error)")
+                return nil
+            }
+        }
+    }
+
     init(
-        networkMonitor: NetworkMonitor = NetworkMonitor(),
+        networkMonitor: NetworkMonitor = .shared,
         syncManager: BackgroundSyncManager = .shared
     ) {
         self.networkMonitor = networkMonitor
@@ -101,28 +114,6 @@ class MainViewModel: ObservableObject {
             }
             .store(in: &cancellables)
     }
-
-//    @MainActor
-//    private func loadDataFromSwiftData() {
-//        guard let modelContext = modelContext else { return }
-//
-//        do {
-//            // Load goals
-//            let goalDescriptor = FetchDescriptor<Goal>(
-//                sortBy: [SortDescriptor(\.due, order: .forward)]
-//            )
-//            let taskDescriptor = FetchDescriptor<GoalTask>()
-//
-//            let localGoals = try modelContext.fetch(goalDescriptor)
-//            let localTasks = try modelContext.fetch(taskDescriptor)
-//
-//            updatePublishedGoals(localGoals)
-//            updatePublishedTasks(localTasks)
-//        } catch {
-//            self.error =
-//                "Failed to load local data: \(error.localizedDescription)"
-//        }
-//    }
 
     @MainActor
     private func updatePublishedGoals(_ goals: [Goal]) {
@@ -197,14 +188,14 @@ class MainViewModel: ObservableObject {
 
         self.tasks.removeAll { $0.id == task.id }
         taskManager.deleteTask(task: task, modelContext: modelContext)
-        
+
         do {
-                try modelContext.save()
-            
-                WidgetCenter.shared.reloadTimelines(ofKind: "FinlineWidget")
-            } catch {
-                print("Error deleting task: \(error.localizedDescription)")
-            }
+            try modelContext.save()
+
+            WidgetCenter.shared.reloadTimelines(ofKind: "FinlineWidget")
+        } catch {
+            print("Error deleting task: \(error.localizedDescription)")
+        }
     }
 
     @MainActor
@@ -223,7 +214,6 @@ class MainViewModel: ObservableObject {
             print("Error saving task completion: \(error.localizedDescription)")
         }
     }
-
 
     @MainActor
     func appendNewGoal(_ goal: Goal) {
@@ -346,4 +336,3 @@ class MainViewModel: ObservableObject {
         }
     }
 }
-

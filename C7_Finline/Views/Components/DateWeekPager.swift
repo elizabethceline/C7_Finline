@@ -122,5 +122,5 @@ struct DateWeekPagerView: View {
         unfinishedTasks: []
     )
     .padding()
-    .background(Color.gray.opacity(0.2))
+    .background(Color(.systemBackground))
 }

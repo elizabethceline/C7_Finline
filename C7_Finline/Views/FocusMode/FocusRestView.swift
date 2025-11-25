@@ -37,15 +37,20 @@ struct FocusRestView: View {
                         HapticManager.shared.playConfirmationHaptic()
                         showEarlyFinishAlert = true
                     } else {
-                        HapticManager.shared.playSessionEndHaptic()
+                        HapticManager.shared.playStartSessionHaptic()
                         viewModel.endRest()
                     }
                 }
             )
             .padding(.bottom, 40)
         }
-        .onAppear{ viewModel.startRest(for: restDuration)}
-        .onDisappear{ viewModel.endRest()}
+//        .onAppear{ viewModel.startRest(for: restDuration)}
+        .onAppear {
+            if viewModel.restRemainingTime <= 0 && !viewModel.isResting {
+                viewModel.startRest(for: restDuration)
+            }
+        }
+//        .onDisappear{ viewModel.endRest()}
         .alert("Done Resting?", isPresented: $showEarlyFinishAlert) {
             Button("Yes", role: .destructive) {
                 HapticManager.shared.playConfirmationHaptic()

@@ -11,21 +11,34 @@ struct ChatBubble: View {
     let message: String
     let showNameTag: Bool
     let shouldCompleteImmediately: Bool
-    
+    let onTypingComplete: (() -> Void)?
+
+    init(
+        message: String,
+        showNameTag: Bool,
+        shouldCompleteImmediately: Bool,
+        onTypingComplete: (() -> Void)? = nil
+    ) {
+        self.message = message
+        self.showNameTag = showNameTag
+        self.shouldCompleteImmediately = shouldCompleteImmediately
+        self.onTypingComplete = onTypingComplete
+    }
+
     var body: some View {
         ZStack(alignment: .topLeading) {
-            TypingText(text: message, shouldCompleteImmediately: shouldCompleteImmediately)
-                .padding(.horizontal, 28)
-                .frame(height: 120, alignment: .center)
-                .background(
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(
-                            Color(
-                                uiColor: .systemBackground
-                            ).opacity(0.5)
-                        )
-                )
-            
+            TypingText(
+                text: message,
+                shouldCompleteImmediately: shouldCompleteImmediately,
+                onTypingComplete: onTypingComplete
+            )
+            .padding(.horizontal, 28)
+            .frame(height: 120, alignment: .center)
+            .background(
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(.thinMaterial)
+            )
+
             if showNameTag {
                 Text("Finley")
                     .font(.title2)

@@ -10,34 +10,30 @@ import SwiftUI
 
 enum ShopItem: String, CaseIterable, Codable {
     case finley  // Default character
-    case dogo
-    case ebet
-    //    case leo
+    case glasses
+    case scarf
 
     var price: Int {
         switch self {
         case .finley: return 0  // Free default character
-        case .dogo: return 100
-        case .ebet: return 50
-        //        case .leo: return 125
+        case .glasses: return 100
+        case .scarf: return 50
         }
     }
 
     var displayName: String {
         switch self {
-        case .finley: return "Finley"
-        case .dogo: return "Dogo"
-        case .ebet: return "Ebet"
-        //        case .leo: return "leo"
+        case .finley: return "Default"
+        case .glasses: return "Glasses"
+        case .scarf: return "Scarf"
         }
     }
 
     var imageName: String {
         switch self {
         case .finley: return "finley"
-        case .dogo: return "dogo"
-        case .ebet: return "ebet"
-        //        case .leo: return "leo"
+        case .glasses: return "finley_glasses"
+        case .scarf: return "finley_scarf"
         }
     }
 
@@ -47,5 +43,30 @@ enum ShopItem: String, CaseIterable, Codable {
 
     var isDefault: Bool {
         return self == .finley
+    }
+}
+
+extension ShopItem {
+    var focusAnimationName: String {
+        switch self {
+        case .finley:
+            return "FishingAnimated"
+        case .scarf:
+            return "FishingAnimatedScarf"
+        case .glasses:
+            return "FishingAnimatedGlasses"
+        }
+    }
+
+    var restAnimationName: String {
+        switch self {
+        case .finley:
+            return "SleepingAnimated"
+        case .scarf:
+            return "SleepingAnimatedScarf"
+        case .glasses:
+            return "SleepingAnimatedGlasses"
+        }
+
     }
 }

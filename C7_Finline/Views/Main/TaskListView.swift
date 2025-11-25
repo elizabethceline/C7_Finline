@@ -284,9 +284,9 @@ struct TaskListView: View {
     }
 
     private func completeTask(_ task: GoalTask) {
-        
+
         HapticManager.shared.playSuccessHaptic()
-        
+
         withAnimation(.easeInOut(duration: 0.3)) {
             removingTaskIds.insert(task.id)
         }
@@ -298,9 +298,9 @@ struct TaskListView: View {
     }
 
     private func deleteTask(_ task: GoalTask) {
-        
+
         HapticManager.shared.playDestructiveHaptic()
-        
+
         withAnimation(.easeInOut(duration: 0.3)) {
             removingTaskIds.insert(task.id)
         }
@@ -341,7 +341,7 @@ struct TaskListView: View {
 
     goal.tasks = [task1, task2]
 
-    let dummyMonitor = NetworkMonitor()
+    let dummyMonitor = NetworkMonitor.shared
 
     let mockVM = MainViewModelMock(goals: [goal], tasks: [task1, task2])
 
@@ -353,7 +353,7 @@ struct TaskListView: View {
         networkMonitor: dummyMonitor
     )
     .padding()
-    .background(Color.gray.opacity(0.1))
+    .background(Color.blue)
     .environmentObject(FocusSessionViewModel())
 }
 

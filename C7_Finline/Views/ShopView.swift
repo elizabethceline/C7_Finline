@@ -30,7 +30,7 @@ struct ShopView: View {
     init(userRecordID: CKRecord.ID) {
         self.userRecordID = userRecordID
 
-        let networkMonitor = NetworkMonitor()
+        let networkMonitor = NetworkMonitor.shared
         let userProfileManager = UserProfileManager(
             networkMonitor: networkMonitor
         )
@@ -138,10 +138,14 @@ struct ShopView: View {
                 Text("\(coins)")
                     .font(.system(size: 18, weight: .bold))
                     .foregroundStyle(Color.white)
-                Image(systemName: "bitcoinsign.circle.fill")
-                    .foregroundColor(.yellow)
-                    .imageScale(.large)
+                Image("fishCoins")
+                    .resizable()
+                    .frame(width: 30, height: 30)
+                //                    .foregroundColor(.yellow)
+                //                    .imageScale(.large)
             }
+//            .padding(.leading, 20)
+//            .padding(.trailing, 8)
             .padding(.horizontal, 14)
             .padding(.vertical, 10)
             .background(Capsule().fill(Color.primary))

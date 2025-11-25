@@ -8,15 +8,22 @@
 import SwiftUI
 
 struct TaskCardView: View {
+    @Environment(\.colorScheme) var colorScheme
+
     let task: GoalTask
 
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
-                Text(formattedTimeRange(start: task.workingTime, durationMinutes: task.focusDuration))
-                    .font(.caption)
-                    .foregroundColor(Color(uiColor: .secondaryLabel))
-                
+                Text(
+                    formattedTimeRange(
+                        start: task.workingTime,
+                        durationMinutes: task.focusDuration
+                    )
+                )
+                .font(.caption)
+                .foregroundColor(Color(uiColor: .secondaryLabel))
+
                 Text(task.name.capitalized)
                     .font(.body)
                     .fontWeight(.medium)
@@ -28,33 +35,39 @@ struct TaskCardView: View {
             Spacer()
 
             Text("\(task.focusDuration)m")
-                .font(.caption)
-                .fontWeight(.bold)
+                .font(.callout)
+                .fontWeight(.semibold)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 4)
-                .background(
-                    task.isCompleted
-                        ? Color.gray.opacity(0.2) : Color.secondary
-                )
                 .foregroundColor(
-                    task.isCompleted ? Color(uiColor: .label) : .black
+                    Color.primary
                 )
                 .cornerRadius(12)
         }
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 24)
-                .fill(Color(uiColor: .systemBackground))
+                .fill(
+                    (colorScheme == .light
+                        ? Color(.systemBackground) : Color(.systemGray6))
+                )
         )
         .opacity(task.isCompleted ? 0.6 : 1)
     }
-    
-    private func formattedTimeRange(start: Date, durationMinutes: Int) -> String {
+
+    private func formattedTimeRange(start: Date, durationMinutes: Int) -> String
+    {
         let formatter = DateFormatter()
         formatter.dateFormat = "HH:mm"
-        
-        let endTime = Calendar.current.date(byAdding: .minute, value: durationMinutes, to: start) ?? start
-        return "\(formatter.string(from: start)) - \(formatter.string(from: endTime))"
+
+        let endTime =
+            Calendar.current.date(
+                byAdding: .minute,
+                value: durationMinutes,
+                to: start
+            ) ?? start
+        return
+            "\(formatter.string(from: start)) - \(formatter.string(from: endTime))"
     }
 }
 
@@ -63,7 +76,12 @@ struct TaskCardView: View {
         task: GoalTask(
             id: "task_001",
             name: "Study Math",
-            workingTime: Calendar.current.date(bySettingHour: 18, minute: 0, second: 0, of: Date())!,
+            workingTime: Calendar.current.date(
+                bySettingHour: 18,
+                minute: 0,
+                second: 0,
+                of: Date()
+            )!,
             focusDuration: 20,
             isCompleted: false,
             goal: Goal(
@@ -76,5 +94,5 @@ struct TaskCardView: View {
         )
     )
     .padding()
-    .background(Color.gray.opacity(0.2))
+    .background(Color.black)
 }

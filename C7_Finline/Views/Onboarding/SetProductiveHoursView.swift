@@ -13,6 +13,8 @@ struct SetProductiveHoursView: View {
 
     @State private var selectedTimeSlots: Set<TimeSlot> = []
     @State private var includeWeekend: Bool = false
+    
+    @Environment(\.colorScheme) var colorScheme
 
     var body: some View {
         ZStack {
@@ -71,7 +73,11 @@ struct SetProductiveHoursView: View {
                                 }
                                 .padding()
                                 .frame(maxWidth: .infinity)
-                                .background(Color(uiColor: .systemBackground))
+                                .background(
+                                    (colorScheme == .light
+                                        ? Color(.systemBackground)
+                                        : Color(.systemGray6))
+                                )
                                 .cornerRadius(20)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 20)
@@ -87,20 +93,29 @@ struct SetProductiveHoursView: View {
 
                         // Weekend toggle
                         Button {
-                            includeWeekend.toggle()
+                            if !selectedTimeSlots.isEmpty {
+                                includeWeekend.toggle()
+                            }
                         } label: {
                             HStack {
                                 Text("Are you productive at weekend?")
                                     .font(.headline)
-                                    .foregroundColor(Color(uiColor: .label))
+                                    .foregroundColor(
+                                        selectedTimeSlots.isEmpty
+                                            ? Color(uiColor: .secondaryLabel)
+                                            : Color(uiColor: .label)
+                                    )
                                 Spacer()
                                 Image(
                                     systemName: includeWeekend
                                         ? "checkmark.square.fill" : "square"
                                 )
                                 .foregroundColor(
-                                    includeWeekend
-                                        ? Color.primary : .primary.opacity(0.6)
+                                    selectedTimeSlots.isEmpty
+                                        ? .primary.opacity(0.3)
+                                        : (includeWeekend
+                                            ? Color.primary
+                                            : .primary.opacity(0.6))
                                 )
                                 .font(.title2)
                             }
@@ -110,6 +125,7 @@ struct SetProductiveHoursView: View {
                             .frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.plain)
+                        .disabled(selectedTimeSlots.isEmpty)
                     }
                     .padding(.top, 1)
                     .padding(.horizontal)
@@ -143,6 +159,12 @@ struct SetProductiveHoursView: View {
         }
         .onAppear {
             loadCurrentSelection()
+        }
+        .onChange(of: selectedTimeSlots) { oldValue, newValue in
+            // Uncheck weekend if all time slots are deselected
+            if newValue.isEmpty {
+                includeWeekend = false
+            }
         }
     }
 
