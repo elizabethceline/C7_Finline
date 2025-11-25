@@ -333,6 +333,11 @@ final class TaskViewModel: ObservableObject {
         return calculateProductiveMinutes(from: startDate, to: endDate)
     }
     
+    // Helper function to check if user has any productive hours set
+    func hasProductiveHours() -> Bool {
+        return productiveHours.contains { !$0.timeSlots.isEmpty }
+    }
+    
     func generateTaskWithAI(
         for goalName: String,
         goalDescription: String,
@@ -363,10 +368,13 @@ final class TaskViewModel: ObservableObject {
         }
         
         let session = LanguageModelSession(model: model)
-        print(productiveHours)
+        print("Productive hours: \(productiveHours)")
+        
+        let hasProductiveHours = self.hasProductiveHours()
+        print("Has productive hours: \(hasProductiveHours)")
         
         let totalMinutesAvailable = calculateProductiveMinutes(from: Date(), to: goal.due)
-        print("total minutes: \(totalMinutesAvailable)")
+        print("Total minutes available: \(totalMinutesAvailable)")
         
         let totalTask: Int
         let timeConstraint: String
@@ -376,8 +384,12 @@ final class TaskViewModel: ObservableObject {
             timeConstraint = "Generate tasks without strict time constraints."
         } else {
             totalTask = totalMinutesAvailable < 500 ? 2 : 5
-            timeConstraint = "Total focus duration must NOT exceed \(totalMinutesAvailable) minutes."
+            timeConstraint = hasProductiveHours
+                ? "Total focus duration must NOT exceed \(totalMinutesAvailable) minutes based on productive hours."
+                : "Total focus duration must fit within \(totalMinutesAvailable) minutes from now until deadline."
         }
+        print("ignore time limit  \(ignoreTimeLimit)")
+        print("total Minutes Avail \(totalMinutesAvailable)")
         
         let prompt = """
             You are an AI productivity assistant.
@@ -417,6 +429,14 @@ final class TaskViewModel: ObservableObject {
     }
     
     private func calculateProductiveMinutes(from startDate: Date, to endDate: Date) -> Int {
+        let hasAnyProductiveHours = productiveHours.contains { !$0.timeSlots.isEmpty }
+        
+        if !hasAnyProductiveHours {
+            let totalMinutes = Int(endDate.timeIntervalSince(startDate) / 60)
+            print("No productive hours set, using full time range: \(totalMinutes) minutes")
+            return max(0, totalMinutes)
+        }
+        
         let cal = Calendar.current
         var currentDate = startDate
         var totalMinutes = 0
@@ -465,18 +485,33 @@ final class TaskViewModel: ObservableObject {
         
         await MainActor.run { self.tasks = [] }
         
+        let hasAnyProductiveHours = productiveHours.contains { !$0.timeSlots.isEmpty }
+        
         for item in items {
             if !ignoreTimeLimit && usedMinutes + item.focusDuration > Int(deadline.timeIntervalSinceNow / 60) {
+                print("Task would exceed time limit, stopping generation")
                 break
             }
             
-            guard let nextSlot = nextAvailableProductiveSlot(from: currentTime, duration: item.focusDuration) else {
-                print("No available productive slot found for remaining time")
-                break
-            }
+            let taskStart: Date
+            let taskEnd: Date
             
-            let taskStart = nextSlot.start
-            let taskEnd = nextSlot.end
+            if hasAnyProductiveHours {
+                guard let nextSlot = nextAvailableProductiveSlot(from: currentTime, duration: item.focusDuration) else {
+                    print("No available productive slot found for remaining time")
+                    break
+                }
+                taskStart = nextSlot.start
+                taskEnd = nextSlot.end
+            } else {
+                taskStart = currentTime
+                taskEnd = currentTime.addingTimeInterval(Double(item.focusDuration) * 60)
+                
+                if taskEnd > deadline {
+                    print("Task would exceed deadline, stopping generation")
+                    break
+                }
+            }
             
             let task = AIGoalTask(
                 name: item.name,
@@ -489,15 +524,25 @@ final class TaskViewModel: ObservableObject {
             usedMinutes += item.focusDuration
             currentTime = taskEnd.addingTimeInterval(15 * 60)
         }
+        
+        print("Generated \(tasks.count) tasks, total duration: \(usedMinutes) minutes")
     }
     
     private func nextAvailableProductiveSlot(from date: Date, duration: Int) -> (start: Date, end: Date)? {
+        let hasAnyProductiveHours = productiveHours.contains { !$0.timeSlots.isEmpty }
+        
+        if !hasAnyProductiveHours {
+            print("No productive hours set, scheduling task immediately")
+            return (start: date, end: date.addingTimeInterval(Double(duration) * 60))
+        }
+        
         let cal = Calendar.current
         var currentDate = date
         
         for _ in 0..<30 {
             let dayOfWeek = DayOfWeek.from(date: currentDate)
-            guard let dayHours = productiveHours.first(where: { $0.day == dayOfWeek }), !dayHours.timeSlots.isEmpty else {
+            guard let dayHours = productiveHours.first(where: { $0.day == dayOfWeek }),
+                  !dayHours.timeSlots.isEmpty else {
                 currentDate = cal.date(byAdding: .day, value: 1, to: currentDate)!
                 continue
             }
