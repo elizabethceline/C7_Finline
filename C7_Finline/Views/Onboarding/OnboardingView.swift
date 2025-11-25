@@ -43,19 +43,23 @@ struct OnboardingView: View {
                 SetProductiveHoursView(
                     productiveHours: $viewModel.productiveHours,
                     onComplete: {
-                        viewModel.saveUserProfile(
-                            username: viewModel.username,
-                            productiveHours: viewModel.productiveHours,
-                            points: viewModel.points,
-                        )
+                        Task {
+                            await viewModel.saveUserProfile(
+                                username: viewModel.username,
+                                productiveHours: viewModel.productiveHours,
+                                points: viewModel.points
+                            )
 
-                        UserDefaults.standard.set(
-                            true,
-                            forKey: "hasCompletedOnboarding"
-                        )
+                            await MainActor.run {
+                                UserDefaults.standard.set(
+                                    true,
+                                    forKey: "hasCompletedOnboarding"
+                                )
 
-                        withAnimation(.easeInOut(duration: 0.6)) {
-                            hasCompletedOnboarding = true
+                                withAnimation(.easeInOut(duration: 0.6)) {
+                                    hasCompletedOnboarding = true
+                                }
+                            }
                         }
                     }
                 )

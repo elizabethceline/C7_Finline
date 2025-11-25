@@ -1,37 +1,37 @@
-import SwiftUI
-import SwiftData
 import Lottie
+import SwiftData
+import SwiftUI
 
 struct FocusModeView: View {
     @EnvironmentObject var viewModel: FocusSessionViewModel
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Environment(\.colorScheme) var colorScheme
-    
+
     @Query private var purchasedItems: [PurchasedItem]
-    
+
     var onGiveUp: (GoalTask) -> Void
     var onSessionEnd: () -> Void
-    
+
     @State private var isShowingEndSessionAlert = false
-    
+
     @State private var isGivingUp = false
     @State private var resultVM: FocusResultViewModel?
-    
+
     @State private var isShowingTimesUpAlert = false
     @State private var timeUpAlertShown = false
     @State private var isShowingAddTimeModal = false
     @State private var extraTimeInMinutes: Int = 5
     @State private var hasExtendedTime = false
-    
+
     @State private var isShowingRestModal = false
     @State private var selectedRestMinutes = 5
-    
+
     private var totalAllowedRestTime: TimeInterval {
         let blocksOf30Min = viewModel.sessionDuration / (30 * 60)
         return blocksOf30Min * (5 * 60)
     }
-    
+
     private var selectedShopItem: ShopItem? {
         purchasedItems.first(where: { $0.isSelected })?.shopItem ?? .finley
     }
@@ -41,35 +41,39 @@ struct FocusModeView: View {
     private var restAnimationName: String {
         selectedShopItem?.restAnimationName ?? "SleepingaAnimated"
     }
-    
+
     var body: some View {
         ZStack {
             backgroundView
-            
+
             if viewModel.isResting {
                 LottieView(name: restAnimationName, loopMode: .loop)
                     .allowsHitTesting(false)
                     .frame(width: 280, height: 280)
-                    .offset(y: 85)
+                    .offset(y: 75)
             } else {
                 LottieView(name: focusAnimationName, loopMode: .loop)
                     .allowsHitTesting(false)
                     .frame(width: 280, height: 280)
-                    .offset(y: 70)
+                    .offset(y: 45)
             }
-            
+
             SnowView()
-                   .allowsHitTesting(false)
-            
+                .allowsHitTesting(false)
+
             if viewModel.isResting {
                 Color.blue.opacity(0.3)
-                    .frame(height: 910)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .ignoresSafeArea()
                     .transition(.opacity)
-                    .animation(.easeInOut(duration: 0.5), value: viewModel.isResting)
+                    .animation(
+                        .easeInOut(duration: 0.5),
+                        value: viewModel.isResting
+                    )
             }
-            
+
             content
-                .padding()
+                .padding(.horizontal)
         }
         // lifecycle + tasks
         .onChange(of: viewModel.isSessionEnded) { oldValue, newValue in
@@ -78,12 +82,16 @@ struct FocusModeView: View {
             }
             if newValue && !isGivingUp && resultVM == nil {
                 Task { @MainActor in
-                    resultVM = viewModel.createResult(using: modelContext, didComplete: true)
+                    resultVM = viewModel.createResult(
+                        using: modelContext,
+                        didComplete: true
+                    )
                 }
             }
         }
         .onChange(of: viewModel.didTimeRunOut) {
-            oldValue, newValue in
+            oldValue,
+            newValue in
             if newValue {
                 isShowingTimesUpAlert = true
                 timeUpAlertShown = true
@@ -109,10 +117,10 @@ struct FocusModeView: View {
             viewModel.didFinishEarly = false
             viewModel.isSessionEnded = false
             viewModel.errorMessage = nil
-            
+
             if viewModel.remainingTime == viewModel.sessionDuration {
-                   HapticManager.shared.playStartSessionHaptic()
-               }
+                HapticManager.shared.playStartSessionHaptic()
+            }
         }
         .onDisappear {
             viewModel.resetSession()
@@ -121,18 +129,21 @@ struct FocusModeView: View {
             Button("I'm Done", role: .none) {
                 HapticManager.shared.playSuccessHaptic()
                 Task {
-                    resultVM = viewModel.createResult(using: modelContext, didComplete: true)
+                    resultVM = viewModel.createResult(
+                        using: modelContext,
+                        didComplete: true
+                    )
                     viewModel.finishEarly()
                     await viewModel.endSession()
 
                 }
             }
-            
+
             Button("Abort Task", role: .destructive) {
                 HapticManager.shared.playDestructiveHaptic()
                 Task {
                     isGivingUp = true
-                    await viewModel.endSession() // mark incomplete
+                    await viewModel.endSession()  // mark incomplete
                     if let task = viewModel.task {
                         onGiveUp(task)
                     } else {
@@ -140,19 +151,26 @@ struct FocusModeView: View {
                     }
                 }
             }
-            
-            Button("Cancel", role: .cancel) { }
+
+            Button("Cancel", role: .cancel) {}
         } message: {
-            let formattedTime = TimeFormatter.format(seconds: viewModel.remainingTime)
-            
-            Text("You still have \(formattedTime) to go. Wrap up now to finish the task, or abort if you’re calling it quits early.")
+            let formattedTime = TimeFormatter.format(
+                seconds: viewModel.remainingTime
+            )
+
+            Text(
+                "You still have \(formattedTime) to go. Wrap up now to finish the task, or abort if you’re calling it quits early."
+            )
         }
-        
+
         .alert("Time's Up!", isPresented: $isShowingTimesUpAlert) {
             Button("Yes, I'm finished") {
                 Task { @MainActor in
-                    resultVM = viewModel.createResult(using: modelContext, didComplete: true)
-                    
+                    resultVM = viewModel.createResult(
+                        using: modelContext,
+                        didComplete: true
+                    )
+
                     await viewModel.endSession()
                 }
             }
@@ -165,17 +183,26 @@ struct FocusModeView: View {
         } message: {
             Text("Let’s be real... Did you actually finish the task?")
         }
-        .alert("Hey, are you still working?", isPresented: $viewModel.isShowingNudgeAlert) {
+        .alert(
+            "Hey, are you still working?",
+            isPresented: $viewModel.isShowingNudgeAlert
+        ) {
             Button("Yes I'm still working") {
                 viewModel.userConfirmedNudge()
             }
         } message: {
-            Text("You’re totally not doing something else right now, right? Answering this will get 20 points.")
+            Text(
+                "You’re totally not doing something else right now, right? Answering this will get 20 points."
+            )
         }
         .sheet(isPresented: $isShowingAddTimeModal) {
             AddTimeView { hours, minutes, seconds in
                 Task {
-                    await viewModel.addMoreTime(hours: hours, minutes: minutes, seconds: seconds)
+                    await viewModel.addMoreTime(
+                        hours: hours,
+                        minutes: minutes,
+                        seconds: seconds
+                    )
                 }
                 hasExtendedTime = true
             }
@@ -183,7 +210,10 @@ struct FocusModeView: View {
         .sheet(isPresented: $isShowingRestModal) {
             AddRestTimeView(
                 restMinutes: $selectedRestMinutes,
-                maxRestMinutes: max(5, Int(viewModel.remainingRestSeconds / 60)),
+                maxRestMinutes: max(
+                    5,
+                    Int(viewModel.remainingRestSeconds / 60)
+                ),
                 onConfirm: {
                     let restDuration = TimeInterval(selectedRestMinutes * 60)
                     viewModel.startRest(for: restDuration)
@@ -200,36 +230,41 @@ struct FocusModeView: View {
             print("isInRestView changed from \(oldValue) to \(newValue)")
         }
     }
-    
+
     // MARK: - Subviews split for compiler friendliness
-    
+
     private var backgroundView: some View {
         //        Image(viewModel.isResting ? "restBackground" : "focusBackground")
         //            .resizable()
         //            .frame(height: 910)
-//        let focusImageName: String = {
-//            guard !viewModel.isResting else {
-//                return "lightFocusBackground"
-//            }
-//            
-//            return colorScheme == .dark ? "darkFocusBackground" : "lightFocusBackground"
-//        }()
-//        
+        //        let focusImageName: String = {
+        //            guard !viewModel.isResting else {
+        //                return "lightFocusBackground"
+        //            }
+        //
+        //            return colorScheme == .dark ? "darkFocusBackground" : "lightFocusBackground"
+        //        }()
+        //
         //        let imageName = viewModel.isResting ? "restBackground" : focusImageName
-        
-        let imageName = colorScheme == .dark
-        ? "darkFocusBackground"
-        : "lightFocusBackground"
-        
+
+        let imageName =
+            colorScheme == .dark
+            ? "darkFocusBackground"
+            : "lightFocusBackground"
+
         return Image(imageName)
             .resizable()
-            .frame(height: 910)
+            .scaledToFill()
+
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .ignoresSafeArea()
     }
-    
+
     private var content: some View {
         VStack(spacing: 24) {
-            Spacer().frame(height: 40)
-            
+            Spacer()
+                .frame(height: 40)
+
             VStack(alignment: .leading) {
                 if let vm = resultVM {
                     endView(vm: vm)
@@ -239,79 +274,146 @@ struct FocusModeView: View {
                     activeView
                 }
             }
+            
+            Spacer()
+                .frame(height: 4)
         }
     }
-    
+
     private func endView(vm: FocusResultViewModel) -> some View {
-        FocusEndView(viewModel: vm, onDismiss: {
-            onSessionEnd() // ✅ call parent
-        })
+        FocusEndView(
+            viewModel: vm,
+            onDismiss: {
+                onSessionEnd()  // ✅ call parent
+            }
+        )
     }
-    
+
     private var restView: some View {
         FocusRestView(
             goalName: viewModel.goalName,
             restDuration: viewModel.restRemainingTime
         )
     }
-    
-    
+
     private var activeView: some View {
-        Group {
-            // Header
-            Text(viewModel.goalName ?? "No Goal")
-                .font(.headline)
-                .bold()
-                .padding(.horizontal)
-                .padding(.vertical, 8)
-            //.background(Color.secondary)
-            //.clipShape(RoundedRectangle(cornerRadius: 20))
-            // .shadow(radius: 2)
-            //.padding()
-            
-            // Task title
-            Text(viewModel.taskTitle.isEmpty ? "Focus Session" : viewModel.taskTitle)
-                .font(.largeTitle)
-                .bold()
-            //.foregroundColor(.white)
-                .multilineTextAlignment(.leading)
-            //.shadow(radius: 6)
-                .padding(.horizontal)
-                .padding(.bottom)
+        VStack(spacing: 0) {
+            VStack(alignment: .leading) {
+                // Header
+                Text(viewModel.goalName ?? "No Goal")
+                    .font(.headline)
+                    .bold()
+                    .padding(.bottom, 4)
+                
+                // Task title
+                Text(viewModel.taskTitle.isEmpty ? "Focus Session" : viewModel.taskTitle)
+                    .font(.largeTitle)
+                    .bold()
+                    .multilineTextAlignment(.leading)
+                    .padding(.bottom)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal)
             
             Spacer()
             
             // Timer display + buttons
             FocusTimerCard(
                 mode: .focus,
-                timeText: TimeFormatter.format(seconds: viewModel.remainingTime),
+                timeText: TimeFormatter.format(
+                    seconds: viewModel.remainingTime
+                ),
                 primaryLabel: "End",
                 onPrimaryTap: {
                     HapticManager.shared.playSessionEndHaptic()
-                    isShowingEndSessionAlert = true },
+                    isShowingEndSessionAlert = true
+                },
                 secondaryLabel: "Rest",
                 onSecondaryTap: {
                     HapticManager.shared.playConfirmationHaptic()
-                    isShowingRestModal = true },
+                    isShowingRestModal = true
+                },
                 secondaryEnabled: viewModel.canRest && viewModel.isFocusing
             )
-            .padding(.bottom, 40)
         }
     }
 }
 
-#Preview {
+#Preview("Focus Mode") {
     let mockSessionVM = FocusSessionViewModel()
     mockSessionVM.taskTitle = "Initiate a Desk Research"
     mockSessionVM.goalName = "Write my Thesis"
-    mockSessionVM.remainingTime = 120
+    mockSessionVM.remainingTime = 3000
 
     return FocusModeView(
         onGiveUp: { task in print("Preview Give Up Tapped") },
-        onSessionEnd: {
-            print("Preview Session Ended Tapped")
-                }
+        onSessionEnd: { print("Preview Session Ended Tapped") }
     )
-        .environmentObject(mockSessionVM)
-        .modelContainer(for: [Goal.self, GoalTask.self], inMemory: true)
+    .environmentObject(mockSessionVM)
+    .modelContainer(for: [Goal.self, GoalTask.self], inMemory: true)
+}
+
+#Preview("Rest Mode") {
+    let mockSessionVM = FocusSessionViewModel()
+    mockSessionVM.taskTitle = "Initiate a Desk Research"
+    mockSessionVM.goalName = "Write my Thesis"
+    mockSessionVM.remainingTime = 3000
+    mockSessionVM.isResting = true
+    mockSessionVM.restRemainingTime = 300
+
+    return FocusModeView(
+        onGiveUp: { task in print("Preview Give Up Tapped") },
+        onSessionEnd: { print("Preview Session Ended Tapped") }
+    )
+    .environmentObject(mockSessionVM)
+    .modelContainer(for: [Goal.self, GoalTask.self], inMemory: true)
+}
+
+#Preview("End Session - Full Layout") {
+    let mockFish = [
+        Fish.sample(of: .common),
+        Fish.sample(of: .common),
+        Fish.sample(of: .uncommon),
+        Fish.sample(of: .rare),
+    ]
+    
+    let mockResult = FocusSessionResult(
+        caughtFish: mockFish,
+        duration: 1800,
+        task: nil
+    )
+    
+    let mockResultVM = FocusResultViewModel(
+        context: nil,
+        networkMonitor: NetworkMonitor.shared
+    )
+    mockResultVM.currentResult = mockResult
+    mockResultVM.bonusPoints = 20
+    
+    let mockSessionVM = FocusSessionViewModel()
+    mockSessionVM.goalName = "Write my Thesis"
+    
+    return ZStack {
+        Image("lightFocusBackground")
+            .resizable()
+            .scaledToFill()
+            .ignoresSafeArea()
+        
+        SnowView()
+            .allowsHitTesting(false)
+        
+        VStack(spacing: 24) {
+          
+            
+            FocusEndView(
+                viewModel: mockResultVM,
+                onDismiss: {
+                    print("Preview Session Ended")
+                }
+            )
+            .padding(.horizontal)
+        }
+    }
+    .environmentObject(mockSessionVM)
+    .modelContainer(for: [Goal.self, GoalTask.self], inMemory: true)
 }
