@@ -144,20 +144,18 @@ class MainViewModel: ObservableObject {
             return
         }
 
-        isLoading = true
+        Task {
+            if networkMonitor.isConnected, isSignedInToiCloud {
+                isLoading = true
 
-        do {
-            let fetchedGoals = try await goalManager.fetchGoals(
-                modelContext: modelContext
-            )
-            updatePublishedGoals(fetchedGoals)
-            try? modelContext.save()
-            await fetchAllTasks()
-        } catch {
-            self.error = "Failed to fetch goals: \(error.localizedDescription)"
+                await syncManager.performSync(
+                    modelContext: modelContext,
+                    reason: "Initial app launch"
+                )
+
+                isLoading = false
+            }
         }
-
-        isLoading = false
     }
 
     // crud tasks
