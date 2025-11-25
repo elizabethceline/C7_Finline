@@ -5,6 +5,7 @@
 //  Created by Elizabeth Celine Liong on 25/10/25.
 //
 
+import CloudKit
 import Combine
 import Foundation
 import SwiftData
@@ -34,7 +35,7 @@ class OnboardingViewModel: ObservableObject {
         self.userProfileManager = UserProfileManager(
             networkMonitor: networkMonitor
         )
-        
+
         observeNetworkStatus()
     }
 
@@ -154,7 +155,7 @@ class OnboardingViewModel: ObservableObject {
         username: String,
         productiveHours: [ProductiveHours],
         points: Int,
-    ) {
+    ) async {
         guard let modelContext = modelContext else { return }
 
         do {
@@ -162,7 +163,33 @@ class OnboardingViewModel: ObservableObject {
             let currentProfile =
                 try modelContext.fetch(descriptor).first ?? self.userProfile
 
-            guard let userProfile = currentProfile else { return }
+            let userProfile: UserProfile
+            if let existing = currentProfile {
+                userProfile = existing
+            } else {
+                let userRecordID: String
+                if isSignedInToiCloud,
+                    let recordID = try? await CloudKitManager.shared
+                        .fetchUserRecordID()
+                {
+                    userRecordID = recordID.recordName
+                } else {
+                    userRecordID = UUID().uuidString
+                }
+
+                let newProfile = UserProfile(
+                    id: userRecordID,
+                    username: "",
+                    points: 0,
+                    productiveHours: DayOfWeek.allCases.map {
+                        ProductiveHours(day: $0)
+                    },
+                    bestFocusTime: 0,
+                    needsSync: true
+                )
+                modelContext.insert(newProfile)
+                userProfile = newProfile
+            }
 
             userProfile.username = username
             userProfile.productiveHours = productiveHours
