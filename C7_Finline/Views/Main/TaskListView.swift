@@ -353,7 +353,7 @@ struct TaskListView: View {
         networkMonitor: dummyMonitor
     )
     .padding()
-    .background(Color.gray.opacity(0.1))
+    .background(Color.blue)
     .environmentObject(FocusSessionViewModel())
 }
 

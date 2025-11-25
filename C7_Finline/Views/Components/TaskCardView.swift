@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct TaskCardView: View {
+    @Environment(\.colorScheme) var colorScheme
+
     let task: GoalTask
 
     var body: some View {
@@ -45,7 +47,10 @@ struct TaskCardView: View {
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 24)
-                .fill(Color(uiColor: .systemBackground))
+                .fill(
+                    (colorScheme == .light
+                        ? Color(.systemBackground) : Color(.systemGray6))
+                )
         )
         .opacity(task.isCompleted ? 0.6 : 1)
     }
@@ -89,5 +94,5 @@ struct TaskCardView: View {
         )
     )
     .padding()
-    .background(Color.gray.opacity(0.2))
+    .background(Color.black)
 }
