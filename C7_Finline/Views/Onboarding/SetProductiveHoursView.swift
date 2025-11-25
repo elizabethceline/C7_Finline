@@ -13,6 +13,8 @@ struct SetProductiveHoursView: View {
 
     @State private var selectedTimeSlots: Set<TimeSlot> = []
     @State private var includeWeekend: Bool = false
+    
+    @Environment(\.colorScheme) var colorScheme
 
     var body: some View {
         ZStack {
@@ -71,7 +73,11 @@ struct SetProductiveHoursView: View {
                                 }
                                 .padding()
                                 .frame(maxWidth: .infinity)
-                                .background(Color(uiColor: .systemBackground))
+                                .background(
+                                    (colorScheme == .light
+                                        ? Color(.systemBackground)
+                                        : Color(.systemGray6))
+                                )
                                 .cornerRadius(20)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 20)
@@ -108,7 +114,8 @@ struct SetProductiveHoursView: View {
                                     selectedTimeSlots.isEmpty
                                         ? .primary.opacity(0.3)
                                         : (includeWeekend
-                                            ? Color.primary : .primary.opacity(0.6))
+                                            ? Color.primary
+                                            : .primary.opacity(0.6))
                                 )
                                 .font(.title2)
                             }

@@ -9,6 +9,8 @@ import SwiftUI
 
 struct DaySelectorView: View {
     @Binding var selectedDay: DayOfWeek
+    
+    @Environment(\.colorScheme) var colorScheme
 
     var body: some View {
         HStack {
@@ -21,7 +23,9 @@ struct DaySelectorView: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 10)
                         .background(
-                            Color(uiColor: .systemBackground)
+                            (colorScheme == .light
+                                ? Color(.systemBackground)
+                                : Color(.systemGray6))
                         )
                         .foregroundColor(
                             Color(uiColor: .label)
@@ -49,5 +53,5 @@ struct DaySelectorView: View {
 #Preview {
     DaySelectorView(selectedDay: .constant(.wednesday))
         .padding()
-        .background(Color.gray.opacity(0.2))
+        .background(.blue)
 }

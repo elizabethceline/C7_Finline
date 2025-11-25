@@ -70,7 +70,11 @@ struct DateHeaderView: View {
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
                     .frame(width: 110, alignment: .leading)
-                    .background(Color.gray.opacity(0.1))
+                    .background(
+                        (colorScheme == .light
+                            ? Color.gray.opacity(0.1) : Color(.systemGray6))
+                            .ignoresSafeArea()
+                    )
                     .cornerRadius(50)
                 }
                 .menuStyle(.button)
@@ -85,6 +89,9 @@ struct DateHeaderView: View {
             )
 
             Divider()
+                .background(
+                    colorScheme == .light ? Color(.systemGray6) : Color(.gray)
+                )
         }
         .padding(.horizontal)
     }
@@ -101,5 +108,5 @@ struct DateHeaderView: View {
         unfinishedTasks: []
     )
     .padding()
-    .background(Color(.systemGray6))
+    .background(Color(.systemBackground))
 }

@@ -28,6 +28,8 @@ struct DetailGoalView: View {
     @State private var selectedTask: GoalTask?
     @State private var goToTaskDetail = false
 
+    @Environment(\.colorScheme) var colorScheme
+
     @State private var removingTaskIds: Set<String> = []
     @State private var showDeleteAlert = false
     @State private var showBulkDeleteAlert = false
@@ -79,7 +81,10 @@ struct DetailGoalView: View {
             }
         }
         .scrollContentBackground(.hidden)
-        .background(Color(.systemGray6).ignoresSafeArea())
+        .background(
+            (colorScheme == .light ? Color(.systemGray6) : Color.black)
+                .ignoresSafeArea()
+        )
         .listStyle(.insetGrouped)
         .navigationTitle("Goal Detail")
         .sheet(isPresented: $showAddTaskModal) {

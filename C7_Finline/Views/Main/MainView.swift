@@ -13,6 +13,7 @@ struct MainView: View {
     @StateObject private var viewModel = MainViewModel()
     @StateObject private var shopVM: ShopViewModel
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.colorScheme) var colorScheme
     @EnvironmentObject var networkMonitor: NetworkMonitor
     @EnvironmentObject var focusVM: FocusSessionViewModel
 
@@ -77,7 +78,10 @@ struct MainView: View {
                 )
                 .environmentObject(focusVM)
             }
-            .background(Color(uiColor: .systemGray6).ignoresSafeArea())
+            .background(
+                (colorScheme == .light ? Color(.systemGray6) : Color.black)
+                    .ignoresSafeArea()
+            )
             .onAppear {
                 viewModel.setModelContext(modelContext)
                 shopVM.setModelContext(modelContext)
