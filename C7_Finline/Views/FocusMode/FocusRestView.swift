@@ -10,19 +10,23 @@ struct FocusRestView: View {
     @State private var showEarlyFinishAlert = false
     
     var body: some View {
-        VStack(alignment: .leading) {
-            Text(goalName ?? "No Goal")
-                .font(.headline)
-                .bold()
-                .padding(.horizontal)
-                .padding(.vertical, 8)
-            
-            Text("You may now\nREST for a while.")
-                .font(.largeTitle)
-                .bold()
-                .multilineTextAlignment(.leading)
-                .padding(.horizontal)
-                .padding(.bottom)
+        VStack(spacing: 0){
+            VStack(alignment: .leading) {
+                Text(goalName ?? "No Goal")
+                    .font(.headline)
+                    .bold()
+                //.padding(.horizontal)
+                    .padding(.bottom, 4)
+                
+                Text("You may now\nREST for a while.")
+                    .font(.largeTitle)
+                    .bold()
+                    .multilineTextAlignment(.leading)
+                //.padding(.horizontal)
+                    .padding(.bottom)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal)
             
             Spacer()
             
@@ -42,24 +46,25 @@ struct FocusRestView: View {
                     }
                 }
             )
-            .padding(.bottom, 40)
+            // .padding(.bottom, 40)
+            
         }
-//        .onAppear{ viewModel.startRest(for: restDuration)}
+        //        .onAppear{ viewModel.startRest(for: restDuration)}
         .onAppear {
             if viewModel.restRemainingTime <= 0 && !viewModel.isResting {
                 viewModel.startRest(for: restDuration)
             }
         }
-//        .onDisappear{ viewModel.endRest()}
+        //        .onDisappear{ viewModel.endRest()}
         .alert("Done Resting?", isPresented: $showEarlyFinishAlert) {
             Button("Yes", role: .destructive) {
                 HapticManager.shared.playConfirmationHaptic()
                 viewModel.endRest()
-                    }
-                    Button("No", role: .cancel) { }
-                } message: {
-                    Text("Your focus timer will resume, and this rest period will still be acounted as used.")
-                }
+            }
+            Button("No", role: .cancel) { }
+        } message: {
+            Text("Your focus timer will resume, and this rest period will still be acounted as used.")
+        }
     }
 }
 
