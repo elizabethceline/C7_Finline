@@ -252,42 +252,78 @@ class ProfileViewModel: ObservableObject {
         points: Int,
         bestFocusTime: TimeInterval? = nil
     ) {
-        guard let modelContext = modelContext else { return }
+        Task { @MainActor in
+            guard let modelContext = self.modelContext else { return }
 
-        self.lastSaveTime = Date()
+            self.lastSaveTime = Date()
 
-        do {
-            let descriptor = FetchDescriptor<UserProfile>()
-            let currentProfile =
-                try modelContext.fetch(descriptor).first ?? self.userProfile
+            do {
+                let descriptor = FetchDescriptor<UserProfile>()
+                let currentProfile =
+                    try modelContext.fetch(descriptor).first ?? self.userProfile
 
-            guard let userProfile = currentProfile else { return }
+                let userProfile: UserProfile
+                if let existing = currentProfile {
+                    userProfile = existing
+                } else {
+                    // Create new profile if none exists
+                    let userRecordID: String
+                    if self.isSignedInToiCloud {
+                        do {
+                            let recordID = try await CloudKitManager.shared
+                                .fetchUserRecordID()
+                            userRecordID = recordID.recordName
+                        } catch {
+                            userRecordID = UUID().uuidString
+                        }
+                    } else {
+                        // Generate a local ID when not connected to iCloud
+                        userRecordID = UUID().uuidString
+                    }
 
-            userProfile.username = username
-            userProfile.productiveHours = productiveHours
-            userProfile.points = points
-            if let bestFocusTime = bestFocusTime {
-                userProfile.bestFocusTime = bestFocusTime
-            }
-            userProfile.needsSync = true
-
-            updatePublishedProfile(userProfile)
-
-            try modelContext.save()
-            print("Profile Saved Locally")
-
-            Task {
-                do {
-                    try await userProfileManager.saveProfile(userProfile)
-                    print("Profile Pushed to Cloud")
-                } catch {
-                    self.error =
-                        "Failed to save profile: \(error.localizedDescription)"
+                    let newProfile = UserProfile(
+                        id: userRecordID,
+                        username: "",
+                        points: 0,
+                        productiveHours: DayOfWeek.allCases.map {
+                            ProductiveHours(day: $0)
+                        },
+                        bestFocusTime: 0,
+                        needsSync: true
+                    )
+                    modelContext.insert(newProfile)
+                    self.userProfile = newProfile
+                    userProfile = newProfile
                 }
+
+                userProfile.username = username
+                userProfile.productiveHours = productiveHours
+                userProfile.points = points
+                if let bestFocusTime = bestFocusTime {
+                    userProfile.bestFocusTime = bestFocusTime
+                }
+                userProfile.needsSync = true
+
+                self.updatePublishedProfile(userProfile)
+
+                try modelContext.save()
+                print("Profile Saved Locally")
+
+                Task {
+                    do {
+                        try await self.userProfileManager.saveProfile(
+                            userProfile
+                        )
+                        print("Profile Pushed to Cloud")
+                    } catch {
+                        self.error =
+                            "Failed to save profile: \(error.localizedDescription)"
+                    }
+                }
+            } catch {
+                self.error =
+                    "Failed to fetch latest profile: \(error.localizedDescription)"
             }
-        } catch {
-            self.error =
-                "Failed to fetch latest profile: \(error.localizedDescription)"
         }
     }
 
