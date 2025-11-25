@@ -9,11 +9,13 @@ struct FocusEndView: View {
     
     var body: some View {
         ZStack {
-            VStack(spacing: 24) {
+            VStack(spacing: 0) {
+            VStack(alignment: .center, spacing: 8) {
                 Text("Focusing Session\nComplete")
                     .font(.largeTitle.bold())
                     .multilineTextAlignment(.center)
-                    .padding(.top, 40)
+                    //.padding(.top, 52)
+                    .padding(.bottom, 16)
                 
                 if viewModel.fishCaught.isEmpty {
                     Text("No fish caught this time! Try focusing a bit longer next round.")
@@ -24,6 +26,9 @@ struct FocusEndView: View {
                 } else {
                     FishSummaryCard(viewModel: viewModel)
                 }
+            }
+            .frame(maxWidth: .infinity)
+           // .padding(.horizontal)
                 
                 Spacer()
                 
@@ -37,8 +42,9 @@ struct FocusEndView: View {
                         StartFocusTip.hasEndedFocus = true
                     }
                 )
-                .padding(.bottom, 40)
+               //.padding(.bottom, 16)
             }
+          
         }
         .confettiCannon(
             trigger: $confettiTrigger,
