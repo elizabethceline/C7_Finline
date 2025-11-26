@@ -11,11 +11,13 @@ import Network
 import SwiftUI
 
 class NetworkMonitor: ObservableObject {
+    static let shared = NetworkMonitor()
+
     private let monitor = NWPathMonitor()
     private let queue = DispatchQueue(label: "NetworkMonitor")
     @Published var isConnected: Bool = false
 
-    init() {
+    private init() {
         monitor.pathUpdateHandler = { [weak self] path in
             guard let self = self else { return }
 

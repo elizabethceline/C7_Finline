@@ -15,12 +15,13 @@ final class GoalViewModel: ObservableObject {
     private let goalManager: GoalManager
     private let networkMonitor: NetworkMonitor
     
-    init(networkMonitor: NetworkMonitor = NetworkMonitor()) {
-        self.networkMonitor = networkMonitor
-        self.goalManager = GoalManager(networkMonitor: networkMonitor)
+    init(networkMonitor: NetworkMonitor? = nil) {
+        let monitor = networkMonitor ?? NetworkMonitor.shared
+        self.networkMonitor = monitor
+        self.goalManager = GoalManager(networkMonitor: monitor)
     }
     
-    func createGoal(name: String, deadline: Date, description: String?, modelContext: ModelContext) -> Goal {
+    func createGoal(name: String, deadline: Date, description: String?, modelContext: ModelContext) async -> Goal {
         return goalManager.createGoal(
             name: name,
             due: deadline,
@@ -29,5 +30,13 @@ final class GoalViewModel: ObservableObject {
         )
     }
     
+    func updateGoal(goal: Goal, name: String, deadline: Date, description: String?) {
+        goalManager.updateGoal(
+            goal: goal,
+            name: name,
+            due: deadline,
+            description: description
+        )
+    }
     
 }

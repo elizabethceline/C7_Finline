@@ -43,6 +43,7 @@ class UserProfileManager {
                 existingProfile.points = ckProfile.points
                 existingProfile.productiveHoursJSON =
                     ckProfile.productiveHoursJSON
+                existingProfile.bestFocusTime = ckProfile.bestFocusTime
                 existingProfile.needsSync = false
                 return existingProfile
             } else {
@@ -65,6 +66,7 @@ class UserProfileManager {
                     username: "",
                     points: 0,
                     productiveHours: emptyHours,
+                    bestFocusTime: 0,
                     needsSync: true
                 )
                 modelContext.insert(newProfile)

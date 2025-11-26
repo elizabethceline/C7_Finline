@@ -11,11 +11,9 @@ import SwiftUI
 struct OnboardingView: View {
     @ObservedObject var viewModel: OnboardingViewModel
     @Binding var hasCompletedOnboarding: Bool
-    @State private var currentStep: OnboardingStep = .splash
-    @State private var showSplash = true
+    @State private var currentStep: OnboardingStep = .carousel
 
     enum OnboardingStep {
-        case splash
         case carousel
         case characterIntro
         case setProductiveHours
@@ -24,16 +22,6 @@ struct OnboardingView: View {
     var body: some View {
         ZStack {
             switch currentStep {
-            case .splash:
-                SplashScreenView()
-                    .onAppear {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
-                            withAnimation(.easeInOut(duration: 0.6)) {
-                                currentStep = .carousel
-                            }
-                        }
-                    }
-
             case .carousel:
                 CarouselView(onComplete: {
                     withAnimation(.easeInOut(duration: 0.6)) {
@@ -55,19 +43,23 @@ struct OnboardingView: View {
                 SetProductiveHoursView(
                     productiveHours: $viewModel.productiveHours,
                     onComplete: {
-                        viewModel.saveUserProfile(
-                            username: viewModel.username,
-                            productiveHours: viewModel.productiveHours,
-                            points: 0
-                        )
+                        Task {
+                            await viewModel.saveUserProfile(
+                                username: viewModel.username,
+                                productiveHours: viewModel.productiveHours,
+                                points: viewModel.points
+                            )
 
-                        UserDefaults.standard.set(
-                            true,
-                            forKey: "hasCompletedOnboarding"
-                        )
+                            await MainActor.run {
+                                UserDefaults.standard.set(
+                                    true,
+                                    forKey: "hasCompletedOnboarding"
+                                )
 
-                        withAnimation(.easeInOut(duration: 0.6)) {
-                            hasCompletedOnboarding = true
+                                withAnimation(.easeInOut(duration: 0.6)) {
+                                    hasCompletedOnboarding = true
+                                }
+                            }
                         }
                     }
                 )

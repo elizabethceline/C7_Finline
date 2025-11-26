@@ -16,11 +16,21 @@ enum TimeSlot: String, CaseIterable, Codable {
 
     var hours: String {
         switch self {
-        case .earlyMorning: return "Before 8am"
-        case .morning: return "8AM-12PM"
-        case .afternoon: return "12PM-5PM"
-        case .evening: return "5PM-9PM"
-        case .night: return "After 9PM"
+        case .earlyMorning: return "3AM - 8AM"
+        case .morning: return "8AM - 12PM"
+        case .afternoon: return "12PM - 5PM"
+        case .evening: return "5PM - 9PM"
+        case .night: return "9PM - 12AM"
         }
     }
+    
+    var order: Int {
+            switch self {
+            case .earlyMorning: return 0
+            case .morning: return 1
+            case .afternoon: return 2
+            case .evening: return 3
+            case .night: return 4
+            }
+        }
 }

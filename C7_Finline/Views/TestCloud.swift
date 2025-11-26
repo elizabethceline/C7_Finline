@@ -15,9 +15,13 @@ struct TestCloud: View {
     @Environment(\.modelContext) private var modelContext
     @State private var showingAddGoal = false
     @State private var showingEditProfile = false
+    //TEST FOCUS MODE IGNORE THIS
+    @State private var navigateToFocus = false
+    //
+
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ZStack {
                 if viewModel.isLoading && viewModel.goals.isEmpty {
                     ProgressView("Loading...")
@@ -66,7 +70,7 @@ struct TestCloud: View {
                             } else {
                                 ForEach(viewModel.goals) { goal in
                                     NavigationLink(
-                                        destination: GoalDetailView(
+                                        destination: GoalDetailView1(
                                             viewModel: viewModel,
                                             goal: goal
                                         )
@@ -81,10 +85,15 @@ struct TestCloud: View {
                                 }
                                 .onDelete(perform: deleteGoals)
                             }
+                            
                         }
+                        
+                        
                     }
+
                     .refreshable {
                         viewModel.fetchUserProfile()
+                    
                     }
                 }
 
@@ -242,7 +251,7 @@ struct AddGoalView: View {
 }
 
 // goal detail
-struct GoalDetailView: View {
+struct GoalDetailView1: View {
     @ObservedObject var viewModel: TestCloudViewModel
     let goal: Goal
     @State private var showingAddTask = false
@@ -332,10 +341,10 @@ struct GoalDetailView: View {
             }
         }
         .sheet(isPresented: $showingAddTask) {
-            AddTaskView(viewModel: viewModel, goalId: goal.id)
+            AddTaskView(viewModel: viewModel, goal: goal)
         }
         .sheet(isPresented: $showingEditGoal) {
-            EditGoalView(viewModel: viewModel, goal: goal)
+            EditGoalView1(viewModel: viewModel, goal: goal)
         }
     }
 
@@ -344,7 +353,7 @@ struct GoalDetailView: View {
     }
 }
 
-struct EditGoalView: View {
+struct EditGoalView1: View {
     @ObservedObject var viewModel: TestCloudViewModel
     let goal: Goal
     @Environment(\.dismiss) var dismiss
@@ -475,7 +484,7 @@ struct TaskRowView: View {
 
 struct AddTaskView: View {
     @ObservedObject var viewModel: TestCloudViewModel
-    let goalId: String
+    let goal: Goal
     @Environment(\.dismiss) var dismiss
     @State private var name = ""
     @State private var workingTime = Date()
@@ -526,7 +535,7 @@ struct AddTaskView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         viewModel.createTask(
-                            goalId: goalId,
+                            goal: goal,
                             name: name,
                             workingTime: workingTime,
                             focusDuration: focusDuration

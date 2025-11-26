@@ -67,6 +67,8 @@ class GoalManager {
             modelContext.delete(goal)
         }
 
+        try? modelContext.save()
+
         return try modelContext.fetch(
             FetchDescriptor<Goal>(sortBy: [
                 SortDescriptor(\.due, order: .forward)

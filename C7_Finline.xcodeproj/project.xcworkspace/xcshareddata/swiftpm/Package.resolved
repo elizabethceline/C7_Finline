@@ -1,0 +1,24 @@
+{
+  "originHash" : "5c237814d74b98b5477afb669f1979a2b8328007532bcc43c27553395f5f8f51",
+  "pins" : [
+    {
+      "identity" : "confettiswiftui?tab=readme-ov-file",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/simibac/ConfettiSwiftUI?tab=readme-ov-file",
+      "state" : {
+        "revision" : "79666d42b882bf7921b1941fa7c636d681d77980",
+        "version" : "2.0.3"
+      }
+    },
+    {
+      "identity" : "lottie-spm",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/airbnb/lottie-spm.git",
+      "state" : {
+        "revision" : "04f2fd18cc9404a0a0917265a449002674f24ec9",
+        "version" : "4.5.2"
+      }
+    }
+  ],
+  "version" : 3
+}

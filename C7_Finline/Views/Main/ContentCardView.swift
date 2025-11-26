@@ -8,11 +8,40 @@
 import SwiftUI
 
 struct ContentCardView: View {
-    @Binding var selectedDate: Date
-    let filteredTasks: [GoalTask]
+    @ObservedObject var viewModel: MainViewModel
     let goals: [Goal]
+    let tasks: [GoalTask]
+    @Binding var selectedDate: Date
+    let networkMonitor: NetworkMonitor
 
-    private var goalsForSelectedDate: [Goal] {
+    @EnvironmentObject var focusVM: FocusSessionViewModel
+    @State private var taskListSnapshot: [GoalTask]?
+    @State private var goalListSnapshot: [Goal]?
+
+    @GestureState private var dragOffset: CGFloat = 0
+    @State private var contentOffset: CGFloat = 0
+    @State private var isAnimating: Bool = false
+
+    @State private var isHorizontalDrag = false
+
+    private let calendar = Calendar.current
+
+    var filteredTasks: [GoalTask] {
+        let dateTasks = tasks.filter { task in
+            Calendar.current.isDate(task.workingTime, inSameDayAs: selectedDate)
+        }
+
+        switch viewModel.taskFilter {
+        case .all:
+            return dateTasks
+        case .unfinished:
+            return dateTasks.filter { !$0.isCompleted }
+        case .finished:
+            return dateTasks.filter { $0.isCompleted }
+        }
+    }
+
+    var filteredGoals: [Goal] {
         goals.filter { goal in
             goal.tasks.contains { task in
                 Calendar.current.isDate(
@@ -23,41 +52,150 @@ struct ContentCardView: View {
         }
     }
 
+    private var displayTasks: [GoalTask] {
+        if let snapshot = taskListSnapshot {
+            return snapshot
+        }
+        return filteredTasks
+    }
+
+    private var displayGoals: [Goal] {
+        if let snapshot = goalListSnapshot {
+            return snapshot
+        }
+        return filteredGoals
+    }
+
+    private var shouldShowEmptyState: Bool {
+        return filteredTasks.isEmpty && taskListSnapshot == nil
+    }
+
+    private func changeDay(delta: Int, width: CGFloat) {
+        if let newDate = calendar.date(
+            byAdding: .day,
+            value: delta,
+            to: selectedDate
+        ) {
+            isAnimating = true
+
+            // Animate content sliding out
+            withAnimation(.easeInOut(duration: 0.3)) {
+                contentOffset =
+                    delta > 0
+                    ? -width : width
+            }
+
+            // Change date and reset position after slide out
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                selectedDate = calendar.startOfDay(for: newDate)
+                contentOffset =
+                    delta > 0
+                    ? width : -width
+
+                // Slide in from opposite side
+                withAnimation(.easeOut(duration: 0.25)) {
+                    contentOffset = 0
+                }
+
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                    isAnimating = false
+                }
+            }
+        }
+    }
+
     var body: some View {
-        ZStack(alignment: .top) {
-            RoundedRectangle(cornerRadius: 20)
-                .fill(Color(uiColor: .systemGray6))
-                .ignoresSafeArea(edges: .bottom)
+        GeometryReader { geo in
+            let drag = DragGesture(minimumDistance: 10)
+                .onChanged { value in
+                    if !isAnimating && !isHorizontalDrag {
+                        let horizontal = abs(value.translation.width)
+                        let vertical = abs(value.translation.height)
+                        if horizontal > vertical {
+                            isHorizontalDrag = true
+                        }
+                    }
+                }
+                .updating($dragOffset) { value, state, _ in
+                    if !isAnimating && isHorizontalDrag {
+                        state = value.translation.width
+                    }
+                }
+                .onEnded { value in
+                    defer { isHorizontalDrag = false }
 
-            VStack(spacing: 16) {
-                Text(selectedDate.formatted(.dateTime.month(.wide).year()))
-                    .font(.title)
-                    .fontWeight(.bold)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                DateSelectorView(selectedDate: $selectedDate)
+                    if !isAnimating && isHorizontalDrag {
+                        if value.translation.width < -50 {
+                            changeDay(delta: 1, width: geo.size.width)
+                        } else if value.translation.width > 50 {
+                            changeDay(delta: -1, width: geo.size.width)
+                        }
+                    }
+                }
 
-                Divider()
-
-                if filteredTasks.isEmpty {
-                    EmptyStateView()
-                        .padding(.top, 24)
+            VStack(spacing: 0) {
+                if shouldShowEmptyState {
+                    ScrollView(showsIndicators: false) {
+                        EmptyStateView()
+                            .padding(.top, 24)
+                            .frame(maxHeight: .infinity, alignment: .top)
+                    }
                 } else {
                     TaskListView(
-                        tasks: filteredTasks,
-                        goals: goalsForSelectedDate,
-                        selectedDate: selectedDate
+                        viewModel: viewModel,
+                        tasks: displayTasks,
+                        goals: displayGoals,
+                        selectedDate: selectedDate,
+                        networkMonitor: networkMonitor
                     )
-                    .padding(.top, 12)
+                    .frame(maxHeight: .infinity, alignment: .top)
                 }
-            }.padding()
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .padding(.horizontal)
+            .offset(x: contentOffset + dragOffset)
+            .opacity(
+                isAnimating
+                    ? (contentOffset == 0 ? 1 : 0.5)
+                    : 1 - abs(dragOffset) / geo.size.width * 0.5
+            )
+            .contentShape(Rectangle())
+            .gesture(drag)
+            .scrollDisabled(isHorizontalDrag)
+        }
+        .refreshable {
+            await viewModel.fetchGoals()
+        }
+
+        .onChange(of: focusVM.isFocusing) { oldValue, newValue in
+            if newValue && !oldValue {
+                // Focus started - take snapshot
+                print("Taking snapshot of tasks/goals")
+                taskListSnapshot = filteredTasks
+                goalListSnapshot = filteredGoals
+            }
+        }
+
+        .onChange(of: focusVM.isSessionEnded) { oldValue, newValue in
+            if !newValue && oldValue {
+                // Session was reset - clear snapshot after delay
+                print("Clearing snapshot")
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    taskListSnapshot = nil
+                    goalListSnapshot = nil
+                }
+            }
         }
     }
 }
 
 #Preview {
     ContentCardView(
+        viewModel: MainViewModel(),
+        goals: [],
+        tasks: [],
         selectedDate: .constant(Date()),
-        filteredTasks: [],
-        goals: []
+        networkMonitor: NetworkMonitor.shared
     )
+    .environmentObject(FocusSessionViewModel())
 }

@@ -26,8 +26,9 @@ struct DateSelectorView: View {
                         date: date,
                         isSelected: Calendar.current.isDate(
                             selectedDate,
-                            inSameDayAs: date
-                        )
+                            inSameDayAs: date,
+                        ),
+                        hasUnfinishedTask: true
                     ) {
                         selectedDate = date
                     }
