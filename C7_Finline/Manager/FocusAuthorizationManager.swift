@@ -16,7 +16,7 @@ import FamilyControls
 #endif
 
 final class FocusAuthorizationManager: ObservableObject {
-    @Published var isEnabled: Bool = true {
+    @Published var isEnabled: Bool = false {
         didSet {
             Task { await handleToggleChange() }
         }
@@ -30,10 +30,12 @@ final class FocusAuthorizationManager: ObservableObject {
     #endif
     
     private let selectionDefaultsKey = "FocusSelectionData"
+    private let enabledDefaultsKey = "DeepFocusEnabled"
     
     init() {
         loadSelection()
         updateAuthorizationStatus()
+        isEnabled = UserDefaults.standard.bool(forKey: enabledDefaultsKey)
     }
     
     func applyShield() {
@@ -83,10 +85,19 @@ final class FocusAuthorizationManager: ObservableObject {
         #endif
     }
     
-    private func updateAuthorizationStatus() {
+    // Change from private to public
+    
+    func updateAuthorizationStatus() {
         #if os(iOS)
         let status = AuthorizationCenter.shared.authorizationStatus
+        let wasAuthorized = isAuthorized
         isAuthorized = (status == .approved)
+        if wasAuthorized && !isAuthorized && isEnabled {
+            print("Authorization revoked - disabling Deep Focus")
+            isEnabled = false
+        }
+        
+        print("Authorization status updated: \(isAuthorized ? "Approved" : "Not Approved")")
         #else
         isAuthorized = false
         #endif
@@ -94,6 +105,7 @@ final class FocusAuthorizationManager: ObservableObject {
     
     @MainActor
     private func handleToggleChange() async {
+        UserDefaults.standard.set(isEnabled, forKey: enabledDefaultsKey)
         if isEnabled {
             #if os(iOS)
             let status = AuthorizationCenter.shared.authorizationStatus
@@ -101,10 +113,15 @@ final class FocusAuthorizationManager: ObservableObject {
                 do {
                     try await AuthorizationCenter.shared.requestAuthorization(for: .individual)
                     updateAuthorizationStatus()
+                    if !isAuthorized {
+                        isEnabled = false
+                        UserDefaults.standard.set(false, forKey: enabledDefaultsKey)
+                    }
                 } catch {
                     self.errorMessage = error.localizedDescription
                     print("Authorization request failed: \(error)")
                     isEnabled = false // revert toggle if it failed
+                    UserDefaults.standard.set(false, forKey: enabledDefaultsKey)
                     return
                 }
             } else {
