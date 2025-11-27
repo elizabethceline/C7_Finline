@@ -138,7 +138,7 @@ struct ContentCardView: View {
                     ScrollView(showsIndicators: false) {
                         EmptyStateView()
                             .padding(.top, 24)
-                            .frame(maxHeight: .infinity, alignment: .top)
+                            .offset(y: 124)
                     }
                 } else {
                     TaskListView(
