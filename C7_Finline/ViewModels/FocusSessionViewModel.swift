@@ -102,9 +102,6 @@ final class FocusSessionViewModel: ObservableObject {
         self.userProfileManager =
             userProfileManager ?? UserProfileManager(networkMonitor: .shared)
         
-        if !self.authManager.isAuthorized {
-               self.authManager.isEnabled = false
-           }
 
         if let task = task {
             self.goalName = goal?.name
@@ -165,26 +162,29 @@ final class FocusSessionViewModel: ObservableObject {
 
         lastLiveActivityUpdate = nil
 
-        if authManager.isEnabled && authManager.isAuthorized {
-            authManager.applyShield()
-        }
+//        if authManager.isEnabled && authManager.isAuthorized {
+//            authManager.applyShield()
+//        }
 
         Task {
             if authManager.isEnabled {
-                if !authManager.isAuthorized {
-                    print(
-                        "Deep Focus is ON but not authorized. Requesting authorization..."
-                    )
-                    await authManager.requestAuthorization()
-                }
-
+                
                 if authManager.isAuthorized {
+                    
                     authManager.applyShield()
-                    print(" Deep Focus shield applied successfully.")
+                    print("Deep Focus shield applied (already authorized).")
                 } else {
-                    print(
-                        "Deep Focus not applied — user denied or authorization failed."
-                    )
+                    
+                    print("Deep Focus is ON but not authorized. Requesting authorization...")
+                    await authManager.requestAuthorization()
+                    
+                    
+                    if authManager.isAuthorized {
+                        authManager.applyShield()
+                        print("Deep Focus shield applied after authorization.")
+                    } else {
+                        print("Deep Focus not applied - user denied or authorization failed.")
+                    }
                 }
             }
 
@@ -695,6 +695,7 @@ final class FocusSessionViewModel: ObservableObject {
     //        Task { await updateLiveActivity() }
     //    }
     @objc private func appDidBecomeActive() {
+        authManager.updateAuthorizationStatus()
         // Update focus session time
         if let endTime = endTime, !isResting {
             let remaining = endTime.timeIntervalSinceNow
@@ -724,6 +725,8 @@ final class FocusSessionViewModel: ObservableObject {
                 stopRestTimer()
             }
         }
+        
+        checkAndApplyShieldIfNeeded()
 
         Task {
             try? await Task.sleep(nanoseconds: 100_000_000)
@@ -868,4 +871,11 @@ final class FocusSessionViewModel: ObservableObject {
     //        self.activity = nil
     //        print("Live Activity ended")
     //    }
+    
+    func checkAndApplyShieldIfNeeded() {
+        if isFocusing && !isResting && authManager.isEnabled && authManager.isAuthorized {
+            authManager.applyShield()
+            print("Shield applied after authorization change")
+        }
+    }
 }

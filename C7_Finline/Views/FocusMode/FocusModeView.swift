@@ -89,6 +89,11 @@ struct FocusModeView: View {
                 }
             }
         }
+        .onChange(of: viewModel.authManager.isAuthorized) { oldValue, newValue in
+            if newValue && !oldValue {
+                viewModel.checkAndApplyShieldIfNeeded()
+            }
+        }
         .onChange(of: viewModel.didTimeRunOut) {
             oldValue,
             newValue in
@@ -109,6 +114,8 @@ struct FocusModeView: View {
             }
         }
         .onAppear {
+            viewModel.authManager.updateAuthorizationStatus()
+            
             isGivingUp = false
             resultVM = nil
             isShowingTimesUpAlert = false
