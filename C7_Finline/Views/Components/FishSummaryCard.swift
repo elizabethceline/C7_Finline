@@ -37,10 +37,10 @@ struct FishSummaryCard: View {
                             Image(fish.imageName)
                                 .resizable()
                                 .scaledToFit()
-                                .frame(width: 60, height: 40)
+                                .frame(width: 50, height: 40)
                         }
                         Text(name)
-                            .font(.title3)
+                            .font(.body)
                             .foregroundColor(.black)
                             .fixedSize(horizontal: false, vertical: true)
                         
@@ -54,7 +54,7 @@ struct FishSummaryCard: View {
 //                                .frame(width: 20, height: 20)
 //                        }
                         Text("x\(fishes.count)")
-                            .font(.title.bold())
+                            .font(.body.bold())
                             .foregroundColor(.primary)
                         
                         Spacer()
@@ -65,12 +65,12 @@ struct FishSummaryCard: View {
 //                            .foregroundColor(.primary)
                         HStack (spacing: 4){
                             Text("+\(totalPoints)")
-                                .font(.title3)
+                                .font(.body)
                                 .foregroundColor(.black)
                             
                             Image("fishCoins")
                                 .resizable()
-                                .frame(width: 25, height: 25)
+                                .frame(width: 20, height: 20)
                         }
                     }
                     
@@ -84,16 +84,16 @@ struct FishSummaryCard: View {
                 Divider()
                 HStack(spacing: 16) {
                     Text("Bonus Nudge Points")
-                        .font(.title3)
+                        .font(.body)
                         .foregroundColor(.black)
                     Spacer()
                     HStack(spacing: 4) {
                         Text("+\(viewModel.bonusPoints)")
-                            .font(.title3)
+                            .font(.body)
                             .foregroundColor(.black)
                         Image("fishCoins")
                             .resizable()
-                            .frame(width: 25, height: 25)
+                            .frame(width: 20, height: 20)
                     }
                 }
             }
