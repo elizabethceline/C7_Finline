@@ -310,7 +310,8 @@ struct CreateTaskView: View {
                         for: goalName,
                         goalDescription: pendingGoalDescription,
                         goalDeadline: goalDeadline,
-                        ignoreTimeLimit: true
+                        ignoreTimeLimit: true,
+                        modelContext: modelContext  // Tambahkan parameter ini
                     )
                     pendingGoalDescription = ""
                 }
@@ -342,7 +343,8 @@ struct CreateTaskView: View {
                             await taskVM.generateTaskWithAI(
                                 for: goalName,
                                 goalDescription: description,
-                                goalDeadline: goalDeadline
+                                goalDeadline: goalDeadline,
+                                modelContext: modelContext  // Tambahkan parameter ini
                             )
                         }
                     }
