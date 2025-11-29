@@ -9,15 +9,15 @@ import SwiftUI
 
 struct EmptyStateView: View {
     @State private var randomFishImage: String = "Goldfish"
-    
-    private let fishImageNames = ["Goldfish", "Tuna", "Angler", "ghostFish"]
-    
+
+    //    private let fishImageNames = ["Goldfish", "Tuna", "Angler", "ghostFish"]
+
     var body: some View {
-        VStack(spacing: 8) {
-            Image(randomFishImage)
+        VStack(spacing: 4) {
+            Image("Tuna")
                 .resizable()
                 .scaledToFit()
-                .frame(width: 100, height: 100)
+                .frame(width: 72, height: 72)
 
             Text("No More Task")
                 .font(.headline)
@@ -25,9 +25,9 @@ struct EmptyStateView: View {
                 .font(.subheadline)
                 .foregroundColor(.gray)
         }
-        .onAppear {
-            randomFishImage = fishImageNames.randomElement() ?? "Goldfish"
-        }
+        //        .onAppear {
+        //            randomFishImage = fishImageNames.randomElement() ?? "Goldfish"
+        //        }
     }
 }
 

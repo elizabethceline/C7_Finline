@@ -14,19 +14,19 @@ import TipKit
 struct CreateTaskView: View {
     let goalName: String
     let goalDeadline: Date
-    
+
     @Environment(\.dismiss) private var dismiss
     var dismissParent: DismissAction? = nil
-    
+
     @ObservedObject var mainVM: MainViewModel
-    
+
     @State private var isShowingModalCreateWithAI: Bool = false
     @State private var isShowingModalCreateManually: Bool = false
     @State private var taskToEdit: AIGoalTask? = nil
     @State private var removingTaskIds: Set<String> = []
     @State private var showDeleteAlert = false
     @State private var taskToDelete: AIGoalTask?
-    
+
     // State untuk insufficient time alert
     @State private var showInsufficientTimeAlert = false
     @State private var pendingGoalDescription: String = ""
@@ -39,7 +39,7 @@ struct CreateTaskView: View {
     private var isAIAvailable: Bool {
         SystemLanguageModel.default.isAvailable
     }
-    
+
     var body: some View {
         VStack(spacing: 0) {
             Form {
@@ -62,7 +62,7 @@ struct CreateTaskView: View {
                         .multilineTextAlignment(.trailing)
                     }
                 }
-                
+
                 if taskVM.isLoading {
                     Section {
                         VStack {
@@ -74,14 +74,14 @@ struct CreateTaskView: View {
 
                             Text("Generating AI tasks...")
                                 .font(.subheadline)
-                                .foregroundColor(.black)
+                                .foregroundColor(Color(.label))
                         }
                         .padding(.vertical)
                         .listRowBackground(Color.clear)
                         .frame(maxWidth: .infinity, alignment: .center)
                     }
                 }
-                
+
                 if let error = taskVM.errorMessage {
                     Section {
                         Text("Error: \(error)")
@@ -89,7 +89,7 @@ struct CreateTaskView: View {
                             .padding(.vertical)
                     }
                 }
-                
+
                 if !taskVM.tasks.isEmpty {
                     ForEach(taskVM.groupedGoalTaskAI(), id: \.date) { group in
                         Section(
@@ -103,9 +103,9 @@ struct CreateTaskView: View {
                         ) {
                             ForEach(group.tasks) { aiTask in
                                 let workingDate: Date? =
-                                ISO8601DateFormatter.parse(
-                                    aiTask.workingTime
-                                )
+                                    ISO8601DateFormatter.parse(
+                                        aiTask.workingTime
+                                    )
                                 let finalWorkingDate = workingDate ?? Date()
                                 let goalTask = taskVM.toGoalTask(
                                     from: aiTask,
@@ -113,8 +113,8 @@ struct CreateTaskView: View {
                                     goalName: goalName,
                                     goalDeadline: goalDeadline
                                 )
-                                
-                                TaskCardView(task: goalTask)
+
+                                TaskCardView(task: goalTask, isTaskDetail: true)
                                     .listRowInsets(
                                         EdgeInsets(
                                             top: 8,
@@ -127,11 +127,11 @@ struct CreateTaskView: View {
                                     .listRowBackground(Color.clear)
                                     .opacity(
                                         removingTaskIds.contains(aiTask.id)
-                                        ? 0 : 1
+                                            ? 0 : 1
                                     )
                                     .offset(
                                         y: removingTaskIds.contains(aiTask.id)
-                                        ? -10 : 0
+                                            ? -10 : 0
                                     )
                                     .onTapGesture {
                                         taskToEdit = aiTask
@@ -172,12 +172,12 @@ struct CreateTaskView: View {
                     .frame(maxWidth: .infinity, alignment: .center)
                     .listRowBackground(Color.clear)
                 }
-                
+
             }
             .scrollContentBackground(.hidden)
             .animation(.easeInOut(duration: 0.3), value: taskVM.tasks)
             .animation(.easeInOut(duration: 0.3), value: removingTaskIds)
-            
+
             VStack(spacing: 16) {
                 Button(action: {
                     if isAIAvailable {
@@ -191,7 +191,7 @@ struct CreateTaskView: View {
                         .padding()
                         .background(
                             isAIAvailable
-                            ? Color.primary : Color.gray.opacity(0.4)
+                                ? Color.primary : Color.gray.opacity(0.4)
                         )
                         .clipShape(RoundedRectangle(cornerRadius: 24))
                         .foregroundColor(.white)
@@ -199,7 +199,7 @@ struct CreateTaskView: View {
                 }
                 .disabled(!isAIAvailable)
                 .popoverTip(CreateWithAITip(), arrowEdge: .bottom)
-                
+
                 Button(action: { isShowingModalCreateManually = true }) {
                     Text("Create Task Manually")
                         .font(.headline)
@@ -231,7 +231,7 @@ struct CreateTaskView: View {
                     .foregroundColor(.red)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                
+
             }
             .padding()
         }
@@ -250,12 +250,12 @@ struct CreateTaskView: View {
                             for: goal,
                             modelContext: modelContext
                         )
-                        
+
                         await MainActor.run {
                             mainVM.appendNewGoal(goal)
                             mainVM.appendNewTasks(goal.tasks)
                             dismissParent?()
-                            
+
                             DispatchQueue.main.asyncAfter(
                                 deadline: .now() + 0.3
                             ) {
@@ -281,7 +281,7 @@ struct CreateTaskView: View {
                 await taskVM.loadUserProfile(modelContext: modelContext)
             }
         }
-        
+
         // Alert untuk delete task
         .alert("Delete Task", isPresented: $showDeleteAlert) {
             Button("Cancel", role: .cancel) {
@@ -299,7 +299,7 @@ struct CreateTaskView: View {
                 )
             }
         }
-        
+
         .alert("Insufficient Time", isPresented: $showInsufficientTimeAlert) {
             Button("Cancel", role: .cancel) {
                 pendingGoalDescription = ""
@@ -310,15 +310,18 @@ struct CreateTaskView: View {
                         for: goalName,
                         goalDescription: pendingGoalDescription,
                         goalDeadline: goalDeadline,
-                        ignoreTimeLimit: true
+                        ignoreTimeLimit: true,
+                        modelContext: modelContext  // Tambahkan parameter ini
                     )
                     pendingGoalDescription = ""
                 }
             }
         } message: {
-            Text("The deadline is too soon. There may not be enough time to complete all generated tasks. Do you want to generate tasks anyway?")
+            Text(
+                "The deadline is too soon. There may not be enough time to complete all generated tasks. Do you want to generate tasks anyway?"
+            )
         }
-        
+
         .sheet(isPresented: $isShowingModalCreateWithAI) {
             NavigationStack {
                 GenerateTaskWithAIView(
@@ -326,11 +329,12 @@ struct CreateTaskView: View {
                     goalDeadline: goalDeadline
                 ) { description in
                     Task {
-                        let totalMinutes = await taskVM.calculateAvailableMinutes(
-                            from: Date(),
-                            to: goalDeadline
-                        )
-                        
+                        let totalMinutes =
+                            await taskVM.calculateAvailableMinutes(
+                                from: Date(),
+                                to: goalDeadline
+                            )
+
                         if totalMinutes < 60 {
                             pendingGoalDescription = description
                             showInsufficientTimeAlert = true
@@ -339,7 +343,8 @@ struct CreateTaskView: View {
                             await taskVM.generateTaskWithAI(
                                 for: goalName,
                                 goalDescription: description,
-                                goalDeadline: goalDeadline
+                                goalDeadline: goalDeadline,
+                                modelContext: modelContext  // Tambahkan parameter ini
                             )
                         }
                     }
@@ -347,12 +352,12 @@ struct CreateTaskView: View {
                 .presentationDetents([.medium])
             }
         }
-        
+
         .sheet(item: $taskToEdit) { task in
             CreateTaskManuallyView(taskVM: taskVM, existingTask: task)
                 .presentationDetents([.medium])
         }
-        
+
         .sheet(isPresented: $isShowingModalCreateManually) {
             CreateTaskManuallyView(
                 taskVM: taskVM,
@@ -361,7 +366,7 @@ struct CreateTaskView: View {
             .presentationDetents([.medium])
         }
     }
-    
+
     private func deleteTaskWithAnimation(_ task: AIGoalTask) {
         withAnimation(.easeInOut(duration: 0.3)) {
             removingTaskIds.insert(task.id)
@@ -385,7 +390,7 @@ extension CreateTaskView {
             ) ?? Date(),
             mainVM: MainViewModel()
         )
-        
+
         view.taskVM.tasks = [
             AIGoalTask(
                 id: "1",
@@ -406,7 +411,7 @@ extension CreateTaskView {
                 focusDuration: 45
             ),
         ]
-        
+
         return NavigationStack { view }
     }
 }

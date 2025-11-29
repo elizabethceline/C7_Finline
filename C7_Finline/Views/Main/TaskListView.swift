@@ -84,7 +84,7 @@ struct TaskListView: View {
                                 coverMode = .detail(task)
                                 TaskCardTip.hasClickedTaskCard = true
                             } label: {
-                                TaskCardView(task: task)
+                                TaskCardView(task: task, isTaskDetail: false)
                             }
                             .listRowInsets(
                                 .init(
