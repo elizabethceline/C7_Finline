@@ -498,7 +498,7 @@ final class TaskViewModel: ObservableObject {
             let taskEnd = taskStart.addingTimeInterval(Double(existingTask.focusDuration) * 60)
             
             if start < taskEnd && end > taskStart {
-                print("⚠️ Conflict detected:")
+                print("  Conflict detected:")
                 print("  New slot: \(start) - \(end)")
                 print("  Existing task: '\(existingTask.name)' at \(taskStart) - \(taskEnd)")
                 return false
@@ -560,12 +560,15 @@ final class TaskViewModel: ObservableObject {
         ignoreTimeLimit: Bool = false
     ) async {
         let iso = ISO8601DateFormatter()
-        var currentTime = Date()
         var usedMinutes = 0
         
         await MainActor.run { self.tasks = [] }
         
         let hasAnyProductiveHours = productiveHours.contains { !$0.timeSlots.isEmpty }
+        
+        var currentTime = Date().addingTimeInterval(5 * 60)
+        
+        print("Starting mapping from: \(currentTime)")
         
         for item in items {
             if !ignoreTimeLimit && usedMinutes + item.focusDuration > Int(deadline.timeIntervalSinceNow / 60) {
@@ -573,24 +576,17 @@ final class TaskViewModel: ObservableObject {
                 break
             }
             
-            let taskStart: Date
-            let taskEnd: Date
+            guard let nextSlot = nextAvailableProductiveSlot(from: currentTime, duration: item.focusDuration) else {
+                print("No slot for task '\(item.name)'")
+                break
+            }
             
-            if hasAnyProductiveHours {
-                guard let nextSlot = nextAvailableProductiveSlot(from: currentTime, duration: item.focusDuration) else {
-                    print("No available productive slot found for remaining time")
-                    break
-                }
-                taskStart = nextSlot.start
-                taskEnd = nextSlot.end
-            } else {
-                taskStart = currentTime
-                taskEnd = currentTime.addingTimeInterval(Double(item.focusDuration) * 60)
-                
-                if taskEnd > deadline {
-                    print("Task would exceed deadline, stopping generation")
-                    break
-                }
+            let taskStart = nextSlot.start
+            let taskEnd = nextSlot.end
+            
+            if !ignoreTimeLimit && taskEnd > deadline {
+                print("Exceed deadline → stopping")
+                break
             }
             
             let task = AIGoalTask(
@@ -600,35 +596,48 @@ final class TaskViewModel: ObservableObject {
             )
             
             await MainActor.run { self.tasks.append(task) }
+            print("Scheduled: '\(item.name)' → \(taskStart) – \(taskEnd)")
             
             usedMinutes += item.focusDuration
             currentTime = taskEnd.addingTimeInterval(15 * 60)
         }
         
-        print("Generated \(tasks.count) tasks, total duration: \(usedMinutes) minutes")
+        print("TOTAL: \(tasks.count) tasks, \(usedMinutes) min")
     }
     
     private func nextAvailableProductiveSlot(from date: Date, duration: Int) -> (start: Date, end: Date)? {
         let hasAnyProductiveHours = productiveHours.contains { !$0.timeSlots.isEmpty }
         
         if !hasAnyProductiveHours {
-            print("No productive hours set, scheduling task immediately")
+            print("No productive hours set, scheduling task with conflict checking")
             var currentTime = date
-            let taskEnd = currentTime.addingTimeInterval(Double(duration) * 60)
+            let maxAttempts = 100
+            var attempts = 0
             
-            while !isTimeSlotAvailable(start: currentTime, end: taskEnd) {
+            while attempts < maxAttempts {
+                let taskEnd = currentTime.addingTimeInterval(Double(duration) * 60)
+                
+                if isTimeSlotAvailable(start: currentTime, end: taskEnd) {
+                    print("Found available slot: \(currentTime) - \(taskEnd)")
+                    return (start: currentTime, end: taskEnd)
+                }
+                
                 if let conflictingTask = existingTasks.first(where: { task in
                     let taskStart = task.workingTime
                     let taskEnd = taskStart.addingTimeInterval(Double(task.focusDuration) * 60)
                     return currentTime < taskEnd && taskEnd > taskStart
                 }) {
                     currentTime = conflictingTask.workingTime.addingTimeInterval(Double(conflictingTask.focusDuration + 15) * 60)
+                    print("Skipping conflicting task '\(conflictingTask.name)', next try: \(currentTime)")
                 } else {
-                    break
+                    currentTime = currentTime.addingTimeInterval(15 * 60)
                 }
+                
+                attempts += 1
             }
             
-            return (start: currentTime, end: currentTime.addingTimeInterval(Double(duration) * 60))
+            print("Could not find available slot after \(maxAttempts) attempts")
+            return nil
         }
         
         let cal = Calendar.current
@@ -649,21 +658,29 @@ final class TaskViewModel: ObservableObject {
                 var slotStart = max(currentDate, slotRange.start)
                 let slotEnd = slotRange.end
                 
-                while slotStart.addingTimeInterval(Double(duration) * 60) <= slotEnd {
+                var attempts = 0
+                let maxAttemptsPerSlot = 50
+                
+                while slotStart.addingTimeInterval(Double(duration) * 60) <= slotEnd && attempts < maxAttemptsPerSlot {
                     let taskEnd = slotStart.addingTimeInterval(Double(duration) * 60)
                     
                     if isTimeSlotAvailable(start: slotStart, end: taskEnd) {
+                        print("Found available productive slot: \(slotStart) - \(taskEnd)")
                         return (start: slotStart, end: taskEnd)
                     }
+                    
                     if let conflictingTask = existingTasks.first(where: { task in
                         let taskStart = task.workingTime
                         let taskEnd = taskStart.addingTimeInterval(Double(task.focusDuration) * 60)
                         return slotStart < taskEnd && taskEnd > taskStart
                     }) {
                         slotStart = conflictingTask.workingTime.addingTimeInterval(Double(conflictingTask.focusDuration + 15) * 60)
+                        print("Skipping conflicting task in productive slot, next try: \(slotStart)")
                     } else {
                         slotStart = slotStart.addingTimeInterval(15 * 60)
                     }
+                    
+                    attempts += 1
                 }
             }
             
@@ -671,8 +688,11 @@ final class TaskViewModel: ObservableObject {
             currentDate = cal.date(bySettingHour: 0, minute: 0, second: 0, of: currentDate)!
         }
         
+        print("Could not find available slot in productive hours")
         return nil
     }
+    
+    
     private func timeRange(for slot: TimeSlot, on date: Date) -> (start: Date, end: Date) {
         let cal = Calendar.current
         switch slot {
