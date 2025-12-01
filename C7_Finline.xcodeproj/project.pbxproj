@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		9200F50E2ED160100039CB8B /* ManagedSettings.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9200F50D2ED160100039CB8B /* ManagedSettings.framework */; };
+		9200F5102ED160100039CB8B /* ManagedSettingsUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9200F50F2ED160100039CB8B /* ManagedSettingsUI.framework */; };
+		9200F5182ED160100039CB8B /* FinlineShieldConfig.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 9200F50C2ED160100039CB8B /* FinlineShieldConfig.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		92250AD82ECF12CA001FC609 /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = 92250AD72ECF12CA001FC609 /* Lottie */; };
 		922EC4E92ECEBBDA00E71F8C /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = 922EC4E82ECEBBDA00E71F8C /* Lottie */; };
 		92EBA3362ECC997B008DBAB4 /* ConfettiSwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = 92EBA3352ECC997B008DBAB4 /* ConfettiSwiftUI */; };
@@ -16,6 +19,27 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		9200F5162ED160100039CB8B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A5E3A6AD2EA7673A0035E192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 9200F50B2ED160100039CB8B;
+			remoteInfo = FinlineShieldConfig;
+		};
+		9200F51D2ED161A00039CB8B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A5E3A6AD2EA7673A0035E192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 9200F50B2ED160100039CB8B;
+			remoteInfo = FinlineShieldConfig;
+		};
+		9200F51F2ED161AC0039CB8B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A5E3A6AD2EA7673A0035E192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 9200F50B2ED160100039CB8B;
+			remoteInfo = FinlineShieldConfig;
+		};
 		A57CCEF32EC1960C00013DA3 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = A5E3A6AD2EA7673A0035E192 /* Project object */;
@@ -47,6 +71,7 @@
 			dstSubfolderSpec = 13;
 			files = (
 				A57CCEF52EC1960C00013DA3 /* FinlineWidgetExtension.appex in Embed Foundation Extensions */,
+				9200F5182ED160100039CB8B /* FinlineShieldConfig.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -54,6 +79,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		9200F50C2ED160100039CB8B /* FinlineShieldConfig.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = FinlineShieldConfig.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		9200F50D2ED160100039CB8B /* ManagedSettings.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ManagedSettings.framework; path = System/Library/Frameworks/ManagedSettings.framework; sourceTree = SDKROOT; };
+		9200F50F2ED160100039CB8B /* ManagedSettingsUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ManagedSettingsUI.framework; path = Library/Frameworks/ManagedSettingsUI.framework; sourceTree = DEVELOPER_DIR; };
 		921A45E22EC9D3F300CAA6FE /* FinlineWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = FinlineWidgetExtension.entitlements; sourceTree = "<group>"; };
 		A57CCEDF2EC1960C00013DA3 /* FinlineWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = FinlineWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		A57CCEE12EC1960C00013DA3 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
@@ -64,6 +92,20 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		9200F51C2ED160100039CB8B /* Exceptions for "FinlineShieldConfig" folder in "FinlineShieldConfig" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 9200F50B2ED160100039CB8B /* FinlineShieldConfig */;
+		};
+		9200F5272ED169E70039CB8B /* Exceptions for "C7_Finline" folder in "FinlineShieldConfig" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Assets.xcassets,
+			);
+			target = 9200F50B2ED160100039CB8B /* FinlineShieldConfig */;
+		};
 		A57CCEF92EC1960C00013DA3 /* Exceptions for "FinlineWidget" folder in "FinlineWidgetExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -74,7 +116,6 @@
 		A57CCF002EC1997600013DA3 /* Exceptions for "FinlineWidget" folder in "C7_Finline" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Assets.xcassets,
 				FocusActivityAttributes.swift,
 				FocusLiveActivity.swift,
 			);
@@ -94,6 +135,14 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		9200F5112ED160100039CB8B /* FinlineShieldConfig */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				9200F51C2ED160100039CB8B /* Exceptions for "FinlineShieldConfig" folder in "FinlineShieldConfig" target */,
+			);
+			path = FinlineShieldConfig;
+			sourceTree = "<group>";
+		};
 		A57CCEE52EC1960C00013DA3 /* FinlineWidget */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -107,6 +156,7 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				A57CD0D72EC2300700013DA3 /* Exceptions for "C7_Finline" folder in "FinlineWidgetExtension" target */,
+				9200F5272ED169E70039CB8B /* Exceptions for "C7_Finline" folder in "FinlineShieldConfig" target */,
 			);
 			path = C7_Finline;
 			sourceTree = "<group>";
@@ -124,6 +174,15 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		9200F5092ED160100039CB8B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9200F50E2ED160100039CB8B /* ManagedSettings.framework in Frameworks */,
+				9200F5102ED160100039CB8B /* ManagedSettingsUI.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A57CCEDC2EC1960C00013DA3 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -165,6 +224,8 @@
 			children = (
 				A57CCEE12EC1960C00013DA3 /* WidgetKit.framework */,
 				A57CCEE32EC1960C00013DA3 /* SwiftUI.framework */,
+				9200F50D2ED160100039CB8B /* ManagedSettings.framework */,
+				9200F50F2ED160100039CB8B /* ManagedSettingsUI.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -177,6 +238,7 @@
 				A5E3A6C52EA7673B0035E192 /* C7_FinlineTests */,
 				A5E3A6CF2EA7673B0035E192 /* C7_FinlineUITests */,
 				A57CCEE52EC1960C00013DA3 /* FinlineWidget */,
+				9200F5112ED160100039CB8B /* FinlineShieldConfig */,
 				A57CCEE02EC1960C00013DA3 /* Frameworks */,
 				A5E3A6B62EA7673A0035E192 /* Products */,
 			);
@@ -189,6 +251,7 @@
 				A5E3A6C22EA7673B0035E192 /* C7_FinlineTests.xctest */,
 				A5E3A6CC2EA7673B0035E192 /* C7_FinlineUITests.xctest */,
 				A57CCEDF2EC1960C00013DA3 /* FinlineWidgetExtension.appex */,
+				9200F50C2ED160100039CB8B /* FinlineShieldConfig.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -196,6 +259,28 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		9200F50B2ED160100039CB8B /* FinlineShieldConfig */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9200F5192ED160100039CB8B /* Build configuration list for PBXNativeTarget "FinlineShieldConfig" */;
+			buildPhases = (
+				9200F5082ED160100039CB8B /* Sources */,
+				9200F5092ED160100039CB8B /* Frameworks */,
+				9200F50A2ED160100039CB8B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				9200F5112ED160100039CB8B /* FinlineShieldConfig */,
+			);
+			name = FinlineShieldConfig;
+			packageProductDependencies = (
+			);
+			productName = FinlineShieldConfig;
+			productReference = 9200F50C2ED160100039CB8B /* FinlineShieldConfig.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		A57CCEDE2EC1960C00013DA3 /* FinlineWidgetExtension */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = A57CCEFA2EC1960C00013DA3 /* Build configuration list for PBXNativeTarget "FinlineWidgetExtension" */;
@@ -231,6 +316,9 @@
 			);
 			dependencies = (
 				A57CCEF42EC1960C00013DA3 /* PBXTargetDependency */,
+				9200F5172ED160100039CB8B /* PBXTargetDependency */,
+				9200F51E2ED161A00039CB8B /* PBXTargetDependency */,
+				9200F5202ED161AC0039CB8B /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				A5E3A6B72EA7673A0035E192 /* C7_Finline */,
@@ -298,9 +386,12 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 2600;
+				LastSwiftUpdateCheck = 2610;
 				LastUpgradeCheck = 2600;
 				TargetAttributes = {
+					9200F50B2ED160100039CB8B = {
+						CreatedOnToolsVersion = 26.1.1;
+					};
 					A57CCEDE2EC1960C00013DA3 = {
 						CreatedOnToolsVersion = 26.0.1;
 					};
@@ -339,11 +430,19 @@
 				A5E3A6C12EA7673B0035E192 /* C7_FinlineTests */,
 				A5E3A6CB2EA7673B0035E192 /* C7_FinlineUITests */,
 				A57CCEDE2EC1960C00013DA3 /* FinlineWidgetExtension */,
+				9200F50B2ED160100039CB8B /* FinlineShieldConfig */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		9200F50A2ED160100039CB8B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A57CCEDD2EC1960C00013DA3 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -375,6 +474,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		9200F5082ED160100039CB8B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A57CCEDB2EC1960C00013DA3 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -406,6 +512,21 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		9200F5172ED160100039CB8B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 9200F50B2ED160100039CB8B /* FinlineShieldConfig */;
+			targetProxy = 9200F5162ED160100039CB8B /* PBXContainerItemProxy */;
+		};
+		9200F51E2ED161A00039CB8B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 9200F50B2ED160100039CB8B /* FinlineShieldConfig */;
+			targetProxy = 9200F51D2ED161A00039CB8B /* PBXContainerItemProxy */;
+		};
+		9200F5202ED161AC0039CB8B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 9200F50B2ED160100039CB8B /* FinlineShieldConfig */;
+			targetProxy = 9200F51F2ED161AC0039CB8B /* PBXContainerItemProxy */;
+		};
 		A57CCEF42EC1960C00013DA3 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = A57CCEDE2EC1960C00013DA3 /* FinlineWidgetExtension */;
@@ -424,6 +545,69 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		9200F51A2ED160100039CB8B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = FinlineShieldConfig/FinlineShieldConfig.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 96MF25N4D7;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = FinlineShieldConfig/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = FinlineShieldConfig;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = c7.finline.FinlineShieldConfig;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		9200F51B2ED160100039CB8B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = FinlineShieldConfig/FinlineShieldConfig.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 96MF25N4D7;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = FinlineShieldConfig/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = FinlineShieldConfig;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = c7.finline.FinlineShieldConfig;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 		A57CCEF72EC1960C00013DA3 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -810,6 +994,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		9200F5192ED160100039CB8B /* Build configuration list for PBXNativeTarget "FinlineShieldConfig" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9200F51A2ED160100039CB8B /* Debug */,
+				9200F51B2ED160100039CB8B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		A57CCEFA2EC1960C00013DA3 /* Build configuration list for PBXNativeTarget "FinlineWidgetExtension" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
