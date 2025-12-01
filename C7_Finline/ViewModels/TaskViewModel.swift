@@ -433,7 +433,7 @@ final class TaskViewModel: ObservableObject {
         print("total Minutes Avail \(totalMinutesAvailable)")
         
         let prompt = """
-            You are an AI productivity assistant.
+            You are an AI productivity assistant. Your job is to break down a given goal and description into a structured list of tasks.
             
             Goal Title: \(goal.name)
             Description: \(goal.goalDescription ?? "No description provided")
