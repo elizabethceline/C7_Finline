@@ -306,11 +306,14 @@ struct CreateTaskView: View {
             }
             Button("Generate Anyway", role: .destructive) {
                 Task {
+                    guard let extendedDeadline =
+                            Calendar.current.date(byAdding: .day, value: 30, to: goalDeadline)
+                    else { return }
                     await taskVM.generateTaskWithAI(
                         for: goalName,
                         goalDescription: pendingGoalDescription,
-                        goalDeadline: goalDeadline,
-                        ignoreTimeLimit: true,
+                        goalDeadline: extendedDeadline,
+                        //ignoreTimeLimit: true,
                         modelContext: modelContext  // Tambahkan parameter ini
                     )
                     pendingGoalDescription = ""
@@ -318,8 +321,14 @@ struct CreateTaskView: View {
             }
         } message: {
             Text(
-                "The deadline is too soon. There may not be enough time to complete all generated tasks. Do you want to generate tasks anyway?"
+                "The deadline is too soon. There may not be enough time to complete all generated tasks. Do you want to generate tasks anyway? Generating tasks anyway will ignore your current deadline."
             )
+        }
+        
+        .alert("No Available Time", isPresented: $taskVM.showNoAvailableTimeAlert) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("Your schedule is currently full. Please adjust your deadline or free up some time to generate tasks.")
         }
 
         .sheet(isPresented: $isShowingModalCreateWithAI) {

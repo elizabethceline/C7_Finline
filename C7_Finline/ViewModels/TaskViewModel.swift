@@ -19,6 +19,7 @@ final class TaskViewModel: ObservableObject {
     @Published var username: String = ""
     @Published var isLoading = false
     @Published var errorMessage: String?
+    @Published var showNoAvailableTimeAlert: Bool = false
     @Published var existingTasks: [GoalTask] = []
     private let taskManager: TaskManager
     private let networkMonitor: NetworkMonitor
@@ -600,6 +601,12 @@ final class TaskViewModel: ObservableObject {
             
             usedMinutes += item.focusDuration
             currentTime = taskEnd.addingTimeInterval(15 * 60)
+        }
+        
+        await MainActor.run {
+            if self.tasks.isEmpty {
+                self.showNoAvailableTimeAlert = true
+            }
         }
         
         print("TOTAL: \(tasks.count) tasks, \(usedMinutes) min")
