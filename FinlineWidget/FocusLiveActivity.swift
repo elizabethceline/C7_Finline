@@ -93,14 +93,17 @@ struct FocusLiveActivity: Widget {
                                     .fontWeight(.bold)
                                     .monospacedDigit()
                                     .foregroundColor(.gray)
-                                    .offset(x:-5)
+                                    .offset(x:1)
                                     .minimumScaleFactor(0.5)
                                     .layoutPriority(10)
                             }
                             
                             Text(context.state.taskTitle)
-                                .font(.title2)
+                                .font(.headline)
                                 .foregroundColor(.gray)
+                                .lineLimit(nil)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .offset(x: -4)
                         }
                         .padding(.bottom,13)
                     }
@@ -313,10 +316,15 @@ struct FocusLiveActivity: Widget {
                         Text("Rest Over")
                             .font(.headline)
                     } else if let endTime = context.state.endTime {
+                        Spacer(minLength: 0)
+                        let remaining = endTime.timeIntervalSince(Date.now)
+                        let frameWidth: CGFloat = remaining >= 3600 ? 65 : 45
+                        
                         Text(timerInterval: Date.now...endTime, countsDown: true)
                             .foregroundColor(Color(red: 161/255, green: 210/255, blue: 241/255))
                             .monospacedDigit()
-                            .frame(width: 65)
+                            .frame(width: frameWidth)
+                    
                     } else {
                         Text(TimeFormatter.format(seconds:
                                                     context.state.isResting ?
@@ -381,7 +389,7 @@ struct FocusLiveActivity: Widget {
     FocusLiveActivity()
 } contentStates: {
     FocusActivityAttributes.ContentState.previewValue(
-        taskTitle: "Focus Session",
+        taskTitle: "Draft Introduction and Thesis Statement",
         remainingTime: 60 * 60,
         isResting: false
     )
@@ -392,7 +400,7 @@ struct FocusLiveActivity: Widget {
     )
     FocusActivityAttributes.ContentState.previewValue(
         taskTitle: "Session Complete",
-        remainingTime: 0,
+        remainingTime: 8 * 10,
         isResting: true
     )
 }
