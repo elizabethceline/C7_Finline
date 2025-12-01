@@ -698,7 +698,7 @@ final class TaskViewModel: ObservableObject {
         switch slot {
         case .earlyMorning:
             return (
-                start: cal.date(bySettingHour: 0, minute: 0, second: 0, of: date)!,
+                start: cal.date(bySettingHour: 3, minute: 0, second: 0, of: date)!,
                 end: cal.date(bySettingHour: 8, minute: 0, second: 0, of: date)!
             )
         case .morning:
