@@ -19,6 +19,7 @@ final class TaskViewModel: ObservableObject {
     @Published var username: String = ""
     @Published var isLoading = false
     @Published var errorMessage: String?
+    @Published var showNoAvailableTimeAlert: Bool = false
     @Published var existingTasks: [GoalTask] = []
     private let taskManager: TaskManager
     private let networkMonitor: NetworkMonitor
@@ -602,6 +603,12 @@ final class TaskViewModel: ObservableObject {
             currentTime = taskEnd.addingTimeInterval(15 * 60)
         }
         
+        await MainActor.run {
+            if self.tasks.isEmpty {
+                self.showNoAvailableTimeAlert = true
+            }
+        }
+        
         print("TOTAL: \(tasks.count) tasks, \(usedMinutes) min")
     }
     
@@ -698,7 +705,7 @@ final class TaskViewModel: ObservableObject {
         switch slot {
         case .earlyMorning:
             return (
-                start: cal.date(bySettingHour: 0, minute: 0, second: 0, of: date)!,
+                start: cal.date(bySettingHour: 3, minute: 0, second: 0, of: date)!,
                 end: cal.date(bySettingHour: 8, minute: 0, second: 0, of: date)!
             )
         case .morning:
