@@ -11,6 +11,7 @@ struct TaskCardView: View {
     @Environment(\.colorScheme) var colorScheme
 
     let task: GoalTask
+    let isTaskDetail: Bool
 
     var body: some View {
         HStack {
@@ -49,7 +50,9 @@ struct TaskCardView: View {
             RoundedRectangle(cornerRadius: 24)
                 .fill(
                     (colorScheme == .light
-                        ? Color(.systemBackground) : Color(.systemGray6))
+                        ? Color(.systemBackground)
+                        : (isTaskDetail == true
+                            ? Color(.systemGray5) : Color(.systemGray6)))
                 )
         )
         .opacity(task.isCompleted ? 0.6 : 1)
@@ -91,7 +94,8 @@ struct TaskCardView: View {
                 goalDescription:
                     "Understand the basics of algebraic expressions and equations."
             )
-        )
+        ),
+        isTaskDetail: false
     )
     .padding()
     .background(Color.black)

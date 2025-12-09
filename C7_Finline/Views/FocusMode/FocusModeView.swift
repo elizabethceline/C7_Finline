@@ -89,6 +89,11 @@ struct FocusModeView: View {
                 }
             }
         }
+        .onChange(of: viewModel.authManager.isAuthorized) { oldValue, newValue in
+            if newValue && !oldValue {
+                viewModel.checkAndApplyShieldIfNeeded()
+            }
+        }
         .onChange(of: viewModel.didTimeRunOut) {
             oldValue,
             newValue in
@@ -109,6 +114,8 @@ struct FocusModeView: View {
             }
         }
         .onAppear {
+            viewModel.authManager.updateAuthorizationStatus()
+            
             isGivingUp = false
             resultVM = nil
             isShowingTimesUpAlert = false
@@ -375,45 +382,23 @@ struct FocusModeView: View {
         Fish.sample(of: .common),
         Fish.sample(of: .uncommon),
         Fish.sample(of: .rare),
+        Fish.sample(of: .legendary)
     ]
-    
-    let mockResult = FocusSessionResult(
-        caughtFish: mockFish,
-        duration: 1800,
-        task: nil
-    )
-    
-    let mockResultVM = FocusResultViewModel(
-        context: nil,
-        networkMonitor: NetworkMonitor.shared
-    )
-    mockResultVM.currentResult = mockResult
-    mockResultVM.bonusPoints = 20
     
     let mockSessionVM = FocusSessionViewModel()
     mockSessionVM.goalName = "Write my Thesis"
+    mockSessionVM.taskTitle = "Initiate a Desk Research"
+    mockSessionVM.remainingTime = 0
+    mockSessionVM.sessionDuration = 1800
+    mockSessionVM.isSessionEnded = true
     
-    return ZStack {
-        Image("lightFocusBackground")
-            .resizable()
-            .scaledToFill()
-            .ignoresSafeArea()
-        
-        SnowView()
-            .allowsHitTesting(false)
-        
-        VStack(spacing: 24) {
-          
-            
-            FocusEndView(
-                viewModel: mockResultVM,
-                onDismiss: {
-                    print("Preview Session Ended")
-                }
-            )
-            .padding(.horizontal)
-        }
-    }
+    mockSessionVM.fishingVM.caughtFish = mockFish
+    mockSessionVM.bonusPointsFromNudge = 20
+
+    return FocusModeView(
+        onGiveUp: { task in print("Preview Give Up Tapped") },
+        onSessionEnd: { print("Preview Session Ended Tapped") }
+    )
     .environmentObject(mockSessionVM)
     .modelContainer(for: [Goal.self, GoalTask.self], inMemory: true)
 }

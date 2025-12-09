@@ -19,10 +19,12 @@ final class TaskViewModel: ObservableObject {
     @Published var username: String = ""
     @Published var isLoading = false
     @Published var errorMessage: String?
+    @Published var showNoAvailableTimeAlert: Bool = false
+    @Published var existingTasks: [GoalTask] = []
     private let taskManager: TaskManager
     private let networkMonitor: NetworkMonitor
-
-
+    
+    
     init(networkMonitor: NetworkMonitor = .shared) {
         self.networkMonitor = networkMonitor
         self.taskManager = TaskManager(networkMonitor: networkMonitor)
@@ -33,7 +35,8 @@ final class TaskViewModel: ObservableObject {
     func loadUserProfile(modelContext: ModelContext) async {
         do {
             guard CloudKitManager.shared.isSignedInToiCloud else {
-                print("User not signed in to iCloud")
+                print("User not signed in to iCloud, loading from SwiftData")
+                await loadProductiveHoursFromSwiftData(modelContext: modelContext)
                 return
             }
             
@@ -58,17 +61,54 @@ final class TaskViewModel: ObservableObject {
                 self.productiveHours = DayOfWeek.allCases.map { ProductiveHours(day: $0) }
             }
             
-            print("Loaded user profile: \(self.username)")
+            print("Loaded user profile from iCloud: \(self.username)")
             print("Productive Hours:")
             for ph in productiveHours {
                 print("\(ph.day): \(ph.timeSlots) hours")
             }
             
         } catch {
-            print("Error loading user profile: \(error)")
+            print("Error loading user profile from iCloud: \(error)")
+            await loadProductiveHoursFromSwiftData(modelContext: modelContext)
         }
     }
     
+    private func loadProductiveHoursFromSwiftData(modelContext: ModelContext) async {
+        do {
+            let descriptor = FetchDescriptor<UserProfile>()
+            let profiles = try modelContext.fetch(descriptor)
+            
+            if let localProfile = profiles.first {
+                self.username = localProfile.username
+                if let data = localProfile.productiveHoursJSON.data(using: .utf8) {
+                    do {
+                        let hours = try JSONDecoder().decode([ProductiveHours].self, from: data)
+                        self.productiveHours = hours
+                        print("Loaded productive hours from SwiftData")
+                    } catch {
+                        self.productiveHours = DayOfWeek.allCases.map { ProductiveHours(day: $0) }
+                        print("Failed to decode productive hours from SwiftData: \(error)")
+                    }
+                } else {
+                    self.productiveHours = DayOfWeek.allCases.map { ProductiveHours(day: $0) }
+                }
+                
+                print("Loaded user profile from SwiftData: \(self.username)")
+                print("Productive Hours:")
+                for ph in productiveHours {
+                    print("\(ph.day): \(ph.timeSlots) hours")
+                }
+            } else {
+                print("No local profile found, using default productive hours")
+                self.productiveHours = DayOfWeek.allCases.map { ProductiveHours(day: $0) }
+                self.username = "User"
+            }
+        } catch {
+            print("Error loading productive hours from SwiftData: \(error)")
+            self.productiveHours = DayOfWeek.allCases.map { ProductiveHours(day: $0) }
+            self.username = "User"
+        }
+    }
     func createAllGoalTasks(for goal: Goal, modelContext: ModelContext) async {
         guard !tasks.isEmpty else {
             print("No generated tasks to save.")
@@ -96,9 +136,9 @@ final class TaskViewModel: ObservableObject {
         do {
             try modelContext.save()
             print("Saved \(tasks.count) AI tasks for goal \(goal.name)")
-
+            
             WidgetCenter.shared.reloadTimelines(ofKind: "FinlineWidget")
-
+            
         } catch {
             print("Failed to save AI tasks: \(error.localizedDescription)")
         }
@@ -159,9 +199,9 @@ final class TaskViewModel: ObservableObject {
         do {
             try modelContext.save()
             print("Task '\(name)' updated successfully.")
-
+            
             WidgetCenter.shared.reloadTimelines(ofKind: "FinlineWidget")
-
+            
         } catch {
             print("Failed to save updated task: \(error.localizedDescription)")
         }
@@ -177,9 +217,9 @@ final class TaskViewModel: ObservableObject {
             taskManager.deleteTask(task: task, modelContext: modelContext)
             
             try modelContext.save()
-
+            
             WidgetCenter.shared.reloadTimelines(ofKind: "FinlineWidget")
-
+            
             await MainActor.run {
                 self.goalTasks.removeAll { $0.id == task.id }
                 print("Deleted task: \(task.name)")
@@ -199,7 +239,6 @@ final class TaskViewModel: ObservableObject {
         }
     }
     
-    //temporary CRUD before saved to Swift Data
     func createTaskManually(name: String, workingTime: Date, focusDuration: Int)
     {
         guard !name.trimmingCharacters(in: .whitespaces).isEmpty else {
@@ -292,9 +331,9 @@ final class TaskViewModel: ObservableObject {
             print("Goal not found")
             return
         }
-
+        
         print("Found goal: \(goal.name)")
-
+        
         let newTask = taskManager.createTask(
             goal: goal,
             name: name,
@@ -304,13 +343,13 @@ final class TaskViewModel: ObservableObject {
         )
         print("Created task: \(newTask.name) for goal: \(goal.name)")
         print("Goal now has \(goal.tasks.count) tasks")
-
+        
         do {
             try modelContext.save()
             print("Context saved successfully")
-
+            
             WidgetCenter.shared.reloadTimelines(ofKind: "FinlineWidget")
-
+            
         } catch {
             print("Failed to save context: \(error)")
         }
@@ -328,12 +367,10 @@ final class TaskViewModel: ObservableObject {
         }
     }
     
-    // Public function untuk calculate available minutes
     func calculateAvailableMinutes(from startDate: Date, to endDate: Date) async -> Int {
         return calculateProductiveMinutes(from: startDate, to: endDate)
     }
     
-    // Helper function to check if user has any productive hours set
     func hasProductiveHours() -> Bool {
         return productiveHours.contains { !$0.timeSlots.isEmpty }
     }
@@ -342,7 +379,8 @@ final class TaskViewModel: ObservableObject {
         for goalName: String,
         goalDescription: String,
         goalDeadline: Date,
-        ignoreTimeLimit: Bool = false
+        ignoreTimeLimit: Bool = false,
+        modelContext: ModelContext
     ) async {
         await MainActor.run {
             self.tasks.removeAll()
@@ -354,10 +392,10 @@ final class TaskViewModel: ObservableObject {
             due: goalDeadline,
             goalDescription: goalDescription
         )
-        await prompt(for: goal, ignoreTimeLimit: ignoreTimeLimit)
+        await prompt(for: goal, ignoreTimeLimit: ignoreTimeLimit, modelContext: modelContext)
     }
     
-    func prompt(for goal: Goal, ignoreTimeLimit: Bool = false) async {
+    func prompt(for goal: Goal, ignoreTimeLimit: Bool = false, modelContext: ModelContext) async {
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
@@ -367,8 +405,11 @@ final class TaskViewModel: ObservableObject {
             return
         }
         
+        await loadExistingTasks(from: Date(), to: goal.due, modelContext: modelContext)
+        
         let session = LanguageModelSession(model: model)
         print("Productive hours: \(productiveHours)")
+        print("Existing tasks count: \(existingTasks.count)")
         
         let hasProductiveHours = self.hasProductiveHours()
         print("Has productive hours: \(hasProductiveHours)")
@@ -385,18 +426,18 @@ final class TaskViewModel: ObservableObject {
         } else {
             totalTask = totalMinutesAvailable < 500 ? 2 : 5
             timeConstraint = hasProductiveHours
-                ? "Total focus duration must NOT exceed \(totalMinutesAvailable) minutes based on productive hours."
-                : "Total focus duration must fit within \(totalMinutesAvailable) minutes from now until deadline."
+            ? "Total focus duration must NOT exceed \(totalMinutesAvailable) minutes based on productive hours."
+            : "Total focus duration must fit within \(totalMinutesAvailable) minutes from now until deadline."
         }
         print("ignore time limit  \(ignoreTimeLimit)")
         print("total Minutes Avail \(totalMinutesAvailable)")
         
         let prompt = """
-            You are an AI productivity assistant.
-
+            You are an AI productivity assistant. Your job is to break down a given goal and description into a structured list of tasks.
+            
             Goal Title: \(goal.name)
             Description: \(goal.goalDescription ?? "No description provided")
-
+            
             Generate exactly \(totalTask) tasks.
             Each must contain:
             - "name": unique descriptive title
@@ -404,14 +445,14 @@ final class TaskViewModel: ObservableObject {
                 Easy: 20–30
                 Medium: 30–60
                 Hard: 60–120
-
+            
             RULES:
             - DO NOT generate date/time.
             - DO NOT include start/end times.
             - \(timeConstraint)
             Return ONLY JSON array of { "name": "...", "focusDuration": ... }
             """
-
+        
         var aiItems: [AIPlannedItem] = []
         do {
             let response = try await session.respond(
@@ -420,13 +461,53 @@ final class TaskViewModel: ObservableObject {
             )
             aiItems = response.content
         } catch {
-            errorMessage =
-                "Failed to parse AI tasks: \(error.localizedDescription)"
+            errorMessage = "Failed to parse AI tasks: \(error.localizedDescription)"
             return
         }
         
         await mapWorkingTimes(from: aiItems, deadline: goal.due, ignoreTimeLimit: ignoreTimeLimit)
     }
+    
+    private func loadExistingTasks(from startDate: Date, to endDate: Date, modelContext: ModelContext) async {
+        let descriptor = FetchDescriptor<GoalTask>(
+            predicate: #Predicate { task in
+                task.workingTime >= startDate && task.workingTime <= endDate
+            },
+            sortBy: [SortDescriptor(\.workingTime, order: .forward)]
+        )
+        
+        do {
+            let results = try modelContext.fetch(descriptor)
+            await MainActor.run {
+                self.existingTasks = results
+                print("Loaded \(results.count) existing tasks in range \(startDate) to \(endDate)")
+                for task in results {
+                    print("  - \(task.name) at \(task.workingTime)")
+                }
+            }
+        } catch {
+            print("Error loading existing tasks: \(error.localizedDescription)")
+            await MainActor.run {
+                self.existingTasks = []
+            }
+        }
+    }
+    
+    private func isTimeSlotAvailable(start: Date, end: Date) -> Bool {
+        for existingTask in existingTasks {
+            let taskStart = existingTask.workingTime
+            let taskEnd = taskStart.addingTimeInterval(Double(existingTask.focusDuration) * 60)
+            
+            if start < taskEnd && end > taskStart {
+                print("  Conflict detected:")
+                print("  New slot: \(start) - \(end)")
+                print("  Existing task: '\(existingTask.name)' at \(taskStart) - \(taskEnd)")
+                return false
+            }
+        }
+        return true
+    }
+    
     
     private func calculateProductiveMinutes(from startDate: Date, to endDate: Date) -> Int {
         let hasAnyProductiveHours = productiveHours.contains { !$0.timeSlots.isEmpty }
@@ -473,19 +554,22 @@ final class TaskViewModel: ObservableObject {
         
         return totalMinutes
     }
-
+    
     func mapWorkingTimes(
         from items: [AIPlannedItem],
         deadline: Date,
         ignoreTimeLimit: Bool = false
     ) async {
         let iso = ISO8601DateFormatter()
-        var currentTime = Date()
         var usedMinutes = 0
         
         await MainActor.run { self.tasks = [] }
         
         let hasAnyProductiveHours = productiveHours.contains { !$0.timeSlots.isEmpty }
+        
+        var currentTime = Date().addingTimeInterval(5 * 60)
+        
+        print("Starting mapping from: \(currentTime)")
         
         for item in items {
             if !ignoreTimeLimit && usedMinutes + item.focusDuration > Int(deadline.timeIntervalSinceNow / 60) {
@@ -493,24 +577,17 @@ final class TaskViewModel: ObservableObject {
                 break
             }
             
-            let taskStart: Date
-            let taskEnd: Date
+            guard let nextSlot = nextAvailableProductiveSlot(from: currentTime, duration: item.focusDuration) else {
+                print("No slot for task '\(item.name)'")
+                break
+            }
             
-            if hasAnyProductiveHours {
-                guard let nextSlot = nextAvailableProductiveSlot(from: currentTime, duration: item.focusDuration) else {
-                    print("No available productive slot found for remaining time")
-                    break
-                }
-                taskStart = nextSlot.start
-                taskEnd = nextSlot.end
-            } else {
-                taskStart = currentTime
-                taskEnd = currentTime.addingTimeInterval(Double(item.focusDuration) * 60)
-                
-                if taskEnd > deadline {
-                    print("Task would exceed deadline, stopping generation")
-                    break
-                }
+            let taskStart = nextSlot.start
+            let taskEnd = nextSlot.end
+            
+            if !ignoreTimeLimit && taskEnd > deadline {
+                print("Exceed deadline → stopping")
+                break
             }
             
             let task = AIGoalTask(
@@ -520,20 +597,54 @@ final class TaskViewModel: ObservableObject {
             )
             
             await MainActor.run { self.tasks.append(task) }
+            print("Scheduled: '\(item.name)' → \(taskStart) – \(taskEnd)")
             
             usedMinutes += item.focusDuration
             currentTime = taskEnd.addingTimeInterval(15 * 60)
         }
         
-        print("Generated \(tasks.count) tasks, total duration: \(usedMinutes) minutes")
+        await MainActor.run {
+            if self.tasks.isEmpty {
+                self.showNoAvailableTimeAlert = true
+            }
+        }
+        
+        print("TOTAL: \(tasks.count) tasks, \(usedMinutes) min")
     }
     
     private func nextAvailableProductiveSlot(from date: Date, duration: Int) -> (start: Date, end: Date)? {
         let hasAnyProductiveHours = productiveHours.contains { !$0.timeSlots.isEmpty }
         
         if !hasAnyProductiveHours {
-            print("No productive hours set, scheduling task immediately")
-            return (start: date, end: date.addingTimeInterval(Double(duration) * 60))
+            print("No productive hours set, scheduling task with conflict checking")
+            var currentTime = date
+            let maxAttempts = 100
+            var attempts = 0
+            
+            while attempts < maxAttempts {
+                let taskEnd = currentTime.addingTimeInterval(Double(duration) * 60)
+                
+                if isTimeSlotAvailable(start: currentTime, end: taskEnd) {
+                    print("Found available slot: \(currentTime) - \(taskEnd)")
+                    return (start: currentTime, end: taskEnd)
+                }
+                
+                if let conflictingTask = existingTasks.first(where: { task in
+                    let taskStart = task.workingTime
+                    let taskEnd = taskStart.addingTimeInterval(Double(task.focusDuration) * 60)
+                    return currentTime < taskEnd && taskEnd > taskStart
+                }) {
+                    currentTime = conflictingTask.workingTime.addingTimeInterval(Double(conflictingTask.focusDuration + 15) * 60)
+                    print("Skipping conflicting task '\(conflictingTask.name)', next try: \(currentTime)")
+                } else {
+                    currentTime = currentTime.addingTimeInterval(15 * 60)
+                }
+                
+                attempts += 1
+            }
+            
+            print("Could not find available slot after \(maxAttempts) attempts")
+            return nil
         }
         
         let cal = Calendar.current
@@ -551,29 +662,50 @@ final class TaskViewModel: ObservableObject {
             
             for slot in sortedSlots {
                 let slotRange = timeRange(for: slot, on: currentDate)
-                let slotStart = max(currentDate, slotRange.start)
+                var slotStart = max(currentDate, slotRange.start)
                 let slotEnd = slotRange.end
-                let slotMinutes = Int(slotEnd.timeIntervalSince(slotStart) / 60)
                 
-                if slotMinutes >= duration {
-                    return (start: slotStart, end: slotStart.addingTimeInterval(Double(duration) * 60))
+                var attempts = 0
+                let maxAttemptsPerSlot = 50
+                
+                while slotStart.addingTimeInterval(Double(duration) * 60) <= slotEnd && attempts < maxAttemptsPerSlot {
+                    let taskEnd = slotStart.addingTimeInterval(Double(duration) * 60)
+                    
+                    if isTimeSlotAvailable(start: slotStart, end: taskEnd) {
+                        print("Found available productive slot: \(slotStart) - \(taskEnd)")
+                        return (start: slotStart, end: taskEnd)
+                    }
+                    
+                    if let conflictingTask = existingTasks.first(where: { task in
+                        let taskStart = task.workingTime
+                        let taskEnd = taskStart.addingTimeInterval(Double(task.focusDuration) * 60)
+                        return slotStart < taskEnd && taskEnd > taskStart
+                    }) {
+                        slotStart = conflictingTask.workingTime.addingTimeInterval(Double(conflictingTask.focusDuration + 15) * 60)
+                        print("Skipping conflicting task in productive slot, next try: \(slotStart)")
+                    } else {
+                        slotStart = slotStart.addingTimeInterval(15 * 60)
+                    }
+                    
+                    attempts += 1
                 }
             }
             
             currentDate = cal.date(byAdding: .day, value: 1, to: currentDate)!
             currentDate = cal.date(bySettingHour: 0, minute: 0, second: 0, of: currentDate)!
-
         }
         
+        print("Could not find available slot in productive hours")
         return nil
     }
+    
     
     private func timeRange(for slot: TimeSlot, on date: Date) -> (start: Date, end: Date) {
         let cal = Calendar.current
         switch slot {
         case .earlyMorning:
             return (
-                start: cal.date(bySettingHour: 0, minute: 0, second: 0, of: date)!,
+                start: cal.date(bySettingHour: 3, minute: 0, second: 0, of: date)!,
                 end: cal.date(bySettingHour: 8, minute: 0, second: 0, of: date)!
             )
         case .morning:

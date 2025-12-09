@@ -308,7 +308,7 @@ struct DetailGoalView: View {
                                 coverMode = .detail(task)
                             }
                         } label: {
-                            TaskCardView(task: task)
+                            TaskCardView(task: task, isTaskDetail: false)
                         }
                         .buttonStyle(.plain)
                     }
